@@ -2,6 +2,14 @@
 
 Sistema web para lançamento diário/semanal de refeições por escola e cardápio, com painel administrativo, configuração de responsáveis e exportação mensal consolidada para Excel.
 
+## Acessar protótipo online
+
+Após o GitHub Pages publicar a última versão:
+
+[https://guedesyc.github.io/apuracao-merenda/](https://guedesyc.github.io/apuracao-merenda/)
+
+A versão online é estática: permite testar a interface e salva dados no navegador. A exportação Excel real precisa da versão local com servidor.
+
 ## Como rodar
 
 1. Instale a dependência Python:
