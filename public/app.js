@@ -208,11 +208,11 @@ function renderLogin(error = "") {
         <p>Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal.</p>
         <div class="field">
           <label for="username">Usuário</label>
-          <input id="username" autocomplete="username" value="admin" />
+          <input id="username" autocomplete="username" />
         </div>
         <div class="field">
           <label for="password">Senha</label>
-          <input id="password" type="password" autocomplete="current-password" value="admin" />
+          <input id="password" type="password" autocomplete="current-password" />
         </div>
         <button class="primary" type="submit">Entrar</button>
         <p class="error">${error}</p>
@@ -886,7 +886,7 @@ function renderConfig() {
     </section>
   `);
   $("#add-user").addEventListener("click", () => {
-    state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "123", role: "nutritionist", active: true });
+    state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "", role: "nutritionist", active: true });
     saveDb("Nutricionista criada.");
   });
   document.querySelectorAll("[data-user-field]").forEach(input => {

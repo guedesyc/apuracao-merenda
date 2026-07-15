@@ -44,23 +44,6 @@ A produção real deve ser publicada no Netlify com Supabase configurado.
 
 Veja [DEPLOY.md](DEPLOY.md) para configurar Supabase, variáveis do Netlify e teste local com Netlify CLI antes do deploy.
 
-## Logins iniciais
+## Acesso inicial
 
-- Coordenação: `admin` / `admin`
-- Nutricionistas: senha inicial `123`
-
-| Usuário | Nome |
-| --- | --- |
-| `dione.cibele` | DIONE CIBELE |
-| `beatriz.baiao` | BEATRIZ BAIÃO |
-| `rebecca.tranquilli` | REBECCA TRANQUILLI |
-| `evelyn.louise` | EVELYN LOUISE |
-| `rafaela.anjos` | RAFAELA ANJOS |
-| `flavia.franco` | FLÁVIA FRANCO |
-| `carla.amparo` | CARLA AMPARO |
-| `isadora.cardim` | ISADORA CARDIM |
-| `vanessa.galvao` | VANESSA GALVÃO |
-| `tassia.virginia` | TÁSSIA VIRGINIA |
-| `mercia.nolair` | MÉRCIA NOLAIR |
-| `claudia.brim` | CLAUDIA BRIM |
-| `ana.silvana` | ANA SILVANA |
+O seed cria os usuários iniciais para teste. Antes de uso real, a coordenação deve trocar as senhas pelo painel ADM.
