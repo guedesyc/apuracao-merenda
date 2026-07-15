@@ -9,8 +9,14 @@ const state = {
   message: ""
 };
 
+let staticDbCache = null;
+
 const $ = selector => document.querySelector(selector);
 const app = $("#app");
+
+function isStaticMode() {
+  return location.hostname.endsWith("github.io") || location.protocol === "file:";
+}
 
 function money(value) {
   return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -92,6 +98,9 @@ function assignedSchools(userId = state.user?.id) {
 }
 
 async function api(path, options = {}) {
+  if (isStaticMode()) {
+    return staticApi(path, options);
+  }
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
     ...options,
@@ -100,6 +109,43 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || "Falha na operacao.");
   return data;
+}
+
+async function getStaticDb() {
+  if (staticDbCache) return staticDbCache;
+  const stored = localStorage.getItem("apuracao-comandas-db");
+  if (stored) {
+    staticDbCache = JSON.parse(stored);
+    return staticDbCache;
+  }
+  const response = await fetch("demo-data.json", { cache: "no-store" });
+  staticDbCache = await response.json();
+  localStorage.setItem("apuracao-comandas-db", JSON.stringify(staticDbCache));
+  return staticDbCache;
+}
+
+async function staticApi(path, options = {}) {
+  const db = await getStaticDb();
+  if (path === "/api/data") return db;
+
+  if (path === "/api/login") {
+    const body = options.body || {};
+    const user = db.users.find(item => item.username === body.username && item.password === body.password);
+    if (!user) throw new Error("Usuario ou senha invalidos.");
+    return { user: { id: user.id, name: user.name, username: user.username, role: user.role } };
+  }
+
+  if (path === "/api/save") {
+    staticDbCache = options.body;
+    localStorage.setItem("apuracao-comandas-db", JSON.stringify(staticDbCache));
+    return { ok: true };
+  }
+
+  if (path === "/api/export") {
+    throw new Error("A exportacao Excel real precisa da versao com servidor local.");
+  }
+
+  throw new Error("Rota nao encontrada.");
 }
 
 async function saveDb(message = "Salvo.") {
