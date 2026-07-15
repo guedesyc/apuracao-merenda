@@ -41,6 +41,11 @@ button {
   padding: 8px 12px;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 button.primary {
   background: var(--brand);
   border-color: var(--brand);
@@ -416,6 +421,30 @@ textarea {
 
 .month-school.collapsed {
   gap: 0;
+}
+
+.school-total-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.school-total-item {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fbfcfa;
+}
+
+.school-total-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.school-total-item strong {
+  font-size: 16px;
 }
 
 .month-date-card {

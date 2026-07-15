@@ -297,6 +297,39 @@ function filledCardLines(entry) {
     .filter(item => item.qty !== "" && item.qty !== null && item.qty !== undefined);
 }
 
+function monthCompletionStatus(userId = state.user.id, month = state.selectedMonth) {
+  const schools = assignedSchools(userId);
+  const dates = businessDates(month);
+  const expected = schools.length * dates.length;
+  let complete = 0;
+  schools.forEach(school => {
+    dates.forEach(date => {
+      if (isCompleteEntry(entryKey(date, school.id, userId))) complete += 1;
+    });
+  });
+  return { schools, dates, expected, complete, pending: Math.max(expected - complete, 0) };
+}
+
+function upsertClosure(month, status, extra = {}) {
+  const existing = state.db.closures.find(item => item.month === month && item.nutritionistId === state.user.id);
+  const patch = {
+    month,
+    nutritionistId: state.user.id,
+    nutritionistName: state.user.name,
+    status,
+    updatedAt: new Date().toISOString(),
+    ...extra
+  };
+  if (status === "partial") patch.partialAt = new Date().toISOString();
+  if (status === "sent") patch.sentAt = new Date().toISOString();
+  if (existing) Object.assign(existing, patch);
+  else state.db.closures.push({ id: uid("closure"), ...patch });
+}
+
+function schoolMonthTotal(schoolId, userId = state.user.id, month = state.selectedMonth) {
+  return completeEntriesFor({ month, userId, schoolId }).reduce((sum, entry) => sum + quantitiesTotal(entry.quantities), 0);
+}
+
 function upsertEntry(schoolId, patch, date = state.selectedDate) {
   let entry = entryKey(date, schoolId);
   if (!entry) {
@@ -321,8 +354,9 @@ function upsertEntry(schoolId, patch, date = state.selectedDate) {
 function renderNutritionistForm() {
   const schools = assignedSchools();
   const monthDates = businessDates();
-  const filled = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id }).length;
-  const expected = schools.length * monthDates.length;
+  const completion = monthCompletionStatus();
+  const filled = completion.complete;
+  const expected = completion.expected;
   const cards = state.db.cards;
   shell(`
     <div class="topbar">
@@ -342,7 +376,8 @@ function renderNutritionistForm() {
     </section>
     <div class="toolbar">
       <button class="secondary" id="save-partial">Encerrar Parcialmente</button>
-      <button class="primary" id="send-final">Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
+      <button class="secondary" id="send-test">Envio Teste</button>
+      <button class="primary" id="send-final" ${completion.pending ? "disabled" : ""}>Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
       <span class="status-line">${state.message}</span>
     </div>
     <section class="school-list">
@@ -406,12 +441,22 @@ function renderNutritionistForm() {
       upsertEntry(school, { notes: event.target.value }, date);
     });
   });
-  $("#save-partial").addEventListener("click", () => saveDb("Parcial encerrada e salva."));
+  $("#save-partial").addEventListener("click", async () => {
+    upsertClosure(state.selectedMonth, "partial", { expected: completion.expected, complete: completion.complete, pending: completion.pending });
+    await saveDb("Parcial registrada e salva.");
+  });
+  $("#send-test").addEventListener("click", async () => {
+    upsertClosure(state.selectedMonth, "sent", { test: true, expected: completion.expected, complete: completion.complete, pending: completion.pending });
+    await saveDb("Envio teste registrado para coordena&ccedil;&atilde;o.");
+  });
   $("#send-final").addEventListener("click", async () => {
-    const month = state.selectedMonth;
-    const existing = state.db.closures.find(item => item.month === month && item.nutritionistId === state.user.id);
-    if (existing) existing.status = "sent";
-    else state.db.closures.push({ id: uid("closure"), month, nutritionistId: state.user.id, nutritionistName: state.user.name, status: "sent", sentAt: new Date().toISOString() });
+    const latest = monthCompletionStatus();
+    if (latest.pending > 0) {
+      state.message = `Ainda existem ${latest.pending} pend&ecirc;ncias. Preencha todas as datas de todas as escolas antes de enviar.`;
+      renderNutritionistForm();
+      return;
+    }
+    upsertClosure(state.selectedMonth, "sent", { test: false, expected: latest.expected, complete: latest.complete, pending: 0 });
     await saveDb("M&ecirc;s enviado para coordena&ccedil;&atilde;o.");
   });
 }
@@ -505,6 +550,7 @@ function renderMyMonth() {
       <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas com algum lan&ccedil;amento</span></div>
       <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
     </section>
+    ${schoolTotalSummary(schools)}
     ${myMonthBySchool(schools, monthDates)}
   `);
   $("#month").addEventListener("change", event => {
@@ -529,6 +575,23 @@ function renderMyMonth() {
   });
 }
 
+function schoolTotalSummary(schools) {
+  if (!schools.length) return "";
+  return `
+    <section class="panel">
+      <h2>Total por escola</h2>
+      <div class="school-total-grid">
+        ${schools.map(school => `
+          <div class="school-total-item">
+            <span>${school.shortName}</span>
+            <strong>${money(schoolMonthTotal(school.id))}</strong>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function myMonthBySchool(schools, dates) {
   if (!schools.length) return `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`;
   return `
@@ -536,6 +599,7 @@ function myMonthBySchool(schools, dates) {
       ${schools.map(school => {
         const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
         const collapsed = state.collapsedMonthSchools.has(school.id);
+        const total = schoolMonthTotal(school.id);
         return `
           <article class="month-school ${collapsed ? "collapsed" : ""}">
             <button class="school-toggle" type="button" data-month-school-toggle="${school.id}" aria-expanded="${!collapsed}">
@@ -545,6 +609,7 @@ function myMonthBySchool(schools, dates) {
               </div>
               <div class="school-status">
                 <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
+                <span class="badge progress">${money(total)}</span>
                 <span class="chevron">${collapsed ? "+" : "-"}</span>
               </div>
             </button>
@@ -898,14 +963,19 @@ function renderExport() {
   `);
   $("#month").addEventListener("change", event => {
     state.selectedMonth = event.target.value;
+    state.message = "";
+    renderExport();
   });
   $("#export").addEventListener("click", async () => {
-    state.message = "Gerando planilha...";
+    const month = $("#month").value;
+    state.selectedMonth = month;
+    state.message = `Gerando planilha de ${month}...`;
     renderExport();
     try {
-      const result = await api("/api/export", { method: "POST", body: { month: state.selectedMonth } });
+      const result = await api("/api/export", { method: "POST", body: { month } });
       state.db = await api("/api/data");
-      state.message = `Planilha gerada: ${result.filename}`;
+      state.selectedMonth = month;
+      state.message = `Planilha de ${month} gerada: ${result.filename}`;
       renderExport();
     } catch (error) {
       state.message = error.message;

@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime
@@ -32,7 +33,7 @@ def quantity_to_int(value):
 
 def main():
     month = sys.argv[1] if len(sys.argv) > 1 else "2026-07"
-    if len(month) != 7:
+    if not re.fullmatch(r"\d{4}-\d{2}", month):
         raise SystemExit("Competencia invalida. Use AAAA-MM.")
 
     db = json.loads(DB_FILE.read_text(encoding="utf-8"))
