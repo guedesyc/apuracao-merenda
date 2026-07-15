@@ -1,0 +1,16 @@
+{
+  "name": "apuracao-comandas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema web para apuracao mensal de comandas escolares.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "seed": "python scripts/import_seed.py",
+    "export": "python scripts/export_consolidated.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
