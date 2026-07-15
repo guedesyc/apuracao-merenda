@@ -1,0 +1,16 @@
+[build]
+  publish = "public"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["demo-data.json", "data/templates/Pasta1.xlsx"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

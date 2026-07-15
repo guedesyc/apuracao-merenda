@@ -28,6 +28,19 @@ function money(value) {
   return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function downloadBase64File({ base64, filename, contentType }) {
+  const bytes = Uint8Array.from(atob(base64), char => char.charCodeAt(0));
+  const blob = new Blob([bytes], { type: contentType || "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename || "exportacao.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function formatDateBR(date) {
   const [year, month, day] = date.split("-");
   return `${day}/${month}/${year}`;
@@ -973,6 +986,7 @@ function renderExport() {
     renderExport();
     try {
       const result = await api("/api/export", { method: "POST", body: { month } });
+      if (result.base64) downloadBase64File(result);
       state.db = await api("/api/data");
       state.selectedMonth = month;
       state.message = `Planilha de ${month} gerada: ${result.filename}`;

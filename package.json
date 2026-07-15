@@ -10,6 +10,10 @@
     "seed": "python scripts/import_seed.py",
     "export": "python scripts/export_consolidated.py"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "exceljs": "^4.4.0"
+  },
   "engines": {
     "node": ">=18"
   }
