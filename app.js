@@ -6,9 +6,9 @@ const state = {
   selectedMonth: "2026-07",
   routeFilter: "todas",
   nutritionistFilter: "todos",
-  collapsedSchools: new Set(),
+  expandedSchools: new Set(),
   expandedLaunchDates: new Set(),
-  collapsedMonthSchools: new Set(),
+  expandedMonthSchools: new Set(),
   expandedMonthDates: new Set(),
   expandedAdminSchools: new Set(),
   expandedAdminDates: new Set(),
@@ -392,8 +392,8 @@ function renderNutritionistForm() {
   document.querySelectorAll("[data-school-toggle]").forEach(button => {
     button.addEventListener("click", event => {
       const schoolId = event.currentTarget.dataset.schoolToggle;
-      if (state.collapsedSchools.has(schoolId)) state.collapsedSchools.delete(schoolId);
-      else state.collapsedSchools.add(schoolId);
+      if (state.expandedSchools.has(schoolId)) state.expandedSchools.delete(schoolId);
+      else state.expandedSchools.add(schoolId);
       render();
     });
   });
@@ -462,7 +462,7 @@ function renderNutritionistForm() {
 }
 
 function schoolCard(school, cards, dates) {
-  const collapsed = state.collapsedSchools.has(school.id);
+  const collapsed = !state.expandedSchools.has(school.id);
   const schoolEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id, schoolId: school.id });
   const pending = Math.max(dates.length - schoolEntries.length, 0);
   return `
@@ -560,8 +560,8 @@ function renderMyMonth() {
   document.querySelectorAll("[data-month-school-toggle]").forEach(button => {
     button.addEventListener("click", event => {
       const schoolId = event.currentTarget.dataset.monthSchoolToggle;
-      if (state.collapsedMonthSchools.has(schoolId)) state.collapsedMonthSchools.delete(schoolId);
-      else state.collapsedMonthSchools.add(schoolId);
+      if (state.expandedMonthSchools.has(schoolId)) state.expandedMonthSchools.delete(schoolId);
+      else state.expandedMonthSchools.add(schoolId);
       render();
     });
   });
@@ -598,7 +598,7 @@ function myMonthBySchool(schools, dates) {
     <section class="month-school-list">
       ${schools.map(school => {
         const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
-        const collapsed = state.collapsedMonthSchools.has(school.id);
+        const collapsed = !state.expandedMonthSchools.has(school.id);
         const total = schoolMonthTotal(school.id);
         return `
           <article class="month-school ${collapsed ? "collapsed" : ""}">
