@@ -10,6 +10,8 @@ const state = {
   expandedLaunchDates: new Set(),
   collapsedMonthSchools: new Set(),
   expandedMonthDates: new Set(),
+  expandedAdminSchools: new Set(),
+  expandedAdminDates: new Set(),
   message: ""
 };
 
@@ -633,6 +635,22 @@ function renderDashboard() {
     state.nutritionistFilter = event.target.value;
     render();
   });
+  document.querySelectorAll("[data-admin-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.adminSchoolToggle;
+      if (state.expandedAdminSchools.has(schoolId)) state.expandedAdminSchools.delete(schoolId);
+      else state.expandedAdminSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-admin-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.adminDateToggle;
+      if (state.expandedAdminDates.has(key)) state.expandedAdminDates.delete(key);
+      else state.expandedAdminDates.add(key);
+      render();
+    });
+  });
 }
 
 function adminSchoolTable() {
@@ -642,21 +660,27 @@ function adminSchoolTable() {
   if (state.nutritionistFilter !== "todos") schools = schools.filter(school => school.nutritionistIds.includes(state.nutritionistFilter));
   return `
     <div class="table-wrap">
-      <table class="responsive-table">
-        <thead><tr><th>Escola</th><th>Rota</th><th>Responsáveis</th><th>Preenchimento</th><th>Status</th></tr></thead>
+      <table class="responsive-table admin-progress-table">
+        <thead><tr><th>Escola</th><th>Rota</th><th>Respons&aacute;veis</th><th>Preenchimento</th><th>Status</th></tr></thead>
         <tbody>
           ${schools.map(school => {
-            const entries = completeEntriesFor({ month: state.selectedMonth, schoolId: school.id });
+            const entries = completeEntriesFor({ month: state.selectedMonth, schoolId: school.id, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
             const filledDays = new Set(entries.map(entry => entry.date)).size;
             const percent = Math.min(100, (filledDays / expectedDays) * 100);
             const displayPercent = percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
             const status = percent === 0 ? "pendente" : percent >= 100 ? "completo" : "em andamento";
             const badgeClass = percent === 0 ? "warn" : percent >= 100 ? "done" : "progress";
             const names = school.nutritionistIds.map(id => state.db.users.find(user => user.id === id)?.name).filter(Boolean).join(", ");
-            return `<tr>
-              <td data-label="Escola">${school.shortName}</td>
+            const expanded = state.expandedAdminSchools.has(school.id);
+            return `<tr class="admin-school-row ${expanded ? "expanded" : ""}">
+              <td data-label="Escola">
+                <button class="admin-school-button" type="button" data-admin-school-toggle="${school.id}" aria-expanded="${expanded}">
+                  <span>${school.shortName}</span>
+                  <span class="chevron">${expanded ? "-" : "+"}</span>
+                </button>
+              </td>
               <td data-label="Rota">${school.route}</td>
-              <td data-label="Responsáveis">${names || "Sem responsável"}</td>
+              <td data-label="Respons&aacute;veis">${names || "Sem respons&aacute;vel"}</td>
               <td data-label="Preenchimento">
                 <div class="progress-cell">
                   <strong>${displayPercent}%</strong>
@@ -665,7 +689,8 @@ function adminSchoolTable() {
                 </div>
               </td>
               <td data-label="Status"><span class="badge ${badgeClass}">${status}</span></td>
-            </tr>`;
+            </tr>
+            ${expanded ? `<tr class="admin-detail-row"><td colspan="5">${adminSchoolDetail(school)}</td></tr>` : ""}`;
           }).join("")}
         </tbody>
       </table>
@@ -673,6 +698,81 @@ function adminSchoolTable() {
   `;
 }
 
+function adminDateEntries(schoolId, date) {
+  return entriesFor({ schoolId, date, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
+}
+
+function adminSchoolDetail(school) {
+  const dates = businessDates();
+  const filled = dates.filter(date => adminDateEntries(school.id, date).some(isCompleteEntry)).length;
+  const pending = Math.max(dates.length - filled, 0);
+  const total = dates.reduce((sum, date) => {
+    return sum + adminDateEntries(school.id, date).filter(isCompleteEntry).reduce((daySum, entry) => daySum + quantitiesTotal(entry.quantities), 0);
+  }, 0);
+  return `
+    <section class="admin-school-detail">
+      <div class="admin-detail-summary">
+        <span><strong>${filled}</strong> preenchidas</span>
+        <span><strong>${pending}</strong> pendentes</span>
+        <span><strong>${money(total)}</strong> total estimado</span>
+      </div>
+      <div class="admin-date-list">
+        ${dates.map(date => adminDateCard(school, date)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function adminDateCard(school, date) {
+  const entries = adminDateEntries(school.id, date);
+  const completeEntries = entries.filter(isCompleteEntry);
+  const complete = completeEntries.length > 0;
+  const total = completeEntries.reduce((sum, entry) => sum + quantitiesTotal(entry.quantities), 0);
+  const status = complete ? (completeEntries.some(entry => entry.status === "not_served") ? "Sem atendimento" : "Preenchido") : "Pendente";
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedAdminDates.has(key);
+  return `
+    <article class="admin-date-card ${expanded ? "" : "collapsed"}">
+      <button class="month-date-row" type="button" data-admin-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+        <span>${completeEntries.map(entry => entry.nutritionistName).filter(Boolean).join(", ")}</span>
+        <span>${complete ? money(total) : ""}</span>
+        <span class="chevron">${expanded ? "-" : "+"}</span>
+      </button>
+      ${expanded ? `<div class="admin-date-detail">${adminDateDetail(entries, completeEntries)}</div>` : ""}
+    </article>
+  `;
+}
+
+function adminDateDetail(entries, completeEntries) {
+  if (!entries.length) return `<span class="muted">Nenhum preenchimento iniciado nessa data.</span>`;
+  if (!completeEntries.length) return `<span class="muted">Preenchimento iniciado, mas ainda pendente de finaliza&ccedil;&atilde;o.</span>`;
+  return completeEntries.map(entry => {
+    const total = quantitiesTotal(entry.quantities);
+    const cards = filledCardLines(entry);
+    return `
+      <div class="admin-entry-detail">
+        <div class="admin-entry-head">
+          <strong>${entry.nutritionistName || "Nutricionista"}</strong>
+          <span>${entry.status === "not_served" ? "Sem atendimento" : `Total: ${money(total)}`}</span>
+        </div>
+        ${entry.status === "not_served" ? `<span>Motivo: ${entry.reason}</span>` : cards.length ? `
+          <div class="card-lines">
+            ${cards.map(item => `
+              <div class="card-line">
+                <span>${item.label}</span>
+                <strong>${item.qty}</strong>
+                <span>${money(quantityNumber(item.qty) * item.price)}</span>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<span class="muted">Nenhum card preenchido.</span>`}
+        ${entry.notes ? `<span>Observa&ccedil;&atilde;o: ${entry.notes}</span>` : ""}
+      </div>
+    `;
+  }).join("");
+}
 function renderConfig() {
   shell(`
     <div class="topbar">

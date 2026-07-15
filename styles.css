@@ -549,6 +549,91 @@ th {
   background: var(--brand-2);
 }
 
+.admin-school-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-school-button span:first-child {
+  font-weight: 650;
+}
+
+.admin-detail-row td {
+  padding: 0;
+  background: #fbfcfa;
+}
+
+.admin-school-detail {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-detail-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-detail-summary span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.admin-date-list {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.admin-date-card + .admin-date-card {
+  border-top: 1px solid var(--line);
+}
+
+.admin-date-card .month-date-row {
+  padding: 10px 12px;
+}
+
+.admin-date-detail {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px 132px;
+}
+
+.admin-entry-detail {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-entry-detail + .admin-entry-detail {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.admin-entry-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 560px;
+}
+
 @media (max-width: 880px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -661,6 +746,16 @@ th {
 
   .month-date-detail {
     padding-left: 0;
+  }
+
+  .admin-date-detail {
+    padding-left: 12px;
+  }
+
+  .admin-entry-head,
+  .admin-school-button {
+    display: grid;
+    justify-items: start;
   }
 
   .card-line {
