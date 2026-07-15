@@ -4,30 +4,48 @@
 
 1. Crie um projeto no Supabase.
 2. Abra o SQL Editor.
-3. Execute o arquivo `supabase/schema.sql`.
+3. Execute `supabase/schema.sql`.
+4. Execute `supabase/seed.sql`.
 
-O sistema usa a tabela `app_state` para guardar a base operacional em JSON. A primeira chamada a `/api/data` cria o registro inicial usando `demo-data.json`, caso ainda nao exista estado salvo.
+O banco usa tabelas relacionais para perfis, rotas, escolas, cards, vínculos, lançamentos, fechamentos e exportações. A tela não acessa o banco diretamente; tudo passa pelas Netlify Functions.
 
-## Netlify
+## Variáveis do Netlify
 
-Configure as variaveis de ambiente no site do Netlify:
+Configure no site do Netlify:
 
 ```bash
 SUPABASE_URL=https://SEU-PROJETO.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+SESSION_SECRET=uma-string-longa-aleatoria
 ```
 
-Depois publique o repositorio. O arquivo `netlify.toml` ja define:
+Nunca coloque a `SUPABASE_SERVICE_ROLE_KEY` no front-end ou em arquivos públicos.
 
-- pasta publicada: `public`
-- functions: `netlify/functions`
-- redirecionamento de `/api/*` para a function serverless
-- inclusao da planilha modelo `data/templates/Pasta1.xlsx`
+## Teste local antes de deploy
 
-## Exportacao
+1. Instale as dependências:
 
-Em producao, `/api/export` gera a planilha Excel dentro da function e devolve o arquivo para download no navegador. O mes exportado sempre vem do campo de competencia selecionado na tela.
+   ```bash
+   npm install
+   ```
 
-## Seguranca
+2. Configure as variáveis em `.env` local.
 
-Use a `SUPABASE_SERVICE_ROLE_KEY` apenas como variavel de ambiente do Netlify. Nunca coloque essa chave em arquivos publicos ou no front-end.
+3. Rode com Netlify CLI:
+
+   ```bash
+   npx netlify dev
+   ```
+
+4. Teste:
+   - login admin;
+   - login de uma nutricionista;
+   - se a nutricionista só vê escolas dela;
+   - salvar lançamento;
+   - salvar sem atendimento;
+   - alterar vínculo no ADM;
+   - exportar Excel.
+
+## Exportação
+
+Em produção, `/api/export` gera a planilha Excel dentro da Function e devolve o arquivo para download no navegador.

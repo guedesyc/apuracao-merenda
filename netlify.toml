@@ -3,7 +3,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["demo-data.json", "data/templates/Pasta1.xlsx"]
+  included_files = ["public/demo-data.json", "data/templates/Pasta1.xlsx"]
 
 [[redirects]]
   from = "/api/*"

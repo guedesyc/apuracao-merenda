@@ -2,35 +2,47 @@
 
 Sistema web para lançamento diário/semanal de refeições por escola e cardápio, com painel administrativo, configuração de responsáveis e exportação mensal consolidada para Excel.
 
-## Acessar protótipo online
+## Arquitetura
 
-Após o GitHub Pages publicar a última versão:
+- Frontend estático em `public/`.
+- API em Netlify Functions, em `netlify/functions`.
+- Banco relacional no Supabase, com schema em `supabase/schema.sql`.
+- Seed inicial em `supabase/seed.sql`.
+- Exportação Excel gerada pela Function usando `data/templates/Pasta1.xlsx`.
+
+## Protótipo online
+
+O GitHub Pages serve apenas como protótipo visual:
 
 [https://guedesyc.github.io/apuracao-merenda/](https://guedesyc.github.io/apuracao-merenda/)
 
-A versão online é estática: permite testar a interface e salva dados no navegador. A exportação Excel real precisa da versão local com servidor.
+A produção real deve ser publicada no Netlify com Supabase configurado.
 
-## Como rodar
+## Como rodar localmente
 
-1. Instale a dependência Python:
+1. Instale as dependências:
 
    ```bash
+   npm install
    pip install -r requirements.txt
    ```
 
-2. Gere a base inicial a partir das planilhas:
+2. Para o modo local antigo, gere a base inicial:
 
    ```bash
    python scripts/import_seed.py
-   ```
-
-3. Inicie o sistema:
-
-   ```bash
    npm run dev
    ```
 
-3. Abra `http://localhost:3000`.
+3. Para simular produção, configure `.env` e rode:
+
+   ```bash
+   npx netlify dev
+   ```
+
+## Produção
+
+Veja [DEPLOY.md](DEPLOY.md) para configurar Supabase, variáveis do Netlify e teste local com Netlify CLI antes do deploy.
 
 ## Logins iniciais
 
@@ -52,9 +64,3 @@ A versão online é estática: permite testar a interface e salva dados no naveg
 | `mercia.nolair` | MÉRCIA NOLAIR |
 | `claudia.brim` | CLAUDIA BRIM |
 | `ana.silvana` | ANA SILVANA |
-
-## Observações
-
-- Os dados ficam salvos em `data/db.json`.
-- A planilha modelo usada na exportação fica em `data/templates/Pasta1.xlsx`.
-- As exportações geradas ficam em `data/exports`.

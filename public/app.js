@@ -1,4 +1,4 @@
-const state = {
+﻿const state = {
   db: null,
   user: null,
   view: "lancamentos",
@@ -12,6 +12,7 @@ const state = {
   expandedMonthDates: new Set(),
   expandedAdminSchools: new Set(),
   expandedAdminDates: new Set(),
+  sessionToken: localStorage.getItem("apuracao-session-token") || "",
   message: ""
 };
 
@@ -138,8 +139,10 @@ async function api(path, options = {}) {
   if (isStaticMode()) {
     return staticApi(path, options);
   }
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (state.sessionToken) headers.Authorization = `Bearer ${state.sessionToken}`;
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
+    headers,
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined
   });
@@ -187,6 +190,7 @@ async function staticApi(path, options = {}) {
 
 async function saveDb(message = "Salvo.") {
   await api("/api/save", { method: "POST", body: state.db });
+  state.db = await api("/api/data");
   state.message = message;
   render();
 }
@@ -222,7 +226,11 @@ function renderLogin(error = "") {
         method: "POST",
         body: { username: $("#username").value.trim(), password: $("#password").value }
       });
+      state.sessionToken = result.token || "";
+      if (state.sessionToken) localStorage.setItem("apuracao-session-token", state.sessionToken);
       state.user = result.user;
+      state.db = await api("/api/data");
+      state.selectedMonth = state.db.settings.currentMonth;
       state.view = state.user.role === "admin" ? "dashboard" : "lancamentos";
       render();
     } catch (err) {
@@ -264,6 +272,8 @@ function shell(content) {
   });
   $("#logout").addEventListener("click", () => {
     state.user = null;
+    state.sessionToken = "";
+    localStorage.removeItem("apuracao-session-token");
     renderLogin();
   });
 }
@@ -1007,8 +1017,26 @@ function render() {
   if (state.view === "exportar") return renderExport();
 }
 
-loadData()
-  .then(() => renderLogin())
-  .catch(error => {
-    app.innerHTML = `<main class="login-screen"><div class="login-card"><h1>Base não inicializada</h1><p>${error.message}</p><p>Rode <code>python scripts/import_seed.py</code> e reinicie o sistema.</p></div></main>`;
-  });
+function legacyInitialLoadDisabled() {
+  if (state.sessionToken && !isStaticMode()) {
+    return loadData()
+      .then(() => {
+        state.user = state.db.currentUser || state.db.users[0] || null;
+        state.view = state.user?.role === "admin" ? "dashboard" : "lancamentos";
+        render();
+      })
+      .catch(() => {
+        state.sessionToken = "";
+        localStorage.removeItem("apuracao-session-token");
+        renderLogin();
+      });
+  }
+  if (isStaticMode()) {
+    return loadData().then(() => renderLogin());
+  }
+  renderLogin();
+  return Promise.resolve();
+}
+
+legacyInitialLoadDisabled();
+

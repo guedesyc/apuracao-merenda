@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
+    "dev:netlify": "netlify dev",
     "start": "node server.js",
     "seed": "python scripts/import_seed.py",
     "export": "python scripts/export_consolidated.py"
