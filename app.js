@@ -7,6 +7,9 @@ const state = {
   routeFilter: "todas",
   nutritionistFilter: "todos",
   collapsedSchools: new Set(),
+  expandedLaunchDates: new Set(),
+  collapsedMonthSchools: new Set(),
+  expandedMonthDates: new Set(),
   message: ""
 };
 
@@ -272,6 +275,26 @@ function defaultQuantitiesForSchool(schoolId) {
   return Object.fromEntries(selectedCardPreference(schoolId).map(cardId => [cardId, ""]));
 }
 
+function dateStateKey(schoolId, date) {
+  return `${schoolId}:${date}`;
+}
+
+function quantitiesTotal(quantities = {}) {
+  return Object.entries(quantities).reduce((sum, [cardId, qty]) => {
+    const card = state.db.cards.find(item => item.id === cardId);
+    return sum + quantityNumber(qty) * Number(card?.price || 0);
+  }, 0);
+}
+
+function filledCardLines(entry) {
+  return Object.entries(entry?.quantities || {})
+    .map(([cardId, qty]) => {
+      const card = state.db.cards.find(item => item.id === cardId);
+      return { label: card?.label || cardId, qty, price: Number(card?.price || 0) };
+    })
+    .filter(item => item.qty !== "" && item.qty !== null && item.qty !== undefined);
+}
+
 function upsertEntry(schoolId, patch, date = state.selectedDate) {
   let entry = entryKey(date, schoolId);
   if (!entry) {
@@ -334,6 +357,14 @@ function renderNutritionistForm() {
       const schoolId = event.currentTarget.dataset.schoolToggle;
       if (state.collapsedSchools.has(schoolId)) state.collapsedSchools.delete(schoolId);
       else state.collapsedSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.dateToggle;
+      if (state.expandedLaunchDates.has(key)) state.expandedLaunchDates.delete(key);
+      else state.expandedLaunchDates.add(key);
       render();
     });
   });
@@ -410,46 +441,51 @@ function dateCard(school, cards, date) {
   const quantities = entry?.quantities || defaultQuantitiesForSchool(school.id);
   const isNotServed = entry?.status === "not_served";
   const complete = isCompleteEntry(entry);
-  const total = Object.entries(quantities).reduce((sum, [cardId, qty]) => {
-    const card = cards.find(item => item.id === cardId);
-    return sum + quantityNumber(qty) * Number(card?.price || 0);
-  }, 0);
+  const total = quantitiesTotal(quantities);
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedLaunchDates.has(key);
   return `
-    <article class="date-card">
-      <div class="date-head">
+    <article class="date-card ${expanded ? "" : "collapsed"}">
+      <button class="date-toggle" type="button" data-date-toggle="${key}" aria-expanded="${expanded}">
         <strong>${formatDateBR(date)}</strong>
-        <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
-      </div>
-      <div class="field">
-        <label>Motivo sem atendimento</label>
-        <select data-reason data-school="${school.id}" data-date="${date}">
-          <option value="">Teve atendimento</option>
-          ${state.db.settings.reasons.map(reason => `<option ${entry?.reason === reason ? "selected" : ""}>${reason}</option>`).join("")}
-        </select>
-      </div>
-      ${isNotServed ? "" : `
-        <div class="card-selector">
-          ${cards.map(card => `
-            <label class="check-pill">
-              <input type="checkbox" data-card-toggle data-school="${school.id}" data-date="${date}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} />
-              ${card.label}
-            </label>
-          `).join("")}
+        <div class="date-summary">
+          <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
+          <span class="muted">${complete ? money(total) : ""}</span>
+          <span class="chevron">${expanded ? "-" : "+"}</span>
         </div>
-        <div class="qty-grid">
-          ${cards.filter(card => quantities[card.id] !== undefined).map(card => `
-            <div class="field">
-              <label>${card.label} &bull; ${money(card.price)}</label>
-              <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-date="${date}" data-card="${card.id}" value="${quantities[card.id]}" />
-            </div>
-          `).join("")}
+      </button>
+      ${expanded ? `
+        <div class="field">
+          <label>Motivo sem atendimento</label>
+          <select data-reason data-school="${school.id}" data-date="${date}">
+            <option value="">Teve atendimento</option>
+            ${state.db.settings.reasons.map(reason => `<option ${entry?.reason === reason ? "selected" : ""}>${reason}</option>`).join("")}
+          </select>
         </div>
-      `}
-      <div class="field">
-        <label>Observa&ccedil;&atilde;o</label>
-        <textarea data-notes data-school="${school.id}" data-date="${date}">${entry?.notes || ""}</textarea>
-      </div>
-      <strong>Total do dia: ${money(total)}</strong>
+        ${isNotServed ? "" : `
+          <div class="card-selector">
+            ${cards.map(card => `
+              <label class="check-pill">
+                <input type="checkbox" data-card-toggle data-school="${school.id}" data-date="${date}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} />
+                ${card.label}
+              </label>
+            `).join("")}
+          </div>
+          <div class="qty-grid">
+            ${cards.filter(card => quantities[card.id] !== undefined).map(card => `
+              <div class="field">
+                <label>${card.label} &bull; ${money(card.price)}</label>
+                <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-date="${date}" data-card="${card.id}" value="${quantities[card.id]}" />
+              </div>
+            `).join("")}
+          </div>
+        `}
+        <div class="field">
+          <label>Observa&ccedil;&atilde;o</label>
+          <textarea data-notes data-school="${school.id}" data-date="${date}">${entry?.notes || ""}</textarea>
+        </div>
+        <strong>Total do dia: ${money(total)}</strong>
+      ` : ""}
     </article>
   `;
 }
@@ -473,6 +509,22 @@ function renderMyMonth() {
     state.selectedMonth = event.target.value;
     render();
   });
+  document.querySelectorAll("[data-month-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.monthSchoolToggle;
+      if (state.collapsedMonthSchools.has(schoolId)) state.collapsedMonthSchools.delete(schoolId);
+      else state.collapsedMonthSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-month-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.monthDateToggle;
+      if (state.expandedMonthDates.has(key)) state.expandedMonthDates.delete(key);
+      else state.expandedMonthDates.add(key);
+      render();
+    });
+  });
 }
 
 function myMonthBySchool(schools, dates) {
@@ -481,18 +533,22 @@ function myMonthBySchool(schools, dates) {
     <section class="month-school-list">
       ${schools.map(school => {
         const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
+        const collapsed = state.collapsedMonthSchools.has(school.id);
         return `
-          <article class="month-school">
-            <div class="school-head">
+          <article class="month-school ${collapsed ? "collapsed" : ""}">
+            <button class="school-toggle" type="button" data-month-school-toggle="${school.id}" aria-expanded="${!collapsed}">
               <div>
                 <h3>${school.shortName}</h3>
                 <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
               </div>
-              <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
-            </div>
-            <div class="month-date-list">
+              <div class="school-status">
+                <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
+                <span class="chevron">${collapsed ? "+" : "-"}</span>
+              </div>
+            </button>
+            ${collapsed ? "" : `<div class="month-date-list">
               ${dates.map(date => monthDateRow(school, date)).join("")}
-            </div>
+            </div>`}
           </article>
         `;
       }).join("")}
@@ -503,18 +559,38 @@ function myMonthBySchool(schools, dates) {
 function monthDateRow(school, date) {
   const entry = entryKey(date, school.id);
   const complete = isCompleteEntry(entry);
-  const total = Object.entries(entry?.quantities || {}).reduce((sum, [cardId, qty]) => {
-    const card = state.db.cards.find(item => item.id === cardId);
-    return sum + quantityNumber(qty) * Number(card?.price || 0);
-  }, 0);
+  const total = quantitiesTotal(entry?.quantities || {});
   const status = entry?.status === "not_served" ? "Sem atendimento" : complete ? "Preenchido" : "Pendente";
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedMonthDates.has(key);
+  const cards = filledCardLines(entry);
   return `
-    <div class="month-date-row">
-      <strong>${formatDateBR(date)}</strong>
-      <span class="badge ${complete ? "done" : "warn"}">${status}</span>
-      <span>${entry?.reason || ""}</span>
-      <span>${complete ? money(total) : ""}</span>
-    </div>
+    <article class="month-date-card ${expanded ? "" : "collapsed"}">
+      <button class="month-date-row" type="button" data-month-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+        <span>${entry?.reason || ""}</span>
+        <span>${complete ? money(total) : ""}</span>
+        <span class="chevron">${expanded ? "-" : "+"}</span>
+      </button>
+      ${expanded ? `
+        <div class="month-date-detail">
+          <strong>Total da refei&ccedil;&atilde;o: ${money(total)}</strong>
+          ${entry?.status === "not_served" ? `<span>Motivo: ${entry.reason}</span>` : cards.length ? `
+            <div class="card-lines">
+              ${cards.map(item => `
+                <div class="card-line">
+                  <span>${item.label}</span>
+                  <strong>${item.qty}</strong>
+                  <span>${money(quantityNumber(item.qty) * item.price)}</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<span class="muted">Nenhum card preenchido nessa data.</span>`}
+          ${entry?.notes ? `<span>Observa&ccedil;&atilde;o: ${entry.notes}</span>` : ""}
+        </div>
+      ` : ""}
+    </article>
   `;
 }
 function renderDashboard() {

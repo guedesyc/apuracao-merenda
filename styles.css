@@ -321,11 +321,30 @@ textarea {
   background: #fbfcfa;
 }
 
-.date-head {
+.date-card.collapsed {
+  padding: 10px 12px;
+}
+
+.date-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.date-summary {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .badge {
@@ -395,18 +414,59 @@ textarea {
   gap: 12px;
 }
 
-.month-date-row {
-  display: grid;
-  grid-template-columns: 120px 150px 1fr 120px;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 0;
+.month-school.collapsed {
+  gap: 0;
+}
+
+.month-date-card {
   border-top: 1px solid var(--line);
 }
 
-.month-date-row > span:last-child {
+.month-date-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 120px 150px 1fr 120px 32px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.month-date-row > span:nth-last-child(2) {
   text-align: right;
   font-weight: 700;
+}
+
+.month-date-row .chevron {
+  justify-self: end;
+}
+
+.month-date-detail {
+  display: grid;
+  gap: 8px;
+  padding: 0 0 12px 120px;
+}
+
+.card-lines {
+  display: grid;
+  gap: 6px;
+}
+
+.card-line {
+  display: grid;
+  grid-template-columns: 1fr 80px 120px;
+  gap: 10px;
+  align-items: center;
+  max-width: 560px;
+}
+
+.card-line strong,
+.card-line span:last-child {
+  text-align: right;
 }
 
 .empty {
@@ -565,6 +625,19 @@ th {
     justify-content: start;
   }
 
+  .date-toggle,
+  .date-summary {
+    align-items: start;
+  }
+
+  .date-toggle {
+    display: grid;
+  }
+
+  .date-summary {
+    justify-content: start;
+  }
+
   .card-selector {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -578,7 +651,24 @@ th {
     gap: 6px;
   }
 
-  .month-date-row > span:last-child {
+  .month-date-row > span:nth-last-child(2) {
+    text-align: left;
+  }
+
+  .month-date-row .chevron {
+    justify-self: start;
+  }
+
+  .month-date-detail {
+    padding-left: 0;
+  }
+
+  .card-line {
+    grid-template-columns: 1fr;
+  }
+
+  .card-line strong,
+  .card-line span:last-child {
     text-align: left;
   }
 
