@@ -6,6 +6,7 @@ const state = {
   selectedMonth: "2026-07",
   routeFilter: "todas",
   nutritionistFilter: "todos",
+  collapsedSchools: new Set(),
   message: ""
 };
 
@@ -20,6 +21,11 @@ function isStaticMode() {
 
 function money(value) {
   return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatDateBR(date) {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function parseQuantity(value) {
@@ -77,6 +83,19 @@ function expectedBusinessDays(month = state.selectedMonth) {
     if (weekday !== 0 && weekday !== 6) total += 1;
   }
   return total || 22;
+}
+
+function businessDates(month = state.selectedMonth) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(year, monthNumber, 0).getDate();
+  const dates = [];
+  for (let day = 1; day <= lastDay; day += 1) {
+    const weekday = new Date(year, monthNumber - 1, day).getDay();
+    if (weekday !== 0 && weekday !== 6) {
+      dates.push(`${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+    }
+  }
+  return dates;
 }
 
 function setExpectedBusinessDays(month, value) {
@@ -235,20 +254,38 @@ function entryKey(date, schoolId, nutritionistId = state.user.id) {
   return state.db.entries.find(entry => entry.date === date && entry.schoolId === schoolId && entry.nutritionistId === nutritionistId);
 }
 
-function upsertEntry(schoolId, patch) {
-  let entry = entryKey(state.selectedDate, schoolId);
+function cardPreferenceKey(schoolId, nutritionistId = state.user.id) {
+  return `${nutritionistId}:${schoolId}`;
+}
+
+function selectedCardPreference(schoolId) {
+  return state.db.settings?.cardPreferences?.[cardPreferenceKey(schoolId)] || [];
+}
+
+function saveCardPreference(schoolId, quantities) {
+  state.db.settings = state.db.settings || {};
+  state.db.settings.cardPreferences = state.db.settings.cardPreferences || {};
+  state.db.settings.cardPreferences[cardPreferenceKey(schoolId)] = Object.keys(quantities || {});
+}
+
+function defaultQuantitiesForSchool(schoolId) {
+  return Object.fromEntries(selectedCardPreference(schoolId).map(cardId => [cardId, ""]));
+}
+
+function upsertEntry(schoolId, patch, date = state.selectedDate) {
+  let entry = entryKey(date, schoolId);
   if (!entry) {
     entry = {
       id: uid("entry"),
-      date: state.selectedDate,
-      month: state.selectedDate.slice(0, 7),
+      date,
+      month: date.slice(0, 7),
       schoolId,
       nutritionistId: state.user.id,
       nutritionistName: state.user.name,
       status: "served",
       reason: "",
       notes: "",
-      quantities: {},
+      quantities: defaultQuantitiesForSchool(schoolId),
       updatedAt: new Date().toISOString()
     };
     state.db.entries.push(entry);
@@ -258,84 +295,119 @@ function upsertEntry(schoolId, patch) {
 
 function renderNutritionistForm() {
   const schools = assignedSchools();
-  const filled = completeEntriesFor({ date: state.selectedDate, userId: state.user.id }).length;
+  const monthDates = businessDates();
+  const filled = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id }).length;
+  const expected = schools.length * monthDates.length;
   const cards = state.db.cards;
   shell(`
     <div class="topbar">
       <div class="page-title">
-        <h1>Lançamentos</h1>
+        <h1>Lan&ccedil;amentos</h1>
         <p>${schools.length} escolas sob sua responsabilidade.</p>
       </div>
       <div class="field" style="min-width: 220px">
-        <label>Data</label>
-        <input id="date-picker" type="date" value="${state.selectedDate}" />
+        <label>M&ecirc;s</label>
+        <input id="month" type="month" value="${state.selectedMonth}" />
       </div>
     </div>
     <section class="grid cols-3">
       <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
-      <div class="metric"><strong>${filled}</strong><span>Registros nesta data</span></div>
-      <div class="metric"><strong>${Math.max(schools.length - filled, 0)}</strong><span>Pendentes nesta data</span></div>
+      <div class="metric"><strong>${filled}</strong><span>Registros no m&ecirc;s</span></div>
+      <div class="metric"><strong>${Math.max(expected - filled, 0)}</strong><span>Pendentes no m&ecirc;s</span></div>
     </section>
     <div class="toolbar">
       <button class="secondary" id="save-partial">Encerrar Parcialmente</button>
-      <button class="primary" id="send-final">Encerrar e Enviar para Coordenação</button>
+      <button class="primary" id="send-final">Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
       <span class="status-line">${state.message}</span>
     </div>
-    <section class="grid">
-      ${schools.map(school => schoolCard(school, cards)).join("") || `<div class="empty">Nenhuma escola vinculada ao seu usuário.</div>`}
+    <section class="school-list">
+      ${schools.map(school => schoolCard(school, cards, monthDates)).join("") || `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`}
     </section>
   `);
-  $("#date-picker").addEventListener("change", event => {
-    state.selectedDate = event.target.value;
+  $("#month").addEventListener("change", event => {
+    state.selectedMonth = event.target.value;
+    state.selectedDate = `${event.target.value}-01`;
     render();
+  });
+  document.querySelectorAll("[data-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.schoolToggle;
+      if (state.collapsedSchools.has(schoolId)) state.collapsedSchools.delete(schoolId);
+      else state.collapsedSchools.add(schoolId);
+      render();
+    });
   });
   document.querySelectorAll("[data-card-toggle]").forEach(input => {
     input.addEventListener("change", event => {
-      const { school, card } = event.target.dataset;
-      const entry = entryKey(state.selectedDate, school);
-      const quantities = { ...(entry?.quantities || {}) };
+      const { school, card, date } = event.target.dataset;
+      const entry = entryKey(date, school);
+      const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
       if (event.target.checked) quantities[card] = quantities[card] ?? "";
       else delete quantities[card];
-      upsertEntry(school, { status: "served", quantities });
-      pruneEntryIfEmpty(entryKey(state.selectedDate, school));
+      upsertEntry(school, { status: "served", quantities }, date);
+      saveCardPreference(school, quantities);
+      pruneEntryIfEmpty(entryKey(date, school));
       render();
     });
   });
   document.querySelectorAll("[data-qty]").forEach(input => {
     input.addEventListener("input", event => {
-      const { school, card } = event.target.dataset;
-      const entry = entryKey(state.selectedDate, school);
-      const quantities = { ...(entry?.quantities || {}) };
+      const { school, card, date } = event.target.dataset;
+      const entry = entryKey(date, school);
+      const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
       quantities[card] = parseQuantity(event.target.value);
-      upsertEntry(school, { status: "served", quantities });
+      upsertEntry(school, { status: "served", quantities }, date);
     });
   });
   document.querySelectorAll("[data-reason]").forEach(select => {
     select.addEventListener("change", event => {
-      const schoolId = event.target.dataset.reason;
-      upsertEntry(schoolId, { status: event.target.value ? "not_served" : "served", reason: event.target.value, quantities: event.target.value ? {} : entryKey(state.selectedDate, schoolId)?.quantities || {} });
-      pruneEntryIfEmpty(entryKey(state.selectedDate, schoolId));
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { status: event.target.value ? "not_served" : "served", reason: event.target.value, quantities: event.target.value ? {} : entryKey(date, school)?.quantities || defaultQuantitiesForSchool(school) }, date);
+      pruneEntryIfEmpty(entryKey(date, school));
       render();
     });
   });
   document.querySelectorAll("[data-notes]").forEach(textarea => {
     textarea.addEventListener("change", event => {
-      upsertEntry(event.target.dataset.notes, { notes: event.target.value });
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { notes: event.target.value }, date);
     });
   });
   $("#save-partial").addEventListener("click", () => saveDb("Parcial encerrada e salva."));
   $("#send-final").addEventListener("click", async () => {
-    const month = state.selectedDate.slice(0, 7);
+    const month = state.selectedMonth;
     const existing = state.db.closures.find(item => item.month === month && item.nutritionistId === state.user.id);
     if (existing) existing.status = "sent";
     else state.db.closures.push({ id: uid("closure"), month, nutritionistId: state.user.id, nutritionistName: state.user.name, status: "sent", sentAt: new Date().toISOString() });
-    await saveDb("Mês enviado para coordenação.");
+    await saveDb("M&ecirc;s enviado para coordena&ccedil;&atilde;o.");
   });
 }
 
-function schoolCard(school, cards) {
-  const entry = entryKey(state.selectedDate, school.id);
-  const quantities = entry?.quantities || {};
+function schoolCard(school, cards, dates) {
+  const collapsed = state.collapsedSchools.has(school.id);
+  const schoolEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id, schoolId: school.id });
+  const pending = Math.max(dates.length - schoolEntries.length, 0);
+  return `
+    <article class="school-card ${collapsed ? "collapsed" : ""}">
+      <button class="school-toggle" type="button" data-school-toggle="${school.id}" aria-expanded="${!collapsed}">
+        <div>
+          <h3>${school.shortName}</h3>
+          <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+        </div>
+        <div class="school-status">
+          <span class="badge done">${schoolEntries.length} registradas</span>
+          <span class="badge ${pending ? "warn" : "done"}">${pending} pendentes</span>
+          <span class="chevron">${collapsed ? "+" : "-"}</span>
+        </div>
+      </button>
+      ${collapsed ? "" : `<div class="date-list">${dates.map(date => dateCard(school, cards, date)).join("")}</div>`}
+    </article>
+  `;
+}
+
+function dateCard(school, cards, date) {
+  const entry = entryKey(date, school.id);
+  const quantities = entry?.quantities || defaultQuantitiesForSchool(school.id);
   const isNotServed = entry?.status === "not_served";
   const complete = isCompleteEntry(entry);
   const total = Object.entries(quantities).reduce((sum, [cardId, qty]) => {
@@ -343,17 +415,14 @@ function schoolCard(school, cards) {
     return sum + quantityNumber(qty) * Number(card?.price || 0);
   }, 0);
   return `
-    <article class="school-card">
-      <div class="school-head">
-        <div>
-          <h3>${school.shortName}</h3>
-          <p class="muted">${school.route}${school.address ? ` • ${school.address}` : ""}</p>
-        </div>
+    <article class="date-card">
+      <div class="date-head">
+        <strong>${formatDateBR(date)}</strong>
         <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
       </div>
       <div class="field">
         <label>Motivo sem atendimento</label>
-        <select data-reason="${school.id}">
+        <select data-reason data-school="${school.id}" data-date="${date}">
           <option value="">Teve atendimento</option>
           ${state.db.settings.reasons.map(reason => `<option ${entry?.reason === reason ? "selected" : ""}>${reason}</option>`).join("")}
         </select>
@@ -362,7 +431,7 @@ function schoolCard(school, cards) {
         <div class="card-selector">
           ${cards.map(card => `
             <label class="check-pill">
-              <input type="checkbox" data-card-toggle data-school="${school.id}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} />
+              <input type="checkbox" data-card-toggle data-school="${school.id}" data-date="${date}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} />
               ${card.label}
             </label>
           `).join("")}
@@ -370,35 +439,35 @@ function schoolCard(school, cards) {
         <div class="qty-grid">
           ${cards.filter(card => quantities[card.id] !== undefined).map(card => `
             <div class="field">
-              <label>${card.label} • ${money(card.price)}</label>
-              <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-card="${card.id}" value="${quantities[card.id]}" />
+              <label>${card.label} &bull; ${money(card.price)}</label>
+              <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-date="${date}" data-card="${card.id}" value="${quantities[card.id]}" />
             </div>
           `).join("")}
         </div>
       `}
       <div class="field">
-        <label>Observação</label>
-        <textarea data-notes="${school.id}">${entry?.notes || ""}</textarea>
+        <label>Observa&ccedil;&atilde;o</label>
+        <textarea data-notes data-school="${school.id}" data-date="${date}">${entry?.notes || ""}</textarea>
       </div>
       <strong>Total do dia: ${money(total)}</strong>
     </article>
   `;
 }
-
 function renderMyMonth() {
   const schools = assignedSchools();
+  const monthDates = businessDates();
   const monthEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id });
   shell(`
     <div class="topbar">
-      <div class="page-title"><h1>Meu mês</h1><p>Acompanhamento do preenchimento da competência.</p></div>
-      <div class="field" style="min-width: 180px"><label>Mês</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+      <div class="page-title"><h1>Meu m&ecirc;s</h1><p>Acompanhamento do preenchimento da compet&ecirc;ncia.</p></div>
+      <div class="field" style="min-width: 180px"><label>M&ecirc;s</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
     </div>
     <section class="grid cols-3">
-      <div class="metric"><strong>${monthEntries.length}</strong><span>Registros no mês</span></div>
-      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas com algum lançamento</span></div>
+      <div class="metric"><strong>${monthEntries.length}</strong><span>Registros no m&ecirc;s</span></div>
+      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas com algum lan&ccedil;amento</span></div>
       <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
     </section>
-    ${summaryTable(monthEntries)}
+    ${myMonthBySchool(schools, monthDates)}
   `);
   $("#month").addEventListener("change", event => {
     state.selectedMonth = event.target.value;
@@ -406,26 +475,48 @@ function renderMyMonth() {
   });
 }
 
-function summaryTable(entries) {
+function myMonthBySchool(schools, dates) {
+  if (!schools.length) return `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`;
   return `
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Data</th><th>Escola</th><th>Status</th><th>Motivo</th><th>Total estimado</th></tr></thead>
-        <tbody>
-          ${entries.map(entry => {
-            const school = state.db.schools.find(item => item.id === entry.schoolId);
-            const total = Object.entries(entry.quantities || {}).reduce((sum, [cardId, qty]) => {
-              const card = state.db.cards.find(item => item.id === cardId);
-              return sum + quantityNumber(qty) * Number(card?.price || 0);
-            }, 0);
-            return `<tr><td>${entry.date}</td><td>${school?.shortName || ""}</td><td>${entry.status === "not_served" ? "Sem atendimento" : "Preenchido"}</td><td>${entry.reason || ""}</td><td>${money(total)}</td></tr>`;
-          }).join("") || `<tr><td colspan="5">Nenhum registro encontrado.</td></tr>`}
-        </tbody>
-      </table>
-    </div>
+    <section class="month-school-list">
+      ${schools.map(school => {
+        const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
+        return `
+          <article class="month-school">
+            <div class="school-head">
+              <div>
+                <h3>${school.shortName}</h3>
+                <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+              </div>
+              <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
+            </div>
+            <div class="month-date-list">
+              ${dates.map(date => monthDateRow(school, date)).join("")}
+            </div>
+          </article>
+        `;
+      }).join("")}
+    </section>
   `;
 }
 
+function monthDateRow(school, date) {
+  const entry = entryKey(date, school.id);
+  const complete = isCompleteEntry(entry);
+  const total = Object.entries(entry?.quantities || {}).reduce((sum, [cardId, qty]) => {
+    const card = state.db.cards.find(item => item.id === cardId);
+    return sum + quantityNumber(qty) * Number(card?.price || 0);
+  }, 0);
+  const status = entry?.status === "not_served" ? "Sem atendimento" : complete ? "Preenchido" : "Pendente";
+  return `
+    <div class="month-date-row">
+      <strong>${formatDateBR(date)}</strong>
+      <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+      <span>${entry?.reason || ""}</span>
+      <span>${complete ? money(total) : ""}</span>
+    </div>
+  `;
+}
 function renderDashboard() {
   const monthEntries = completeEntriesFor({ month: state.selectedMonth });
   const sent = state.db.closures.filter(item => item.month === state.selectedMonth && item.status === "sent");

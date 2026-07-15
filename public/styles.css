@@ -211,6 +211,14 @@ textarea {
   gap: 14px;
 }
 
+.school-list,
+.date-list,
+.month-school-list,
+.month-date-list {
+  display: grid;
+  gap: 12px;
+}
+
 .grid.cols-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -252,6 +260,10 @@ textarea {
   gap: 12px;
 }
 
+.school-card.collapsed {
+  gap: 0;
+}
+
 .school-head {
   display: flex;
   align-items: start;
@@ -259,10 +271,61 @@ textarea {
   gap: 12px;
 }
 
+.school-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
 .school-head h3,
+.school-toggle h3,
 .panel h2 {
   margin: 0;
   font-size: 17px;
+}
+
+.school-status {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chevron {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: #fff;
+}
+
+.date-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  background: #fbfcfa;
+}
+
+.date-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .badge {
@@ -321,6 +384,29 @@ textarea {
 
 .qty-grid {
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+
+.month-school {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.month-date-row {
+  display: grid;
+  grid-template-columns: 120px 150px 1fr 120px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.month-date-row > span:last-child {
+  text-align: right;
+  font-weight: 700;
 }
 
 .empty {
@@ -471,12 +557,29 @@ th {
     display: grid;
   }
 
+  .school-toggle {
+    display: grid;
+  }
+
+  .school-status {
+    justify-content: start;
+  }
+
   .card-selector {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .qty-grid {
     grid-template-columns: 1fr;
+  }
+
+  .month-date-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .month-date-row > span:last-child {
+    text-align: left;
   }
 
   .check-pill {
