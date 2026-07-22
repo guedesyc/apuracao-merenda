@@ -1,13 +1,11 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
 
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
-const DATA_FILE = path.join(ROOT, "data", "db.json");
-const EXPORT_DIR = path.join(ROOT, "data", "exports");
 const PORT = Number(process.env.PORT || 3000);
+const { handler } = require("./netlify/functions/api");
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -17,13 +15,13 @@ const MIME = {
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 };
 
-function send(res, status, body, type = "application/json; charset=utf-8") {
-  const payload = typeof body === "string" ? body : JSON.stringify(body);
-  res.writeHead(status, { "Content-Type": type });
+function send(res, status, body, type = "application/json; charset=utf-8", headers = {}) {
+  const payload = Buffer.isBuffer(body) ? body : typeof body === "string" ? body : JSON.stringify(body);
+  res.writeHead(status, { "Content-Type": type, ...headers });
   res.end(payload);
 }
 
-function readJsonBody(req) {
+function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
     req.on("data", chunk => {
@@ -33,26 +31,9 @@ function readJsonBody(req) {
         req.destroy();
       }
     });
-    req.on("end", () => {
-      try {
-        resolve(data ? JSON.parse(data) : {});
-      } catch (error) {
-        reject(error);
-      }
-    });
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
   });
-}
-
-function loadDb() {
-  if (!fs.existsSync(DATA_FILE)) {
-    return null;
-  }
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-}
-
-function saveDb(db) {
-  db.updatedAt = new Date().toISOString();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), "utf8");
 }
 
 function serveStatic(req, res) {
@@ -71,88 +52,29 @@ function serveStatic(req, res) {
   fs.createReadStream(filePath).pipe(res);
 }
 
-function runPython(args) {
-  return new Promise((resolve, reject) => {
-    const bundledPython = path.join(
-      process.env.USERPROFILE || "",
-      ".cache",
-      "codex-runtimes",
-      "codex-primary-runtime",
-      "dependencies",
-      "python",
-      "python.exe"
-    );
-    const py = process.env.PYTHON || (fs.existsSync(bundledPython) ? bundledPython : "python");
-    const child = spawn(py, args, { cwd: ROOT, windowsHide: true });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", chunk => (stdout += chunk));
-    child.stderr.on("data", chunk => (stderr += chunk));
-    child.on("close", code => {
-      if (code === 0) resolve(stdout.trim());
-      else reject(new Error(stderr || stdout || `Python saiu com codigo ${code}`));
-    });
-  });
-}
-
-async function handleApi(req, res) {
+async function serveApi(req, res) {
+  const body = await readBody(req);
   const url = new URL(req.url, `http://${req.headers.host}`);
+  const result = await handler({
+    path: url.pathname,
+    rawUrl: `https://${req.headers.host}${req.url}`,
+    httpMethod: req.method,
+    headers: req.headers,
+    queryStringParameters: Object.fromEntries(url.searchParams.entries()),
+    body,
+    isBase64Encoded: false
+  });
 
-  if (req.method === "GET" && url.pathname === "/api/data") {
-    const db = loadDb();
-    if (!db) return send(res, 404, { error: "Base nao inicializada. Rode python scripts/import_seed.py." });
-    return send(res, 200, db);
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/login") {
-    const body = await readJsonBody(req);
-    const db = loadDb();
-    const user = db?.users.find(item => item.username === body.username && item.password === body.password);
-    if (!user) return send(res, 401, { error: "Usuario ou senha invalidos." });
-    return send(res, 200, { user: { id: user.id, name: user.name, username: user.username, role: user.role } });
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/save") {
-    const db = await readJsonBody(req);
-    if (!Array.isArray(db.schools) || !Array.isArray(db.entries) || !Array.isArray(db.users)) {
-      return send(res, 400, { error: "Formato de dados invalido." });
-    }
-    saveDb(db);
-    return send(res, 200, { ok: true });
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/export") {
-    const body = await readJsonBody(req);
-    if (!body.month || !/^\d{4}-\d{2}$/.test(body.month)) {
-      return send(res, 400, { error: "Informe a competencia no formato AAAA-MM." });
-    }
-    try {
-      const stdout = await runPython(["scripts/export_consolidated.py", body.month]);
-      const result = JSON.parse(stdout);
-      return send(res, 200, result);
-    } catch (error) {
-      return send(res, 500, { error: error.message });
-    }
-  }
-
-  if (req.method === "GET" && url.pathname.startsWith("/exports/")) {
-    const file = path.basename(url.pathname);
-    const filePath = path.join(EXPORT_DIR, file);
-    if (!fs.existsSync(filePath)) return send(res, 404, "Exportacao nao encontrada.", "text/plain; charset=utf-8");
-    res.writeHead(200, {
-      "Content-Type": MIME[".xlsx"],
-      "Content-Disposition": `attachment; filename="${file}"`
-    });
-    return fs.createReadStream(filePath).pipe(res);
-  }
-
-  return send(res, 404, { error: "Rota nao encontrada." });
+  const headers = result.headers || {};
+  const contentType = headers["Content-Type"] || headers["content-type"] || "application/json; charset=utf-8";
+  const payload = result.isBase64Encoded ? Buffer.from(result.body || "", "base64") : result.body || "";
+  return send(res, result.statusCode || 200, payload, contentType, headers);
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.url.startsWith("/api/") || req.url.startsWith("/exports/")) {
-      return await handleApi(req, res);
+    if (req.url.startsWith("/api/")) {
+      return await serveApi(req, res);
     }
     return serveStatic(req, res);
   } catch (error) {
