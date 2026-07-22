@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
-    "exceljs": "^4.4.0"
+    "exceljs": "^4.4.0",
+    "ws": "^8.18.3"
   },
   "engines": {
     "node": ">=18"
