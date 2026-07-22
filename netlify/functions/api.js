@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const ExcelJS = require("exceljs");
+const WebSocket = require("ws");
 const { createClient } = require("@supabase/supabase-js");
 
 const ROOT = process.cwd();
@@ -24,8 +25,11 @@ function parseBody(event) {
 function supabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no Netlify.");
-  return createClient(url, key, { auth: { persistSession: false } });
+  if (!url || !key) throw new Error("Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na hospedagem.");
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    realtime: { transport: WebSocket }
+  });
 }
 
 function secret() {
