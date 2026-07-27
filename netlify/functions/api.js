@@ -339,7 +339,8 @@ async function saveRelationalState(client, actor, db, options = {}) {
     await replaceRows(client, "routes", routeRowsFromDb(db), "id");
     await replaceRows(client, "schools", schoolRowsFromDb(db), "id");
     await replaceRows(client, "cards", cardRowsFromDb(db), "id");
-    await client.from("nutritionist_schools").delete().neq("school_id", "__never__");
+    const schoolIds = (db.schools || []).map(school => school.id).filter(Boolean);
+    if (schoolIds.length) await client.from("nutritionist_schools").delete().in("school_id", schoolIds);
     const assignmentRows = [];
     for (const school of db.schools || []) {
       for (const profileId of school.nutritionistIds || []) assignmentRows.push({ school_id: school.id, profile_id: profileId });
@@ -349,23 +350,25 @@ async function saveRelationalState(client, actor, db, options = {}) {
   }
 
   if (actor.role === "admin") {
-    await client.from("entry_items").delete().neq("entry_id", "__never__");
-    await client.from("entries").delete().neq("id", "__never__");
-    await client.from("monthly_closures").delete().neq("id", "__never__");
-  } else {
-    const { data: ownEntries, error } = await client.from("entries").select("id").eq("nutritionist_id", actor.id);
-    if (error) throw error;
-    const ids = (ownEntries || []).map(item => item.id);
-    if (ids.length) {
-      await client.from("entry_items").delete().in("entry_id", ids);
-      await client.from("entries").delete().eq("nutritionist_id", actor.id);
+    if (options.seed) {
+      await client.from("entry_items").delete().neq("entry_id", "__never__");
+      await client.from("entries").delete().neq("id", "__never__");
+      await client.from("monthly_closures").delete().neq("id", "__never__");
+      await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
+      await replaceRows(client, "entry_items", entryItemRowsFromDb(db, actor), "entry_id,card_id");
+      await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
     }
-    await client.from("monthly_closures").delete().eq("nutritionist_id", actor.id);
+  } else {
+    const ownEntryIds = (db.entries || [])
+      .filter(entry => entry.nutritionistId === actor.id)
+      .map(entry => entry.id)
+      .filter(Boolean);
+    if (ownEntryIds.length) await client.from("entry_items").delete().in("entry_id", ownEntryIds);
+    await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
+    await replaceRows(client, "entry_items", entryItemRowsFromDb(db, actor), "entry_id,card_id");
+    await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
   }
 
-  await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
-  await replaceRows(client, "entry_items", entryItemRowsFromDb(db, actor), "entry_id,card_id");
-  await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
   if (!options.seed) await logAudit(client, actor, "save", "app_state", null, { role: actor.role });
 }
 

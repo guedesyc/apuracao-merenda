@@ -1,4 +1,27 @@
-﻿const state = {
+﻿const HML_QUERY = "hml";
+const HML_STORAGE_KEY = "apuracao-comandas-hml-db";
+const PROD_SESSION_KEY = "apuracao-session-token";
+const HML_SESSION_KEY = "apuracao-hml-session-token";
+const OFFICIAL_ROUTES = [
+  "GRE CAJAZEIRAS",
+  "GRE CENTRO",
+  "GRE CIDADE BAIXA",
+  "GRE LIBERDADE",
+  "GRE SAO CAETANO",
+  "GRE SUBURBIO I",
+  "GRE SUBURBIO II"
+];
+
+function isHmlMode() {
+  const params = new URLSearchParams(location.search);
+  return params.get(HML_QUERY) === "1" || location.pathname.replace(/\/+$/, "") === "/hml";
+}
+
+function authStorageKey() {
+  return isHmlMode() ? HML_SESSION_KEY : PROD_SESSION_KEY;
+}
+
+const state = {
   db: null,
   user: null,
   view: "lancamentos",
@@ -12,7 +35,7 @@
   expandedMonthDates: new Set(),
   expandedAdminSchools: new Set(),
   expandedAdminDates: new Set(),
-  sessionToken: localStorage.getItem("apuracao-session-token") || "",
+  sessionToken: localStorage.getItem(authStorageKey()) || "",
   message: ""
 };
 
@@ -22,7 +45,25 @@ const $ = selector => document.querySelector(selector);
 const app = $("#app");
 
 function isStaticMode() {
-  return location.hostname.endsWith("github.io") || location.protocol === "file:";
+  return isHmlMode() || location.hostname.endsWith("github.io") || location.protocol === "file:";
+}
+
+function staticStorageKey() {
+  return isHmlMode() ? HML_STORAGE_KEY : "apuracao-comandas-db";
+}
+
+function staticDataFile() {
+  return isHmlMode() ? "hml-data.json" : "demo-data.json";
+}
+
+function hmlBanner() {
+  if (!isHmlMode()) return "";
+  return `
+    <div class="hml-banner" role="status">
+      <strong>Ambiente de Homologação</strong>
+      <span>Dados fictícios salvos apenas neste navegador. O Supabase de produção não é acessado.</span>
+    </div>
+  `;
 }
 
 function money(value) {
@@ -64,6 +105,10 @@ function uid(prefix) {
 
 function routes() {
   return [...new Set(state.db.schools.map(s => s.route).filter(Boolean))].sort();
+}
+
+function routeOptions() {
+  return [...new Set([...OFFICIAL_ROUTES, ...routes()])].sort();
 }
 
 function nutritionists() {
@@ -153,14 +198,17 @@ async function api(path, options = {}) {
 
 async function getStaticDb() {
   if (staticDbCache) return staticDbCache;
-  const stored = localStorage.getItem("apuracao-comandas-db");
+  if (isHmlMode() && new URLSearchParams(location.search).get("reset") === "1") {
+    localStorage.removeItem(staticStorageKey());
+  }
+  const stored = localStorage.getItem(staticStorageKey());
   if (stored) {
     staticDbCache = JSON.parse(stored);
     return staticDbCache;
   }
-  const response = await fetch("demo-data.json", { cache: "no-store" });
+  const response = await fetch(staticDataFile(), { cache: "no-store" });
   staticDbCache = await response.json();
-  localStorage.setItem("apuracao-comandas-db", JSON.stringify(staticDbCache));
+  localStorage.setItem(staticStorageKey(), JSON.stringify(staticDbCache));
   return staticDbCache;
 }
 
@@ -177,11 +225,28 @@ async function staticApi(path, options = {}) {
 
   if (path === "/api/save") {
     staticDbCache = options.body;
-    localStorage.setItem("apuracao-comandas-db", JSON.stringify(staticDbCache));
+    localStorage.setItem(staticStorageKey(), JSON.stringify(staticDbCache));
     return { ok: true };
   }
 
   if (path === "/api/export") {
+    if (isHmlMode()) {
+      const month = options.body?.month || db.settings.currentMonth;
+      const rows = db.entries
+        .filter(entry => String(entry.date || "").startsWith(month))
+        .map(entry => {
+          const school = db.schools.find(item => item.id === entry.schoolId);
+          const total = quantityNumber(Object.values(entry.quantities || {}).reduce((sum, value) => sum + quantityNumber(value), 0));
+          return `${entry.date};${school?.shortName || entry.schoolId};${entry.nutritionistName};${entry.status};${total}`;
+        });
+      const csv = ["data;escola;nutricionista;status;quantidade_total", ...rows].join("\n");
+      return {
+        ok: true,
+        filename: `hml-exportacao-${month}.csv`,
+        contentType: "text/csv; charset=utf-8",
+        base64: btoa(csv)
+      };
+    }
     throw new Error("A exportacao Excel real precisa da versao com servidor local.");
   }
 
@@ -202,10 +267,12 @@ async function loadData() {
 
 function renderLogin(error = "") {
   app.innerHTML = `
+    ${hmlBanner()}
     <main class="login-screen">
       <form class="login-card" id="login-form">
         <h1>Apuração de Comandas</h1>
-        <p>Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal.</p>
+        <p>${isHmlMode() ? "Entre com usuários fictícios para testar fluxos sem acessar o Supabase." : "Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal."}</p>
+        ${isHmlMode() ? `<p class="hml-credentials"><strong>HML:</strong> admin/adminhml ou nutri/nutrihml</p>` : ""}
         <div class="field">
           <label for="username">Usuário</label>
           <input id="username" autocomplete="username" />
@@ -227,7 +294,7 @@ function renderLogin(error = "") {
         body: { username: $("#username").value.trim(), password: $("#password").value }
       });
       state.sessionToken = result.token || "";
-      if (state.sessionToken) localStorage.setItem("apuracao-session-token", state.sessionToken);
+      if (state.sessionToken) localStorage.setItem(authStorageKey(), state.sessionToken);
       state.user = result.user;
       state.db = await api("/api/data");
       state.selectedMonth = state.db.settings.currentMonth;
@@ -245,6 +312,7 @@ function shell(content) {
     ? [["dashboard", "Painel"], ["config", "Configurações"], ["exportar", "Exportar"]]
     : [["lancamentos", "Lançamentos"], ["meu-mes", "Meu mês"]];
   app.innerHTML = `
+    ${hmlBanner()}
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
@@ -273,7 +341,7 @@ function shell(content) {
   $("#logout").addEventListener("click", () => {
     state.user = null;
     state.sessionToken = "";
-    localStorage.removeItem("apuracao-session-token");
+    localStorage.removeItem(authStorageKey());
     renderLogin();
   });
 }
@@ -351,6 +419,22 @@ function upsertClosure(month, status, extra = {}) {
 
 function schoolMonthTotal(schoolId, userId = state.user.id, month = state.selectedMonth) {
   return completeEntriesFor({ month, userId, schoolId }).reduce((sum, entry) => sum + quantitiesTotal(entry.quantities), 0);
+}
+
+function schoolMonthCardTotals(schoolId, userId = state.user.id, month = state.selectedMonth) {
+  const totals = new Map();
+  completeEntriesFor({ month, userId, schoolId })
+    .filter(entry => entry.status !== "not_served")
+    .forEach(entry => {
+      Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+        const value = quantityNumber(quantity);
+        if (!value) return;
+        totals.set(cardId, (totals.get(cardId) || 0) + value);
+      });
+    });
+  return state.db.cards
+    .map(card => ({ card, quantity: totals.get(card.id) || 0 }))
+    .filter(item => item.quantity > 0);
 }
 
 function upsertEntry(schoolId, patch, date = state.selectedDate) {
@@ -604,12 +688,28 @@ function schoolTotalSummary(schools) {
     <section class="panel">
       <h2>Total por escola</h2>
       <div class="school-total-grid">
-        ${schools.map(school => `
-          <div class="school-total-item">
-            <span>${school.shortName}</span>
-            <strong>${money(schoolMonthTotal(school.id))}</strong>
-          </div>
-        `).join("")}
+        ${schools.map(school => {
+          const cardTotals = schoolMonthCardTotals(school.id);
+          return `
+            <div class="school-total-item">
+              <span>${school.shortName}</span>
+              <div class="school-card-totals">
+                ${cardTotals.length
+                  ? cardTotals.map(({ card, quantity }) => `
+                    <div class="school-card-total-line">
+                      <span>${card.label}</span>
+                      <strong>${quantity.toLocaleString("pt-BR")}</strong>
+                    </div>
+                  `).join("")
+                  : `<span class="muted">Nenhum card preenchido no mês.</span>`}
+              </div>
+              <div class="school-total-general">
+                <span>Total geral</span>
+                <strong>${money(schoolMonthTotal(school.id))}</strong>
+              </div>
+            </div>
+          `;
+        }).join("")}
       </div>
     </section>
   `;
@@ -790,6 +890,27 @@ function adminDateEntries(schoolId, date) {
   return entriesFor({ schoolId, date, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
 }
 
+function adminSchoolMaxCardRecords(school, dates) {
+  const maxByCard = new Map();
+  dates.forEach(date => {
+    adminDateEntries(school.id, date)
+      .filter(entry => isCompleteEntry(entry) && entry.status !== "not_served")
+      .forEach(entry => {
+        Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+          const value = quantityNumber(quantity);
+          if (!value || value <= (maxByCard.get(cardId)?.quantity || 0)) return;
+          const card = state.db.cards.find(item => item.id === cardId);
+          maxByCard.set(cardId, {
+            label: card?.label || cardId,
+            quantity: value,
+            date: entry.date
+          });
+        });
+      });
+  });
+  return [...maxByCard.values()].sort((a, b) => b.quantity - a.quantity);
+}
+
 function adminSchoolDetail(school) {
   const dates = businessDates();
   const filled = dates.filter(date => adminDateEntries(school.id, date).some(isCompleteEntry)).length;
@@ -797,12 +918,22 @@ function adminSchoolDetail(school) {
   const total = dates.reduce((sum, date) => {
     return sum + adminDateEntries(school.id, date).filter(isCompleteEntry).reduce((daySum, entry) => daySum + quantitiesTotal(entry.quantities), 0);
   }, 0);
+  const maxCardRecords = adminSchoolMaxCardRecords(school, dates);
   return `
     <section class="admin-school-detail">
       <div class="admin-detail-summary">
         <span><strong>${filled}</strong> preenchidas</span>
         <span><strong>${pending}</strong> pendentes</span>
         <span><strong>${money(total)}</strong> total estimado</span>
+        ${maxCardRecords.length ? `
+          <div class="admin-max-card-summary" aria-label="Maiores registros por card">
+            ${maxCardRecords.map(item => `
+              <span>
+                <strong>${item.label}</strong> - ${item.quantity.toLocaleString("pt-BR")} | ${formatDateBR(item.date)}
+              </span>
+            `).join("")}
+          </div>
+        ` : ""}
       </div>
       <div class="admin-date-list">
         ${dates.map(date => adminDateCard(school, date)).join("")}
@@ -877,7 +1008,10 @@ function renderConfig() {
       </div>
     </section>
     <section class="panel">
-      <h2>Vínculo por escola</h2>
+      <div class="section-head">
+        <h2>Vínculo por escola</h2>
+        <button class="secondary" id="add-school" type="button">Adicionar Escola</button>
+      </div>
       <div class="filters">
         <div class="field" style="min-width:220px"><label>Rota</label><select id="route-filter"><option value="todas">Todas</option>${routes().map(route => `<option ${state.routeFilter === route ? "selected" : ""}>${route}</option>`).join("")}</select></div>
       </div>
@@ -888,6 +1022,24 @@ function renderConfig() {
   $("#add-user").addEventListener("click", () => {
     state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "", role: "nutritionist", active: true });
     saveDb("Nutricionista criada.");
+  });
+  $("#add-school").addEventListener("click", () => {
+    const nextRow = Math.max(0, ...state.db.schools.map(school => Number(school.row) || 0)) + 1;
+    const firstNutritionist = nutritionists()[0]?.id || "";
+    const route = state.routeFilter !== "todas" ? state.routeFilter : routeOptions()[0] || "GRE CENTRO";
+    const school = {
+      id: uid("school"),
+      row: nextRow,
+      name: `Nova escola ${nextRow}`,
+      shortName: `Nova escola ${nextRow}`,
+      route,
+      company: "",
+      address: "",
+      active: true,
+      nutritionistIds: firstNutritionist ? [firstNutritionist] : []
+    };
+    state.db.schools.push(school);
+    saveDb("Escola criada. Ajuste nome, rota e nutricionista na tabela.");
   });
   document.querySelectorAll("[data-user-field]").forEach(input => {
     input.addEventListener("change", event => {
@@ -908,12 +1060,26 @@ function renderConfig() {
     state.routeFilter = event.target.value;
     render();
   });
-  document.querySelectorAll("[data-assign]").forEach(input => {
+  document.querySelectorAll("[data-school-field]").forEach(input => {
     input.addEventListener("change", event => {
       const school = state.db.schools.find(item => item.id === event.target.dataset.school);
-      const userId = event.target.dataset.assign;
-      if (event.target.checked && !school.nutritionistIds.includes(userId)) school.nutritionistIds.push(userId);
-      if (!event.target.checked) school.nutritionistIds = school.nutritionistIds.filter(id => id !== userId);
+      const value = event.target.value.trim();
+      school[event.target.dataset.schoolField] = value;
+      if (event.target.dataset.schoolField === "shortName") school.name = value;
+      saveDb("Escola atualizada.");
+    });
+  });
+  document.querySelectorAll("[data-school-route]").forEach(select => {
+    select.addEventListener("change", event => {
+      const school = state.db.schools.find(item => item.id === event.target.dataset.schoolRoute);
+      school.route = event.target.value;
+      saveDb("Rota da escola atualizada.");
+    });
+  });
+  document.querySelectorAll("[data-school-nutritionist]").forEach(select => {
+    select.addEventListener("change", event => {
+      const school = state.db.schools.find(item => item.id === event.target.dataset.schoolNutritionist);
+      school.nutritionistIds = event.target.value ? [event.target.value] : [];
       saveDb("Vínculo atualizado.");
     });
   });
@@ -935,27 +1101,43 @@ function userRow(user) {
 function assignmentTable() {
   let schools = state.db.schools;
   if (state.routeFilter !== "todas") schools = schools.filter(school => school.route === state.routeFilter);
+  const routeChoices = routeOptions();
+  const nutritionistChoices = nutritionists();
   return `
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Escola</th><th>Rota</th><th>Responsáveis</th></tr></thead>
+      <table class="config-school-table">
+        <thead><tr><th>Escola</th><th>Rota</th><th>Nutricionista</th></tr></thead>
         <tbody>
-          ${schools.map(school => `
-            <tr>
-              <td>${school.shortName}</td>
-              <td>${school.route}</td>
+          ${schools.map(school => {
+            const selectedNutritionist = school.nutritionistIds?.[0] || "";
+            return `
+              <tr>
               <td>
-                <div class="assign-grid">
-                  ${nutritionists().map(user => `
-                    <label class="check-pill">
-                      <input type="checkbox" data-assign="${user.id}" data-school="${school.id}" ${school.nutritionistIds.includes(user.id) ? "checked" : ""} />
-                      ${user.name}
-                    </label>
+                <input
+                  data-school="${school.id}"
+                  data-school-field="shortName"
+                  value="${school.shortName || school.name || ""}"
+                  aria-label="Nome da escola"
+                />
+              </td>
+              <td>
+                <select data-school-route="${school.id}" aria-label="Rota da escola">
+                  ${routeChoices.map(route => `
+                    <option value="${route}" ${school.route === route ? "selected" : ""}>${route}</option>
                   `).join("")}
-                </div>
+                </select>
+              </td>
+              <td>
+                <select data-school-nutritionist="${school.id}" aria-label="Nutricionista responsavel">
+                  <option value="">Sem responsavel</option>
+                  ${nutritionistChoices.map(user => `
+                    <option value="${user.id}" ${selectedNutritionist === user.id ? "selected" : ""}>${user.name}</option>
+                  `).join("")}
+                </select>
               </td>
             </tr>
-          `).join("")}
+            `;
+          }).join("")}
         </tbody>
       </table>
     </div>
@@ -1027,7 +1209,7 @@ function legacyInitialLoadDisabled() {
       })
       .catch(() => {
         state.sessionToken = "";
-        localStorage.removeItem("apuracao-session-token");
+        localStorage.removeItem(authStorageKey());
         renderLogin();
       });
   }

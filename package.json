@@ -8,11 +8,14 @@
     "dev": "node server.js",
     "dev:netlify": "netlify dev",
     "start": "node server.js",
+    "backup:prod": "node scripts/backup_supabase.js",
+    "routes:preview": "node scripts/preview_route_assignments.js",
+    "routes:apply": "node scripts/apply_route_assignments.js --apply",
     "seed": "python scripts/import_seed.py",
     "export": "python scripts/export_consolidated.py"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/supabase-js": "2.45.4",
     "exceljs": "^4.4.0",
     "ws": "^8.18.3"
   },

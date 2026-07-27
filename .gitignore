@@ -6,12 +6,15 @@ work/
 data/db.json
 data/exports/*.xlsx
 !data/exports/.gitkeep
+backups/
+route-previews/
 
 __pycache__/
 *.py[cod]
 
 .env
 .env.*
+env.env
 !.env.example
 
 node_modules/

@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "validatedAt": "2026-07-27",
+  "notes": "Rotas e vinculos validados em conversa. LETICIA MIRANDA substitui EVELYN LOUISE e ja consta assim em producao.",
+  "nutritionists": [
+    {
+      "name": "TASSIA VIRGINIA",
+      "phone": "71 99717-1051",
+      "routes": [
+        {
+          "name": "GRE SUBURBIO I",
+          "schools": ["CMEI Mario Altenfelder", "CMEI Mundo Feliz", "E.M Andre Reboucas", "E.M Joaquim Magalhaes", "E.M Machado de Assis", "E.M Manoel Henrique da Silva Barradas", "ESCOLA MUNICIPAL PROFESSORA EUFROSINA MIRANDA", "E.M Senador Antonio Carlos Peixoto de Magalhaes", "CMEI Alvaro Bahia"]
+        },
+        {
+          "name": "GRE SAO CAETANO",
+          "schools": ["CMEI Tereza Helena Mata Pires", "E.M Bela Vista do Lobato", "E.M Padre Norberto"]
+        }
+      ]
+    },
+    {
+      "name": "CLAUDIA BRIM",
+      "phone": "71 99708-6899",
+      "routes": [
+        {
+          "name": "GRE SUBURBIO I",
+          "schools": ["E.M Darcy Ribeiro", "E.M Santo Antonio das Malvinas", "E.M Olga Mettig", "E.M Professor Italo Gaudenzi", "CMEI Abdias Nascimento", "CMEI Paulo Bispo Braz", "CMEI Educar e Viver", "E.M Graciliano Ramos"]
+        },
+        {
+          "name": "GRE SUBURBIO II",
+          "schools": ["CMEI Helio Vianna", "E.M Alto de Coutos"]
+        },
+        {
+          "name": "GRE CAJAZEIRAS",
+          "schools": ["CMEI CSU Joao Paulo I", "E.M Nossa Senhora Aparecida", "E.M Milton Santos"]
+        }
+      ]
+    },
+    {
+      "name": "FLAVIA FRANCO",
+      "phone": "71 99658-2455",
+      "routes": [
+        {
+          "name": "GRE SUBURBIO II",
+          "schools": ["E.M Dr Otaviano Pimenta", "ESCOLA MUNICIPAL D PEDRO I", "E.M Anfilofio de Carvalho", "E.M Cid Passos", "E.M Mirantes de Periperi", "E.M Presidente Medici"]
+        },
+        {
+          "name": "GRE SUBURBIO I",
+          "schools": ["E.M Senhor do Bonfim", "E.M Armando Carneiro da Rocha", "E.M Maria Emilia"]
+        },
+        {
+          "name": "GRE SAO CAETANO",
+          "schools": ["E.M Antonio Carlos Magalhaes", "E.M Barbosa Rodrigues", "E.M Consul Schindler", "ESCOLA MUNICIPAL COMUNITARIA REGINA STUKENBORG"]
+        }
+      ]
+    },
+    {
+      "name": "VANESSA GALVAO",
+      "phone": "71 99943-0079",
+      "routes": [
+        {
+          "name": "GRE LIBERDADE",
+          "schools": ["E.M Manoel Florencio", "CMEI Santa Monica", "CMEI Epifania Silva", "E.M Cardeal da Silva", "E.M Dr Marcos Vinicius Vilaca", "CMEI Jose da Silva Tavares", "E.M Giselia Palma"]
+        },
+        {
+          "name": "GRE SAO CAETANO",
+          "schools": ["CMEI Lindaura Andrade Mendonca", "CMEI Semente do Amanha", "E.M 15 de Outubro", "ESCOLA MUNICIPAL BATISTA DE SAN MARTIM", "E.M do Calafate", "E.M Fonte do Capim"]
+        }
+      ]
+    },
+    {
+      "name": "MERCIA NOLAIR",
+      "phone": "71 99644-2775",
+      "routes": [
+        {
+          "name": "GRE LIBERDADE",
+          "schools": ["CMEI Hosannah de Oliveira", "CMEI Jose Adeodato de Souza Filho", "E.M Pero Vaz Velho", "E.M Cidade Nova", "E.M Pau Miudo", "E.M Josafa Carlos Borges", "E.M Piraja da Silva", "E.M Vila Vicentina", "E.M Zacarias Boa Morte", "ESCOLA MUNICIPAL ABRIGO FILHOS DO POVO", "E.M Sao Judas Tadeu", "Nossa Senhora de Nazare", "Julieta Viana"]
+        }
+      ]
+    },
+    {
+      "name": "REBECCA TRANQUILLI",
+      "phone": "71 9666-9863",
+      "routes": [
+        {
+          "name": "GRE CENTRO",
+          "schools": ["CMEI CSU Major Cosme de Farias", "CMEI Iacy Vaz Fagundes", "CMEI Luis Eduardo Magalhaes", "ESCOLA MUNICIPAL DESPORTIVA SANTA RITA", "E.M Joao Lino", "E.M Luiz Anselmo", "ESCOLA MUNICIPAL OLGA FIGUEIREDO DE AZEVEDO", "ESCOLA MUNICIPAL SANTA RITA", { "name": "ESCOLA MUNICIPAL AILTON SOARES", "createIfMissing": true }, "E.M Terezinha Vaz da Silveira", "E.M Joao Pedro dos Santos"]
+        },
+        {
+          "name": "GRE LIBERDADE",
+          "schools": ["E.M Major Eloi Magalhaes", "E.M Professora Suzana Imbassahy"]
+        }
+      ]
+    },
+    {
+      "name": "BEATRIZ",
+      "phone": "71 99680-6379",
+      "routes": [
+        {
+          "name": "GRE CENTRO",
+          "schools": ["CMEI Abrigo do Salvador", "CMEI Virgem de La Almudena", "E.M Lelis Piedade", "E.M Joir Brasileiro", "E.M Maria Quiteria", "E.M Martagao Gesteira", "E.M Professor Aristides Novis", "E.M Ruy de Lima Maltez", "CMEI Ieda Barradas Carneiro", "ESCOLA MUNICIPAL COMUNITARIA DA HISTARTE", "E.M Nossa Senhora dos Anjos", "E.M Sebastiao Dias", "E.M Visconde de Cairu"]
+        }
+      ]
+    },
+    {
+      "name": "DIONE CIBELE",
+      "phone": "71 99719-8976",
+      "routes": [
+        {
+          "name": "GRE CENTRO",
+          "schools": ["CMEI Nossa Senhora da Vitoria", "CMEI Paroquial de Santana", "E.M Amelia Rodrigues", "E.M Casa da Providencia", "E.M Cosme de Farias", "E.M Hildete Lomanto", "E.M Paroquial da Vitoria", "E.M Perminio Leite", "E.M Professor Alexandre Leal Costa", "E.M Santa Angela das Merces", "E.M Soror Joana Angelica", "E.M Vivaldo da Costa Lima", "E.M Sao Jose Anexa"]
+        }
+      ]
+    },
+    {
+      "name": "ANA SILVANA",
+      "phone": "71 99911-8439",
+      "routes": [
+        {
+          "name": "GRE CAJAZEIRAS",
+          "schools": ["CMEI Cantinho das Criancas", "CENTRO MUNICIPAL DE EDUCACAO INFANTIL EDIVALDO MACHADO BOAVENTURA", "CENTRO MUNICIPAL DE EDUCACAO INFANTIL RAFAEL DE OLIVEIRA", "CMEI Waldeck Ornelas", "ESCOLA MUNICIPAL ADAUTO PEREIRA DE SOUZA", "E.M Novo Marotinho", "E.M Eduardo Campos", "ESCOLA MUNICIPAL ELYSIO ATHAYDE", "ESCOLA MUNICIPAL PROFª IRENE DA SILVA COSTA SANTOS", "E.M Professor Claudio Veiga", "E.M Professor Manoel de Almeida Cruz", "E.M Professor Ricardo Pereira", "ESCOLA MUNICIPAL PROFESSORA ELISA SALDANHA"]
+        }
+      ]
+    },
+    {
+      "name": "CARLA AMPARO",
+      "phone": "71 99676-6524",
+      "routes": [
+        {
+          "name": "GRE SAO CAETANO",
+          "schools": ["E.M Batista de Sao Caetano", "ESCOLA MUNICIPAL ASSISTENCIA SOCIAL SAO JOSE", "E.M Fazenda Grande", "E.M Professor Antonio Carvalho Guedes", "E.M Carlos Batalha", "E.M Francisco Mangabeira", "E.M Helena Magalhaes", "E.M Professora Maria de Lourdes Santana Alves", "CMEI Yolanda Pires", "CMEI Angelina Rocha de Assis", "CENTRO MUNICIPAL DE EDUCACAO INFANTIL MOSA BERBERT", "E.M Gilberto Pires Marinho"]
+        }
+      ]
+    },
+    {
+      "name": "ISADORA CARDIM",
+      "phone": "71 99739-7751",
+      "routes": [
+        {
+          "name": "GRE SAO CAETANO",
+          "schools": ["E.M Educador Paulo Freire", "E.M Crianca Feliz", "E.M Amai Pro", "E.M Campinas de Piraja", "E.M Marechal Rondon", "E.M Xavier Marques", "ESCOLA MUNICIPAL FILHOS DE SALOMAO", "ESCOLA MUNICIPAL JAQUEIRA DO CARNEIRO", "E.M Austricliano de Carvalho", "E.M Conego Emilio Lobo", "CENTRO MUNICIPAL DE EDUCACAO INFANTIL CASA DA CRIANCA DO BOM JUA", "CMEI Fruto do Amanha"]
+        }
+      ]
+    },
+    {
+      "name": "LETICIA MIRANDA",
+      "phone": "71 99696-6064",
+      "routes": [
+        {
+          "name": "GRE CIDADE BAIXA",
+          "schools": ["CMEI Eloyna Barradas", "E.M Primeiro de Maio", "E.M Simoes Filho", "E.M Maria Jose de Paula", "E.M Centro Social Mangueira", "E.M Alfredo Amorim", "CMEI Baronesa de Sauipe", "CMEI Maria da Conceicao", "E.M Henriqueta Machado", "E.M Freire Filho", "E.M Constanca Medeiros", "CMEI Melvin Jones", "E.M Carmelitana do Menino Jesus"]
+        }
+      ]
+    },
+    {
+      "name": "RAFAELA ANJOS",
+      "phone": "71 99666-0462",
+      "routes": [
+        {
+          "name": "GRE CIDADE BAIXA",
+          "schools": ["CMEI Arlete Magalhaes", "CMEI Augusto Lopes Pontes", "CMEI Nossa Senhora das Gracas", "E.M Santa Barbara", "E.M Hilberto Silva", "E.M Presidente Castelo Branco", "E.M Almerinda Costa", "E.M Tiradentes", "E.M Geraldo Tavares", "E.M Sociedade 6 de Janeiro", "E.M Uniao Comunitaria"]
+        },
+        {
+          "name": "GRE LIBERDADE",
+          "schools": ["E.M Ministro Simoes Filho"]
+        }
+      ]
+    }
+  ]
+}

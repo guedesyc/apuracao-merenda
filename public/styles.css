@@ -24,6 +24,35 @@ body {
   color: var(--ink);
 }
 
+.hml-banner {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 16px;
+  background: #fff7df;
+  border-bottom: 1px solid #e8cf92;
+  color: #5d4108;
+  text-align: center;
+  font-size: 14px;
+}
+
+.hml-banner strong {
+  white-space: nowrap;
+}
+
+.hml-credentials {
+  border: 1px solid #e8cf92;
+  border-radius: var(--radius);
+  background: #fffaf0;
+  color: #5d4108;
+  padding: 10px 12px;
+}
+
 button,
 input,
 select,
@@ -259,6 +288,18 @@ textarea {
   padding: 16px;
 }
 
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section-head h2 {
+  margin: 0;
+}
+
 .school-card {
   padding: 14px;
   display: grid;
@@ -447,6 +488,35 @@ textarea {
   font-size: 16px;
 }
 
+.school-card-totals {
+  display: grid;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.school-card-total-line,
+.school-total-general {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.school-card-total-line {
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 6px;
+}
+
+.school-card-total-line strong {
+  font-size: 14px;
+}
+
+.school-total-general {
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
 .month-date-card {
   border-top: 1px solid var(--line);
 }
@@ -620,6 +690,15 @@ th {
   border-radius: 8px;
   padding: 8px 10px;
   background: #fff;
+}
+
+.admin-max-card-summary {
+  display: contents;
+}
+
+.admin-max-card-summary span {
+  background: #f7fbf9;
+  border-color: #cbded5;
 }
 
 .admin-date-list {

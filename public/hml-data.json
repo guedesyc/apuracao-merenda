@@ -1,0 +1,166 @@
+{
+  "version": 2,
+  "createdAt": "2026-07-01T09:00:00.000Z",
+  "updatedAt": "2026-07-27T09:00:00.000Z",
+  "settings": {
+    "currentMonth": "2026-07",
+    "reasons": ["Sem aula", "Feriado", "Manutencao", "Outro"],
+    "workingDaysByMonth": {
+      "2026-07": 22
+    },
+    "cardPreferences": {
+      "nutri:hml-school-1": ["hml-card-1", "hml-card-2"],
+      "nutri:hml-school-2": ["hml-card-1", "hml-card-3"]
+    }
+  },
+  "cards": [
+    {
+      "id": "hml-card-1",
+      "number": 1,
+      "label": "CARD HML 1",
+      "description": "REFEICAO INTEGRAL",
+      "price": 10.25,
+      "column": 3
+    },
+    {
+      "id": "hml-card-2",
+      "number": 2,
+      "label": "CARD HML 2",
+      "description": "REFEICAO PARCIAL",
+      "price": 4.54,
+      "column": 4
+    },
+    {
+      "id": "hml-card-3",
+      "number": 3,
+      "label": "LANCHE HML",
+      "description": "LANCHE TESTE",
+      "price": 3.41,
+      "column": 5
+    }
+  ],
+  "schools": [
+    {
+      "id": "hml-school-1",
+      "row": 5,
+      "name": "0001 - ESCOLA HML CENTRO",
+      "shortName": "ESCOLA HML CENTRO",
+      "route": "GRE CENTRO",
+      "company": "LOTE HML",
+      "address": "Rua Ficticia 100",
+      "active": true,
+      "nutritionistIds": ["nutri"]
+    },
+    {
+      "id": "hml-school-2",
+      "row": 6,
+      "name": "0002 - CMEI HML NORTE",
+      "shortName": "CMEI HML NORTE",
+      "route": "GRE SUBURBIO I",
+      "company": "LOTE HML",
+      "address": "Avenida de Testes 200",
+      "active": true,
+      "nutritionistIds": ["nutri"]
+    },
+    {
+      "id": "hml-school-3",
+      "row": 7,
+      "name": "0003 - ESCOLA HML SUL",
+      "shortName": "ESCOLA HML SUL",
+      "route": "GRE CAJAZEIRAS",
+      "company": "LOTE HML",
+      "address": "Praca Exemplo 300",
+      "active": true,
+      "nutritionistIds": ["nutri2"]
+    }
+  ],
+  "users": [
+    {
+      "id": "admin",
+      "name": "Coordenacao HML",
+      "username": "admin",
+      "password": "adminhml",
+      "role": "admin",
+      "active": true
+    },
+    {
+      "id": "nutri",
+      "name": "Nutricionista HML",
+      "username": "nutri",
+      "password": "nutrihml",
+      "role": "nutritionist",
+      "active": true
+    },
+    {
+      "id": "nutri2",
+      "name": "Nutricionista Apoio",
+      "username": "apoio",
+      "password": "apoiohml",
+      "role": "nutritionist",
+      "active": true
+    }
+  ],
+  "entries": [
+    {
+      "id": "hml-entry-1",
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "schoolId": "hml-school-1",
+      "nutritionistId": "nutri",
+      "nutritionistName": "Nutricionista HML",
+      "status": "served",
+      "reason": "",
+      "notes": "Lancamento ficticio inicial.",
+      "quantities": {
+        "hml-card-1": 42,
+        "hml-card-2": 18
+      },
+      "updatedAt": "2026-07-01T12:00:00.000Z"
+    },
+    {
+      "id": "hml-entry-2",
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "schoolId": "hml-school-2",
+      "nutritionistId": "nutri",
+      "nutritionistName": "Nutricionista HML",
+      "status": "not_served",
+      "reason": "Manutencao",
+      "notes": "",
+      "quantities": {},
+      "updatedAt": "2026-07-01T12:30:00.000Z"
+    },
+    {
+      "id": "hml-entry-3",
+      "date": "2026-07-02",
+      "month": "2026-07",
+      "schoolId": "hml-school-3",
+      "nutritionistId": "nutri2",
+      "nutritionistName": "Nutricionista Apoio",
+      "status": "served",
+      "reason": "",
+      "notes": "",
+      "quantities": {
+        "hml-card-1": 30,
+        "hml-card-3": 25
+      },
+      "updatedAt": "2026-07-02T13:00:00.000Z"
+    }
+  ],
+  "closures": [
+    {
+      "id": "hml-closure-1",
+      "month": "2026-07",
+      "nutritionistId": "nutri",
+      "nutritionistName": "Nutricionista HML",
+      "status": "partial",
+      "expected": 44,
+      "complete": 2,
+      "pending": 42,
+      "test": true,
+      "sentAt": null,
+      "updatedAt": "2026-07-03T10:00:00.000Z"
+    }
+  ],
+  "exports": []
+}
