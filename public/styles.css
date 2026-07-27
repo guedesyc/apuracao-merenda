@@ -701,6 +701,15 @@ th {
   border-color: #cbded5;
 }
 
+.admin-card-total-summary {
+  display: contents;
+}
+
+.admin-card-total-summary span {
+  background: #fffdf7;
+  border-color: #ded7c4;
+}
+
 .admin-date-list {
   display: grid;
   gap: 0;

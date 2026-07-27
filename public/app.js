@@ -911,6 +911,29 @@ function adminSchoolMaxCardRecords(school, dates) {
   return [...maxByCard.values()].sort((a, b) => b.quantity - a.quantity);
 }
 
+function adminSchoolCardTotals(school, dates) {
+  const totals = new Map();
+  dates.forEach(date => {
+    adminDateEntries(school.id, date)
+      .filter(entry => isCompleteEntry(entry) && entry.status !== "not_served")
+      .forEach(entry => {
+        Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+          const value = quantityNumber(quantity);
+          if (!value) return;
+          totals.set(cardId, (totals.get(cardId) || 0) + value);
+        });
+      });
+  });
+  return state.db.cards
+    .map(card => ({
+      label: card.label,
+      quantity: totals.get(card.id) || 0,
+      total: (totals.get(card.id) || 0) * Number(card.price || 0)
+    }))
+    .filter(item => item.quantity > 0)
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
+}
+
 function adminSchoolDetail(school) {
   const dates = businessDates();
   const filled = dates.filter(date => adminDateEntries(school.id, date).some(isCompleteEntry)).length;
@@ -919,6 +942,7 @@ function adminSchoolDetail(school) {
     return sum + adminDateEntries(school.id, date).filter(isCompleteEntry).reduce((daySum, entry) => daySum + quantitiesTotal(entry.quantities), 0);
   }, 0);
   const maxCardRecords = adminSchoolMaxCardRecords(school, dates);
+  const cardTotals = adminSchoolCardTotals(school, dates);
   return `
     <section class="admin-school-detail">
       <div class="admin-detail-summary">
@@ -930,6 +954,15 @@ function adminSchoolDetail(school) {
             ${maxCardRecords.map(item => `
               <span>
                 <strong>${item.label}</strong> - ${item.quantity.toLocaleString("pt-BR")} | ${formatDateBR(item.date)}
+              </span>
+            `).join("")}
+          </div>
+        ` : ""}
+        ${cardTotals.length ? `
+          <div class="admin-card-total-summary" aria-label="Totais por card">
+            ${cardTotals.map(item => `
+              <span>
+                <strong>${item.label}</strong> - ${item.quantity.toLocaleString("pt-BR")} | ${money(item.total)}
               </span>
             `).join("")}
           </div>
