@@ -317,7 +317,7 @@ function shell(content) {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
-          <img src="yg-systems-logo.png" alt="YG Systems" />
+          <img src="yg-systems-monogram.png" alt="YG Systems" />
           <div>
             <strong>Comandas</strong>
             <span>Controle de refeições</span>
