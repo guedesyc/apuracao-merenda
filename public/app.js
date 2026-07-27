@@ -270,7 +270,7 @@ function renderLogin(error = "") {
     ${hmlBanner()}
     <main class="login-screen">
       <form class="login-card" id="login-form">
-        <img class="login-logo" src="yg-systems-logo.png" alt="YG Systems" />
+        <img class="login-logo" src="yg-systems-monogram.png" alt="YG Systems" />
         <h1>Apuração de Comandas</h1>
         <p>${isHmlMode() ? "Entre com usuários fictícios para testar fluxos sem acessar o Supabase." : "Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal."}</p>
         ${isHmlMode() ? `<p class="hml-credentials"><strong>HML:</strong> admin/adminhml ou nutri/nutrihml</p>` : ""}
