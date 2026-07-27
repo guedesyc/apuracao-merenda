@@ -270,6 +270,7 @@ function renderLogin(error = "") {
     ${hmlBanner()}
     <main class="login-screen">
       <form class="login-card" id="login-form">
+        <img class="login-logo" src="yg-systems-logo.png" alt="YG Systems" />
         <h1>Apuração de Comandas</h1>
         <p>${isHmlMode() ? "Entre com usuários fictícios para testar fluxos sem acessar o Supabase." : "Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal."}</p>
         ${isHmlMode() ? `<p class="hml-credentials"><strong>HML:</strong> admin/adminhml ou nutri/nutrihml</p>` : ""}
@@ -316,8 +317,11 @@ function shell(content) {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
-          <strong>Comandas</strong>
-          <span>Controle de refeições</span>
+          <img src="yg-systems-logo.png" alt="YG Systems" />
+          <div>
+            <strong>Comandas</strong>
+            <span>Controle de refeições</span>
+          </div>
         </div>
         <nav class="nav">
           ${items.map(([id, label]) => `<button data-view="${id}" class="${state.view === id ? "active" : ""}">${label}</button>`).join("")}
@@ -328,7 +332,12 @@ function shell(content) {
           <button id="logout">Sair</button>
         </div>
       </aside>
-      <main class="content">${content}</main>
+      <main class="content">
+        ${content}
+        <footer class="app-footer">
+          Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a>
+        </footer>
+      </main>
     </div>
   `;
   document.querySelectorAll("[data-view]").forEach(button => {
@@ -958,16 +967,26 @@ function adminSchoolDetail(school) {
             `).join("")}
           </div>
         ` : ""}
-        ${cardTotals.length ? `
-          <div class="admin-card-total-summary" aria-label="Totais por card">
-            ${cardTotals.map(item => `
-              <span>
-                <strong>${item.label}</strong> - ${item.quantity.toLocaleString("pt-BR")} | ${money(item.total)}
-              </span>
-            `).join("")}
-          </div>
-        ` : ""}
       </div>
+      ${cardTotals.length ? `
+        <div class="admin-school-card-total-panel">
+          <div class="school-total-item admin-school-total-item">
+            <span>${school.shortName}</span>
+            <div class="school-card-totals">
+              ${cardTotals.map(item => `
+                <div class="school-card-total-line">
+                  <span>${item.label}</span>
+                  <strong>${item.quantity.toLocaleString("pt-BR")}</strong>
+                </div>
+              `).join("")}
+            </div>
+            <div class="school-total-general">
+              <span>Total geral</span>
+              <strong>${money(total)}</strong>
+            </div>
+          </div>
+        </div>
+      ` : ""}
       <div class="admin-date-list">
         ${dates.map(date => adminDateCard(school, date)).join("")}
       </div>

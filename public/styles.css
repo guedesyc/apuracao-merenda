@@ -130,6 +130,15 @@ textarea {
   box-shadow: 0 20px 70px rgba(23, 34, 29, 0.12);
 }
 
+.login-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin-bottom: 14px;
+}
+
 .login-card h1,
 .page-title h1 {
   margin: 0;
@@ -171,9 +180,25 @@ textarea {
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+}
+
+.brand img {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #31443c;
+}
+
+.brand div {
   display: grid;
   gap: 3px;
-  padding: 10px 8px;
+  min-width: 0;
 }
 
 .brand strong {
@@ -219,6 +244,24 @@ textarea {
   display: grid;
   gap: 18px;
   align-content: start;
+}
+
+.app-footer {
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.app-footer a {
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  text-decoration: underline;
 }
 
 .topbar,
@@ -701,13 +744,14 @@ th {
   border-color: #cbded5;
 }
 
-.admin-card-total-summary {
-  display: contents;
+.admin-school-card-total-panel {
+  display: flex;
+  align-items: flex-start;
 }
 
-.admin-card-total-summary span {
-  background: #fffdf7;
-  border-color: #ded7c4;
+.admin-school-total-item {
+  width: min(246px, 100%);
+  background: #fbfcfa;
 }
 
 .admin-date-list {
