@@ -326,6 +326,83 @@ function hasValidQuantities(entry) {
   });
 }
 
+function comparableEntry(entry) {
+  const quantities = entry.quantities || Object.fromEntries((entry.entry_items || []).map(item => [item.card_id, item.quantity]));
+  return {
+    date: entry.date || entry.entry_date || "",
+    status: entry.status || "",
+    reason: entry.reason || "",
+    notes: entry.notes || "",
+    quantities: Object.fromEntries(Object.entries(quantities)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([cardId, quantity]) => [cardId, Number(quantity) || 0]))
+  };
+}
+
+async function assertFinalizedMonthsUnchanged(client, actor, db) {
+  if (actor.role === "admin") return;
+  const { data: finalizedClosures, error: closuresError } = await client
+    .from("monthly_closures")
+    .select("month")
+    .eq("nutritionist_id", actor.id)
+    .eq("status", "sent");
+  if (closuresError) throw closuresError;
+  const finalizedMonths = new Set((finalizedClosures || []).map(item => item.month));
+  if (!finalizedMonths.size) return;
+
+  for (const month of finalizedMonths) {
+    const incomingClosure = (db.closures || []).find(item => item.month === month && item.nutritionistId === actor.id);
+    if (!incomingClosure || incomingClosure.status !== "sent") {
+      const error = new Error(`A competÃªncia ${month} jÃ¡ foi encerrada e nÃ£o pode mais ser alterada.`);
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  const { data: existingEntries, error: entriesError } = await client
+    .from("entries")
+    .select("id, entry_date, month, status, reason, notes, entry_items(card_id, quantity)")
+    .eq("nutritionist_id", actor.id)
+    .in("month", [...finalizedMonths]);
+  if (entriesError) throw entriesError;
+
+  for (const month of finalizedMonths) {
+    const current = new Map((existingEntries || [])
+      .filter(entry => entry.month === month)
+      .map(entry => [entry.id, comparableEntry(entry)]));
+    const incoming = new Map((db.entries || [])
+      .filter(entry => (entry.month || String(entry.date || "").slice(0, 7)) === month)
+      .filter(entry => entry.id)
+      .map(entry => [entry.id, comparableEntry(entry)]));
+    if (current.size !== incoming.size || [...current].some(([id, value]) => JSON.stringify(value) !== JSON.stringify(incoming.get(id)))) {
+      const error = new Error(`A competÃªncia ${month} jÃ¡ foi encerrada e nÃ£o pode mais ser alterada.`);
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+}
+
+async function entryIdsWithChangedQuantities(client, actor, db) {
+  const { data: existingEntries, error } = await client
+    .from("entries")
+    .select("id, entry_items(card_id, quantity)")
+    .eq("nutritionist_id", actor.id);
+  if (error) throw error;
+  const existingById = new Map((existingEntries || []).map(entry => [entry.id, entry]));
+
+  return (db.entries || [])
+    .filter(entry => entry.nutritionistId === actor.id && entry.id)
+    .filter(entry => {
+      const existing = existingById.get(entry.id);
+      if (entry.status === "not_served") return Boolean(existing?.entry_items?.length);
+      if (!hasValidQuantities(entry)) return false;
+      const currentQuantities = comparableEntry(existing || {}).quantities;
+      const incomingQuantities = comparableEntry(entry).quantities;
+      return JSON.stringify(currentQuantities) !== JSON.stringify(incomingQuantities);
+    })
+    .map(entry => entry.id);
+}
+
 function closureRowsFromDb(db, actor) {
   return (db.closures || [])
     .filter(item => actor.role === "admin" || item.nutritionistId === actor.id)
@@ -371,10 +448,7 @@ async function saveRelationalState(client, actor, db, options = {}) {
       await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
     }
   } else {
-    const ownEntries = (db.entries || [])
-      .filter(entry => entry.nutritionistId === actor.id && entry.id)
-      .filter(entry => entry.status === "not_served" || hasValidQuantities(entry));
-    const entriesToReplace = ownEntries.map(entry => entry.id);
+    const entriesToReplace = await entryIdsWithChangedQuantities(client, actor, db);
     if (entriesToReplace.length) await client.from("entry_items").delete().in("entry_id", entriesToReplace);
     await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
     await replaceRows(
@@ -480,6 +554,7 @@ exports.handler = async event => {
       if (!Array.isArray(db.schools) || !Array.isArray(db.entries) || !Array.isArray(db.users)) {
         return json(400, { error: "Formato de dados invalido." });
       }
+      await assertFinalizedMonthsUnchanged(client, actor, db);
       await saveRelationalState(client, actor, db);
       return json(200, { ok: true });
     }
@@ -506,7 +581,7 @@ exports.handler = async event => {
 
     return json(404, { error: "Rota nao encontrada." });
   } catch (error) {
-    return json(500, { error: error.message });
+    return json(error.statusCode || 500, { error: error.message });
   }
 };
 
