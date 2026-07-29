@@ -1,4 +1,4 @@
-const HML_QUERY = "hml";
+﻿const HML_QUERY = "hml";
 const HML_STORAGE_KEY = "apuracao-comandas-hml-db";
 const PROD_SESSION_KEY = "apuracao-session-token";
 const HML_SESSION_KEY = "apuracao-hml-session-token";
@@ -498,7 +498,7 @@ function renderNutritionistForm() {
     <div class="toolbar">
       <button class="secondary" id="save-partial" ${isMonthFinalized() ? "disabled" : ""}>Salvar</button>
       <button class="primary" id="send-final" ${completion.pending || isMonthFinalized() ? "disabled" : ""}>Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
-      ${isMonthFinalized() ? `<span class="status-line">Compet&ecirc;ncia encerrada e bloqueada para edi&ccedil;&atilde;o.</span>` : ""}
+      ${isMonthFinalized() ? "<span class=\"status-line\">Compet&ecirc;ncia encerrada e bloqueada para edi&ccedil;&atilde;o.</span>" : ""}
       <span class="status-line">${state.message}</span>
     </div>
     <section class="school-list">
@@ -532,7 +532,293 @@ function renderNutritionistForm() {
       const entry = entryKey(date, school);
       const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
       if (event.target.checked) quantities[card] = quantities[card] ?? "";
-      else delete …3578 tokens truncated…    ${adminSchoolTable()}
+      else delete quantities[card];
+      upsertEntry(school, { status: "served", quantities }, date);
+      saveCardPreference(school, quantities);
+      pruneEntryIfEmpty(entryKey(date, school));
+      render();
+    });
+  });
+  document.querySelectorAll("[data-qty]").forEach(input => {
+    input.addEventListener("input", event => {
+      const { school, card, date } = event.target.dataset;
+      const entry = entryKey(date, school);
+      const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
+      quantities[card] = parseQuantity(event.target.value);
+      upsertEntry(school, { status: "served", quantities }, date);
+    });
+  });
+  document.querySelectorAll("[data-reason]").forEach(select => {
+    select.addEventListener("change", event => {
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { status: event.target.value ? "not_served" : "served", reason: event.target.value, quantities: event.target.value ? {} : entryKey(date, school)?.quantities || defaultQuantitiesForSchool(school) }, date);
+      pruneEntryIfEmpty(entryKey(date, school));
+      render();
+    });
+  });
+  document.querySelectorAll("[data-notes]").forEach(textarea => {
+    textarea.addEventListener("change", event => {
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { notes: event.target.value }, date);
+    });
+  });
+  $("#save-partial").addEventListener("click", async () => {
+    if (isMonthFinalized()) return;
+    upsertClosure(state.selectedMonth, "partial", { expected: completion.expected, complete: completion.complete, pending: completion.pending });
+    await saveDb("Dados salvos.");
+  });
+  $("#send-final").addEventListener("click", async () => {
+    if (isMonthFinalized()) return;
+    const latest = monthCompletionStatus();
+    if (latest.pending > 0) {
+      state.message = `Ainda existem ${latest.pending} pend&ecirc;ncias. Preencha todas as datas de todas as escolas antes de enviar.`;
+      renderNutritionistForm();
+      return;
+    }
+    upsertClosure(state.selectedMonth, "sent", { expected: latest.expected, complete: latest.complete, pending: 0 });
+    await saveDb("M&ecirc;s enviado para coordena&ccedil;&atilde;o.");
+  });
+}
+
+function schoolCard(school, cards, dates) {
+  const collapsed = !state.expandedSchools.has(school.id);
+  const schoolEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id, schoolId: school.id });
+  const pending = Math.max(dates.length - schoolEntries.length, 0);
+  return `
+    <article class="school-card ${collapsed ? "collapsed" : ""}">
+      <button class="school-toggle" type="button" data-school-toggle="${school.id}" aria-expanded="${!collapsed}">
+        <div>
+          <h3>${school.shortName}</h3>
+          <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+        </div>
+        <div class="school-status">
+          <span class="badge done">${schoolEntries.length} registradas</span>
+          <span class="badge ${pending ? "warn" : "done"}">${pending} pendentes</span>
+          <span class="chevron">${collapsed ? "+" : "-"}</span>
+        </div>
+      </button>
+      ${collapsed ? "" : `<div class="date-list">${dates.map(date => dateCard(school, cards, date)).join("")}</div>`}
+    </article>
+  `;
+}
+
+function dateCard(school, cards, date) {
+  const entry = entryKey(date, school.id);
+  const quantities = entry?.quantities || defaultQuantitiesForSchool(school.id);
+  const isNotServed = entry?.status === "not_served";
+  const finalized = isMonthFinalized(String(date).slice(0, 7));
+  const complete = isCompleteEntry(entry);
+  const total = quantitiesTotal(quantities);
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedLaunchDates.has(key);
+  return `
+    <article class="date-card ${expanded ? "" : "collapsed"}">
+      <button class="date-toggle" type="button" data-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <div class="date-summary">
+          <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
+          <span class="muted">${complete ? money(total) : ""}</span>
+          <span class="chevron">${expanded ? "-" : "+"}</span>
+        </div>
+      </button>
+      ${expanded ? `
+        <div class="field">
+          <label>Motivo sem atendimento</label>
+          <select data-reason data-school="${school.id}" data-date="${date}" ${finalized ? "disabled" : ""}>
+            <option value="">Teve atendimento</option>
+            ${state.db.settings.reasons.map(reason => `<option ${entry?.reason === reason ? "selected" : ""}>${reason}</option>`).join("")}
+          </select>
+        </div>
+        ${isNotServed ? "" : `
+          <div class="card-selector">
+            ${cards.map(card => `
+              <label class="check-pill">
+                <input type="checkbox" data-card-toggle data-school="${school.id}" data-date="${date}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} ${finalized ? "disabled" : ""} />
+                ${card.label}
+              </label>
+            `).join("")}
+          </div>
+          <div class="qty-grid">
+            ${cards.filter(card => quantities[card.id] !== undefined).map(card => `
+              <div class="field">
+                <label>${card.label} &bull; ${money(card.price)}</label>
+                <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-date="${date}" data-card="${card.id}" value="${quantities[card.id]}" ${finalized ? "disabled" : ""} />
+              </div>
+            `).join("")}
+          </div>
+        `}
+        <div class="field">
+          <label>Observa&ccedil;&atilde;o</label>
+          <textarea data-notes data-school="${school.id}" data-date="${date}" ${finalized ? "disabled" : ""}>${entry?.notes || ""}</textarea>
+        </div>
+        <strong>Total do dia: ${money(total)}</strong>
+      ` : ""}
+    </article>
+  `;
+}
+function renderMyMonth() {
+  const schools = assignedSchools();
+  const monthDates = businessDates();
+  const monthEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id });
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>Meu m&ecirc;s</h1><p>Acompanhamento do preenchimento da compet&ecirc;ncia.</p></div>
+      <div class="field" style="min-width: 180px"><label>M&ecirc;s</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+    </div>
+    <section class="grid cols-3">
+      <div class="metric"><strong>${monthEntries.length}</strong><span>Registros no m&ecirc;s</span></div>
+      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas com algum lan&ccedil;amento</span></div>
+      <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
+    </section>
+    ${schoolTotalSummary(schools)}
+    ${myMonthBySchool(schools, monthDates)}
+  `);
+  $("#month").addEventListener("change", event => {
+    state.selectedMonth = event.target.value;
+    render();
+  });
+  document.querySelectorAll("[data-month-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.monthSchoolToggle;
+      if (state.expandedMonthSchools.has(schoolId)) state.expandedMonthSchools.delete(schoolId);
+      else state.expandedMonthSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-month-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.monthDateToggle;
+      if (state.expandedMonthDates.has(key)) state.expandedMonthDates.delete(key);
+      else state.expandedMonthDates.add(key);
+      render();
+    });
+  });
+}
+
+function schoolTotalSummary(schools) {
+  if (!schools.length) return "";
+  return `
+    <section class="panel">
+      <h2>Total por escola</h2>
+      <div class="school-total-grid">
+        ${schools.map(school => {
+          const cardTotals = schoolMonthCardTotals(school.id);
+          return `
+            <div class="school-total-item">
+              <span>${school.shortName}</span>
+              <div class="school-card-totals">
+                ${cardTotals.length
+                  ? cardTotals.map(({ card, quantity }) => `
+                    <div class="school-card-total-line">
+                      <span>${card.label}</span>
+                      <strong>${quantity.toLocaleString("pt-BR")}</strong>
+                    </div>
+                  `).join("")
+                  : `<span class="muted">Nenhum card preenchido no mês.</span>`}
+              </div>
+              <div class="school-total-general">
+                <span>Total geral</span>
+                <strong>${money(schoolMonthTotal(school.id))}</strong>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function myMonthBySchool(schools, dates) {
+  if (!schools.length) return `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`;
+  return `
+    <section class="month-school-list">
+      ${schools.map(school => {
+        const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
+        const collapsed = !state.expandedMonthSchools.has(school.id);
+        const total = schoolMonthTotal(school.id);
+        return `
+          <article class="month-school ${collapsed ? "collapsed" : ""}">
+            <button class="school-toggle" type="button" data-month-school-toggle="${school.id}" aria-expanded="${!collapsed}">
+              <div>
+                <h3>${school.shortName}</h3>
+                <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+              </div>
+              <div class="school-status">
+                <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
+                <span class="badge progress">${money(total)}</span>
+                <span class="chevron">${collapsed ? "+" : "-"}</span>
+              </div>
+            </button>
+            ${collapsed ? "" : `<div class="month-date-list">
+              ${dates.map(date => monthDateRow(school, date)).join("")}
+            </div>`}
+          </article>
+        `;
+      }).join("")}
+    </section>
+  `;
+}
+
+function monthDateRow(school, date) {
+  const entry = entryKey(date, school.id);
+  const complete = isCompleteEntry(entry);
+  const total = quantitiesTotal(entry?.quantities || {});
+  const status = entry?.status === "not_served" ? "Sem atendimento" : complete ? "Preenchido" : "Pendente";
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedMonthDates.has(key);
+  const cards = filledCardLines(entry);
+  return `
+    <article class="month-date-card ${expanded ? "" : "collapsed"}">
+      <button class="month-date-row" type="button" data-month-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+        <span>${entry?.reason || ""}</span>
+        <span>${complete ? money(total) : ""}</span>
+        <span class="chevron">${expanded ? "-" : "+"}</span>
+      </button>
+      ${expanded ? `
+        <div class="month-date-detail">
+          <strong>Total da refei&ccedil;&atilde;o: ${money(total)}</strong>
+          ${entry?.status === "not_served" ? `<span>Motivo: ${entry.reason}</span>` : cards.length ? `
+            <div class="card-lines">
+              ${cards.map(item => `
+                <div class="card-line">
+                  <span>${item.label}</span>
+                  <strong>${item.qty}</strong>
+                  <span>${money(quantityNumber(item.qty) * item.price)}</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<span class="muted">Nenhum card preenchido nessa data.</span>`}
+          ${entry?.notes ? `<span>Observa&ccedil;&atilde;o: ${entry.notes}</span>` : ""}
+        </div>
+      ` : ""}
+    </article>
+  `;
+}
+function renderDashboard() {
+  const monthEntries = completeEntriesFor({ month: state.selectedMonth });
+  const sent = state.db.closures.filter(item => item.month === state.selectedMonth && item.status === "sent");
+  const expectedDays = expectedBusinessDays();
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>Painel da Coordenação</h1><p>Acompanhe preenchimentos, responsáveis e pendências.</p></div>
+      <div class="toolbar">
+        <div class="field" style="min-width: 180px"><label>Mês</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+        <div class="field" style="width: 150px"><label>Dias úteis</label><input id="working-days" type="text" inputmode="numeric" value="${expectedDays}" /></div>
+      </div>
+    </div>
+    <section class="grid cols-4">
+      <div class="metric"><strong>${state.db.schools.length}</strong><span>Escolas cadastradas</span></div>
+      <div class="metric"><strong>${monthEntries.length}</strong><span>Dias preenchidos</span></div>
+      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas preenchidas</span></div>
+      <div class="metric"><strong>${sent.length}</strong><span>Envios finais</span></div>
+    </section>
+    <div class="filters">
+      <div class="field" style="min-width: 220px"><label>Rota</label><select id="route-filter"><option value="todas">Todas</option>${routes().map(route => `<option ${state.routeFilter === route ? "selected" : ""}>${route}</option>`).join("")}</select></div>
+      <div class="field" style="min-width: 220px"><label>Nutricionista</label><select id="nutri-filter"><option value="todos">Todas</option>${nutritionists().map(user => `<option value="${user.id}" ${state.nutritionistFilter === user.id ? "selected" : ""}>${user.name}</option>`).join("")}</select></div>
+    </div>
+    ${adminSchoolTable()}
   `);
   $("#month").addEventListener("change", event => {
     state.selectedMonth = event.target.value;
@@ -991,5 +1277,4 @@ function legacyInitialLoadDisabled() {
 }
 
 legacyInitialLoadDisabled();
-
 
