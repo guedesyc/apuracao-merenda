@@ -162,7 +162,7 @@ async function loadRelationalState(client, actor) {
   const { data: entriesData, error: entriesError } = await entriesQuery;
   if (entriesError) throw entriesError;
 
-  const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
+  const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "SeguranÃ§a", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
 
   return {
     version: 2,
@@ -314,6 +314,18 @@ function entryItemRowsFromDb(db, actor) {
   return rows;
 }
 
+function hasValidQuantities(entry) {
+  if (!entry || entry.status === "not_served") return false;
+  const quantities = entry.quantities;
+  if (!quantities || typeof quantities !== "object" || Array.isArray(quantities)) return false;
+  const values = Object.values(quantities);
+  if (!values.length) return false;
+  return values.every(value => {
+    if (value === "" || value === null || value === undefined) return false;
+    return Number.isFinite(Number(String(value).replace(",", ".")));
+  });
+}
+
 function closureRowsFromDb(db, actor) {
   return (db.closures || [])
     .filter(item => actor.role === "admin" || item.nutritionistId === actor.id)
@@ -359,13 +371,18 @@ async function saveRelationalState(client, actor, db, options = {}) {
       await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
     }
   } else {
-    const ownEntryIds = (db.entries || [])
-      .filter(entry => entry.nutritionistId === actor.id)
-      .map(entry => entry.id)
-      .filter(Boolean);
-    if (ownEntryIds.length) await client.from("entry_items").delete().in("entry_id", ownEntryIds);
+    const ownEntries = (db.entries || [])
+      .filter(entry => entry.nutritionistId === actor.id && entry.id)
+      .filter(entry => entry.status === "not_served" || hasValidQuantities(entry));
+    const entriesToReplace = ownEntries.map(entry => entry.id);
+    if (entriesToReplace.length) await client.from("entry_items").delete().in("entry_id", entriesToReplace);
     await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
-    await replaceRows(client, "entry_items", entryItemRowsFromDb(db, actor), "entry_id,card_id");
+    await replaceRows(
+      client,
+      "entry_items",
+      entryItemRowsFromDb(db, actor).filter(row => entriesToReplace.includes(row.entry_id)),
+      "entry_id,card_id"
+    );
     await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
   }
 
@@ -468,7 +485,7 @@ exports.handler = async event => {
     }
 
     if (event.httpMethod === "POST" && action === "export") {
-      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenação pode exportar." });
+      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenaÃ§Ã£o pode exportar." });
       const body = parseBody(event);
       if (!body.month || !/^\d{4}-\d{2}$/.test(body.month)) {
         return json(400, { error: "Informe a competencia no formato AAAA-MM." });
@@ -492,3 +509,4 @@ exports.handler = async event => {
     return json(500, { error: error.message });
   }
 };
+
