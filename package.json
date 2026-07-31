@@ -9,6 +9,8 @@
     "dev:netlify": "netlify dev",
     "start": "node server.js",
     "backup:prod": "node scripts/backup_supabase.js",
+    "backup:audit": "node scripts/audit_backup_recovery.js",
+    "backup:restore-items": "node scripts/restore_backup_items.js",
     "routes:preview": "node scripts/preview_route_assignments.js",
     "routes:apply": "node scripts/apply_route_assignments.js --apply",
     "seed": "python scripts/import_seed.py",

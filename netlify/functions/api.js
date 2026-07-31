@@ -162,7 +162,7 @@ async function loadRelationalState(client, actor) {
   const { data: entriesData, error: entriesError } = await entriesQuery;
   if (entriesError) throw entriesError;
 
-  const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "SeguranÃ§a", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
+  const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
 
   return {
     version: 2,
@@ -353,7 +353,7 @@ async function assertFinalizedMonthsUnchanged(client, actor, db) {
   for (const month of finalizedMonths) {
     const incomingClosure = (db.closures || []).find(item => item.month === month && item.nutritionistId === actor.id);
     if (!incomingClosure || incomingClosure.status !== "sent") {
-      const error = new Error(`A competÃªncia ${month} jÃ¡ foi encerrada e nÃ£o pode mais ser alterada.`);
+      const error = new Error(`A competência ${month} já foi encerrada e não pode mais ser alterada.`);
       error.statusCode = 409;
       throw error;
     }
@@ -375,7 +375,7 @@ async function assertFinalizedMonthsUnchanged(client, actor, db) {
       .filter(entry => entry.id)
       .map(entry => [entry.id, comparableEntry(entry)]));
     if (current.size !== incoming.size || [...current].some(([id, value]) => JSON.stringify(value) !== JSON.stringify(incoming.get(id)))) {
-      const error = new Error(`A competÃªncia ${month} jÃ¡ foi encerrada e nÃ£o pode mais ser alterada.`);
+      const error = new Error(`A competência ${month} já foi encerrada e não pode mais ser alterada.`);
       error.statusCode = 409;
       throw error;
     }
@@ -560,7 +560,7 @@ exports.handler = async event => {
     }
 
     if (event.httpMethod === "POST" && action === "export") {
-      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenaÃ§Ã£o pode exportar." });
+      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenação pode exportar." });
       const body = parseBody(event);
       if (!body.month || !/^\d{4}-\d{2}$/.test(body.month)) {
         return json(400, { error: "Informe a competencia no formato AAAA-MM." });
@@ -584,4 +584,3 @@ exports.handler = async event => {
     return json(error.statusCode || 500, { error: error.message });
   }
 };
-
