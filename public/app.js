@@ -38,7 +38,8 @@ const state = {
   expandedAdminDates: new Set(),
   sessionToken: localStorage.getItem(authStorageKey()) || "",
   message: "",
-  isSaving: false
+  isSaving: false,
+  adminRefreshTimer: null
 };
 
 let staticDbCache = null;
@@ -922,6 +923,19 @@ function renderDashboard() {
       render();
     });
   });
+
+  if (state.adminRefreshTimer) clearInterval(state.adminRefreshTimer);
+  state.adminRefreshTimer = setInterval(async () => {
+    if (!state.user || state.user.role !== "admin" || state.view !== "dashboard") return;
+    try {
+      const selectedMonth = state.selectedMonth;
+      state.db = await api("/api/data");
+      state.selectedMonth = selectedMonth;
+      renderDashboard();
+    } catch (_) {
+      // Keep the current view when a background refresh is temporarily unavailable.
+    }
+  }, 15000);
 }
 
 function adminSchoolTable() {
@@ -1317,6 +1331,10 @@ function renderExport() {
 }
 
 function render() {
+  if (state.view !== "dashboard" && state.adminRefreshTimer) {
+    clearInterval(state.adminRefreshTimer);
+    state.adminRefreshTimer = null;
+  }
   if (!state.user) return renderLogin();
   if (state.view === "lancamentos") return renderNutritionistForm();
   if (state.view === "meu-mes") return renderMyMonth();
