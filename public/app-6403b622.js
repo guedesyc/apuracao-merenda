@@ -2,6 +2,7 @@
 const HML_STORAGE_KEY = "apuracao-comandas-hml-db";
 const PROD_SESSION_KEY = "apuracao-session-token";
 const HML_SESSION_KEY = "apuracao-hml-session-token";
+const SAVE_DRAFT_PREFIX = "apuracao-comandas-save-draft";
 const OFFICIAL_ROUTES = [
   "GRE CAJAZEIRAS",
   "GRE CENTRO",
@@ -36,7 +37,8 @@ const state = {
   expandedAdminSchools: new Set(),
   expandedAdminDates: new Set(),
   sessionToken: localStorage.getItem(authStorageKey()) || "",
-  message: ""
+  message: "",
+  isSaving: false
 };
 
 let staticDbCache = null;
@@ -54,6 +56,55 @@ function staticStorageKey() {
 
 function staticDataFile() {
   return isHmlMode() ? "hml-data.json" : "demo-data.json";
+}
+
+function saveDraftStorageKey() {
+  return `${SAVE_DRAFT_PREFIX}:${isStaticMode() ? "static" : "prod"}:${state.user?.id || "anon"}`;
+}
+
+function saveLocalDraft(reason = "pending-save") {
+  if (!state.user || !state.db) return;
+  const draft = {
+    reason,
+    savedAt: new Date().toISOString(),
+    userId: state.user.id,
+    selectedMonth: state.selectedMonth,
+    entries: (state.db.entries || []).filter(entry => entry.nutritionistId === state.user.id),
+    closures: (state.db.closures || []).filter(item => item.nutritionistId === state.user.id)
+  };
+  localStorage.setItem(saveDraftStorageKey(), JSON.stringify(draft));
+}
+
+function getLocalDraft() {
+  if (!state.user) return null;
+  try {
+    return JSON.parse(localStorage.getItem(saveDraftStorageKey()) || "null");
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearLocalDraft() {
+  if (!state.user) return;
+  localStorage.removeItem(saveDraftStorageKey());
+}
+
+function restoreLocalDraft() {
+  const draft = getLocalDraft();
+  if (!draft || draft.userId !== state.user.id) return false;
+  const draftEntryIds = new Set((draft.entries || []).map(entry => entry.id).filter(Boolean));
+  state.db.entries = [
+    ...(state.db.entries || []).filter(entry => entry.nutritionistId !== state.user.id || !draftEntryIds.has(entry.id)),
+    ...(draft.entries || [])
+  ];
+  const draftClosureKeys = new Set((draft.closures || []).map(item => `${item.month}:${item.nutritionistId}`));
+  state.db.closures = [
+    ...(state.db.closures || []).filter(item => !draftClosureKeys.has(`${item.month}:${item.nutritionistId}`)),
+    ...(draft.closures || [])
+  ];
+  state.selectedMonth = draft.selectedMonth || state.selectedMonth;
+  state.message = "Rascunho local restaurado. Confira os dados e clique em Salvar.";
+  return true;
 }
 
 function hmlBanner() {
@@ -254,10 +305,23 @@ async function staticApi(path, options = {}) {
 }
 
 async function saveDb(message = "Salvo.") {
-  await api("/api/save", { method: "POST", body: state.db });
-  state.db = await api("/api/data");
-  state.message = message;
+  saveLocalDraft("before-save");
+  state.isSaving = true;
+  state.message = "Salvando...";
   render();
+  try {
+    await api("/api/save", { method: "POST", body: state.db });
+    const selectedMonth = state.selectedMonth;
+    state.db = await api("/api/data");
+    state.selectedMonth = selectedMonth;
+    clearLocalDraft();
+    state.message = message;
+  } catch (error) {
+    state.message = `Nao foi possivel salvar: ${error.message}. O preenchimento continua nesta tela; tente Salvar novamente antes de sair.`;
+  } finally {
+    state.isSaving = false;
+    render();
+  }
 }
 
 async function loadData() {
@@ -470,6 +534,7 @@ function upsertEntry(schoolId, patch, date = state.selectedDate) {
     state.db.entries.push(entry);
   }
   Object.assign(entry, patch, { updatedAt: new Date().toISOString() });
+  saveLocalDraft("edit");
 }
 
 function renderNutritionistForm() {
@@ -496,9 +561,10 @@ function renderNutritionistForm() {
       <div class="metric"><strong>${Math.max(expected - filled, 0)}</strong><span>Pendentes no m&ecirc;s</span></div>
     </section>
     <div class="toolbar">
-      <button class="secondary" id="save-partial" ${isMonthFinalized() ? "disabled" : ""}>Salvar</button>
-      <button class="primary" id="send-final" ${completion.pending || isMonthFinalized() ? "disabled" : ""}>Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
-      ${isMonthFinalized() ? "<span class=\"status-line\">Compet&ecirc;ncia encerrada e bloqueada para edi&ccedil;&atilde;o.</span>" : ""}
+      <button class="secondary" id="save-partial" ${isMonthFinalized() || state.isSaving ? "disabled" : ""}>${state.isSaving ? "Salvando..." : "Salvar"}</button>
+      <button class="primary" id="send-final" ${completion.pending || isMonthFinalized() || state.isSaving ? "disabled" : ""}>Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
+      ${getLocalDraft() ? `<button class="secondary" id="restore-draft" ${state.isSaving ? "disabled" : ""}>Restaurar rascunho local</button>` : ""}
+      ${isMonthFinalized() ? `<span class="status-line">Compet&ecirc;ncia encerrada e bloqueada para edi&ccedil;&atilde;o.</span>` : ""}
       <span class="status-line">${state.message}</span>
     </div>
     <section class="school-list">
@@ -566,6 +632,10 @@ function renderNutritionistForm() {
     if (isMonthFinalized()) return;
     upsertClosure(state.selectedMonth, "partial", { expected: completion.expected, complete: completion.complete, pending: completion.pending });
     await saveDb("Dados salvos.");
+  });
+  const restoreDraftButton = $("#restore-draft");
+  if (restoreDraftButton) restoreDraftButton.addEventListener("click", () => {
+    if (restoreLocalDraft()) renderNutritionistForm();
   });
   $("#send-final").addEventListener("click", async () => {
     if (isMonthFinalized()) return;
