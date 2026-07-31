@@ -100,6 +100,29 @@ async function selectAll(client, table, columns = "*") {
   return data || [];
 }
 
+async function selectEntriesPaged(client, actor) {
+  const pageSize = 1000;
+  const rows = [];
+  let from = 0;
+
+  while (true) {
+    let query = client
+      .from("entries")
+      .select("*, entry_items(card_id, quantity)")
+      .order("entry_date", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (actor.role !== "admin") query = query.eq("nutritionist_id", actor.id);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return rows;
+}
+
 async function ensureSeeded(client) {
   const { count, error } = await client.from("profiles").select("id", { count: "exact", head: true });
   if (error) throw error;
@@ -157,10 +180,7 @@ async function loadRelationalState(client, actor) {
   if (schoolsError) throw schoolsError;
   const visibleSchoolIds = new Set((schoolsData || []).map(school => school.id));
 
-  let entriesQuery = client.from("entries").select("*, entry_items(card_id, quantity)").order("entry_date", { ascending: true });
-  if (actor.role !== "admin") entriesQuery = entriesQuery.eq("nutritionist_id", actor.id);
-  const { data: entriesData, error: entriesError } = await entriesQuery;
-  if (entriesError) throw entriesError;
+  const entriesData = await selectEntriesPaged(client, actor);
 
   const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
 
