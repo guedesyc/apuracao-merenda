@@ -1,51 +1,60 @@
-# Deploy Netlify + Supabase
+# Deploy Hostinger + Supabase
 
-## Supabase
+A produção atual utiliza uma aplicação Node.js na Hostinger e banco relacional no Supabase.
 
-1. Crie um projeto no Supabase.
-2. Abra o SQL Editor.
-3. Execute `supabase/schema.sql`.
-4. Execute `supabase/seed.sql`.
+## Variáveis de ambiente
 
-O banco usa tabelas relacionais para perfis, rotas, escolas, cards, vínculos, lançamentos, fechamentos e exportações. A tela não acessa o banco diretamente; tudo passa pelas Netlify Functions.
+Configure no ambiente da aplicação Node da Hostinger:
 
-## Variáveis do Netlify
-
-Configure no site do Netlify:
-
-```bash
+```env
 SUPABASE_URL=https://SEU-PROJETO.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
 SESSION_SECRET=uma-string-longa-aleatoria
 ```
 
-Nunca coloque a `SUPABASE_SERVICE_ROLE_KEY` no front-end ou em arquivos públicos.
+O `PORT` normalmente é fornecido pela hospedagem. Localmente, o servidor usa a porta `3000` quando essa variável não está definida.
 
-## Teste local antes de deploy
+Nunca coloque a `SUPABASE_SERVICE_ROLE_KEY` no frontend, no GitHub ou em arquivos públicos.
 
-1. Instale as dependências:
+## Configuração da aplicação Node
 
-   ```bash
-   npm install
-   ```
+- Diretório da aplicação: raiz deste repositório.
+- Arquivo de inicialização: `server.js`.
+- Instalação: `npm install`.
+- Inicialização: `npm start`.
+- Arquivos públicos: diretório `public/`.
 
-2. Configure as variáveis em `.env` local.
+O `server.js` entrega o frontend e encaminha as rotas `/api/*` para a implementação da API. Embora essa implementação permaneça em `netlify/functions/api.js`, a produção não utiliza Netlify Functions.
 
-3. Rode com Netlify CLI:
+## Supabase
 
-   ```bash
-   npx netlify dev
-   ```
+O schema do projeto está em `supabase/schema.sql`. O arquivo `supabase/seed.sql` serve apenas para uma base inicial vazia.
 
-4. Teste:
-   - login admin;
-   - login de uma nutricionista;
-   - se a nutricionista só vê escolas dela;
-   - salvar lançamento;
-   - salvar sem atendimento;
-   - alterar vínculo no ADM;
-   - exportar Excel.
+Em uma produção com dados reais:
 
-## Exportação
+- não execute o seed novamente;
+- não substitua tabelas inteiras;
+- faça backup antes de qualquer migração;
+- aplique somente alterações SQL revisadas e necessárias.
 
-Em produção, `/api/export` gera a planilha Excel dentro da Function e devolve o arquivo para download no navegador.
+## Publicação
+
+1. Gere um backup conforme [BACKUP.md](BACKUP.md).
+2. Envie o commit aprovado ao GitHub.
+3. Atualize a aplicação na Hostinger a partir da branch `main`.
+4. Confirme que as variáveis de ambiente continuam cadastradas.
+5. Reinstale dependências caso `package.json` ou `package-lock.json` tenham mudado.
+6. Reinicie a aplicação Node.
+
+## Validação após deploy
+
+- confirmar login ADM e de uma nutricionista;
+- confirmar a competência global e os dias úteis;
+- confirmar que `Lançamentos` não permite trocar o mês;
+- confirmar que `Meu Mês` permite consulta histórica;
+- conferir os nomes abaixo de `Envios finais`;
+- abrir uma escola e uma data no Painel ADM;
+- validar a tela de exportação sem gerar arquivos desnecessários;
+- verificar se o navegador não apresenta erros.
+
+Para testes com escrita, prefira o HML descrito em [HML.md](HML.md).

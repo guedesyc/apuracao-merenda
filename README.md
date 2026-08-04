@@ -1,49 +1,71 @@
 # Apuração de Comandas
 
-Sistema web para lançamento diário/semanal de refeições por escola e cardápio, com painel administrativo, configuração de responsáveis e exportação mensal consolidada para Excel.
+Sistema web para lançamento e acompanhamento mensal das refeições servidas nas escolas, com acesso separado para nutricionistas e coordenação.
 
-## Arquitetura
+Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaomerendaescolar.ygsystems.com.br)
 
+## Arquitetura atual
+
+- Aplicação Node.js hospedada na Hostinger e iniciada por `server.js`.
 - Frontend estático em `public/`.
-- API em Netlify Functions, em `netlify/functions`.
-- Banco relacional no Supabase, com schema em `supabase/schema.sql`.
-- Seed inicial em `supabase/seed.sql`.
-- Exportação Excel gerada pela Function usando `data/templates/Pasta1.xlsx`.
+- API HTTP implementada em `netlify/functions/api.js` e carregada pelo servidor Node. O nome da pasta é histórico; a produção não depende da Netlify.
+- Banco relacional no Supabase, com estrutura em `supabase/schema.sql`.
+- Exportação mensal consolidada em Excel.
 
-## Protótipo online
+## Regras de acesso
 
-O GitHub Pages serve apenas como protótipo visual:
+### Coordenação
 
-[https://guedesyc.github.io/apuracao-merenda/](https://guedesyc.github.io/apuracao-merenda/)
+- Define a competência global e a quantidade de dias úteis no Painel ADM.
+- A competência salva passa a valer para todas as nutricionistas.
+- Acompanha preenchimentos por rota, nutricionista, escola e data.
+- Visualiza valores, cards, quantidades, pendências e nutricionistas que realizaram o envio final.
+- Administra nutricionistas, escolas, rotas e vínculos.
+- Exporta a consolidação selecionando o mês desejado.
 
-A produção real deve ser publicada no Netlify com Supabase configurado.
+### Nutricionista
+
+- Em `Lançamentos`, trabalha somente na competência global definida pela coordenação.
+- Não pode alterar o mês nessa tela.
+- Escolas e datas começam recolhidas e podem ser abertas individualmente.
+- Pode salvar o preenchimento em andamento.
+- O envio final só é liberado quando todas as datas de todas as escolas vinculadas estiverem registradas.
+- Depois do envio final, a competência fica bloqueada para edição.
+- Em `Meu Mês`, pode selecionar a competência atual ou meses anteriores apenas para consulta.
 
 ## Como rodar localmente
 
-1. Instale as dependências:
+Instale as dependências e inicie o servidor:
 
-   ```bash
-   npm install
-   pip install -r requirements.txt
-   ```
+```bash
+npm install
+npm start
+```
 
-2. Para o modo local antigo, gere a base inicial:
+Por padrão, o sistema abre em `http://localhost:3000`.
 
-   ```bash
-   python scripts/import_seed.py
-   npm run dev
-   ```
+Para conectar ao Supabase, configure as variáveis descritas em `.env.example` no ambiente do processo Node.
 
-3. Para simular produção, configure `.env` e rode:
+No PowerShell, caso a execução de `npm.ps1` esteja bloqueada, use `npm.cmd`:
 
-   ```bash
-   npx netlify dev
-   ```
+```powershell
+npm.cmd install
+npm.cmd start
+```
 
-## Produção
+## Homologação isolada
 
-Veja [DEPLOY.md](DEPLOY.md) para configurar Supabase, variáveis do Netlify e teste local com Netlify CLI antes do deploy.
+Para testar sem acessar o Supabase de produção, abra:
 
-## Acesso inicial
+```text
+http://localhost:3000/?hml=1
+```
 
-O seed cria os usuários iniciais para teste. Antes de uso real, a coordenação deve trocar as senhas pelo painel ADM.
+O HML usa dados fictícios e salva as alterações somente no navegador. Consulte [HML.md](HML.md) para acessos e instruções completas.
+
+## Produção e segurança
+
+- Nunca publique `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`, `.env` ou `env.env`.
+- Não execute `supabase/seed.sql` sobre uma produção que já contém dados reais.
+- Faça backup antes de alterações estruturais ou manutenções importantes.
+- Consulte [DEPLOY.md](DEPLOY.md) para a configuração da Hostinger e [BACKUP.md](BACKUP.md) para a rotina de backup do Supabase.
