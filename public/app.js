@@ -410,4 +410,997 @@ function shell(content) {
       <main class="content">
         ${content}
         <footer class="app-footer">
-          Desenvolvido por <a href="https×MvêÚ$z{-®éÜj×BæVçG&–W2†VçG'’çVçF—F–W2ÇÂ·Ò’æf÷$V6‚‚…¶6&D–BÂVçF—G•Ò’Óâ°Ð¢6öç7BfÇVRÒVçF—G”çVÖ&W"‡VçF—G’“°Ð¢–b‚fÇVR’&WGW&ã°Ð¢F÷FÇ2ç6WB†6&D–BÂ‡F÷FÇ2ævWB†6&D–B’ÇÂ’²fÇVR“°Ð¢Ò“°Ð¢Ò“°Ð¢Ò“°Ð¢&WGW&â7FFRæF"æ6&G0Ð¢æÖ†6&BÓâ‡°Ð¢Æ&VÃ¢6&BæÆ&VÂÀÐ¢VçF—G“¢F÷FÇ2ævWB†6&Bæ–B’ÇÂÀÐ¢F÷FÃ¢‡F÷FÇ2ævWB†6&Bæ–B’ÇÂ’¢çVÖ&W"†6&Bç&–6RÇÂÐ¢Ò’Ð¢æf–ÇFW"†—FVÒÓâ—FVÒçVçF—G’âÐ¢ç6÷'B‚†Â"’ÓâæÆ&VÂæÆö6ÆT6ö×&R†"æÆ&VÂÂ'BÔ%""Â²çVÖW&–3¢G'VRÒ’“°Ð§ÐÐ Ð¦gVæ7F–öâFÖ–å66†ööÄFWF–Â‡66†ööÂ’°Ð¢6öç7BFFW2Ò'W6–æW74FFW2‚“°Ð¢6öç7Bf–ÆÆVBÒFFW2æf–ÇFW"†FFRÓâFÖ–äFFTVçG&–W2‡66†ööÂæ–BÂFFR’ç6öÖR†—46ö×ÆWFTVçG'’’’æÆVæwFƒ°Ð¢6öç7BVæF–ærÒÖF‚æÖ‚†FFW2æÆVæwF‚Òf–ÆÆVBÂ“°Ð¢6öç7BF÷FÂÒFFW2ç&VGV6R‚‡7VÒÂFFR’Óâ°Ð¢&WGW&â7VÒ²FÖ–äFFTVçG&–W2‡66†ööÂæ–BÂFFR’æf–ÇFW"†—46ö×ÆWFTVçG'’’ç&VGV6R‚†F•7VÒÂVçG'’’ÓâF•7VÒ²VçF—F–W5F÷FÂ†VçG'’çVçF—F–W2’Â“°Ð¢ÒÂ“°Ð¢6öç7BÖ„6&E&V6÷&G2ÒFÖ–å66†ööÄÖ„6&E&V6÷&G2‡66†ööÂÂFFW2“°Ð¢6öç7B6&EF÷FÇ2ÒFÖ–å66†ööÄ6&EF÷FÇ2‡66†ööÂÂFFW2“°Ð¢&WGW&â Ð¢Ç6V7F–öâ6Æ73Ò&FÖ–â×66†ööÂÖFWF–Â#àÐ¢ÆF—b6Æ73Ò&FÖ–âÖFWF–Â×7VÖÖ'’#àÐ¢Ç7ããÇ7G&öæsâG¶f–ÆÆVGÓÂ÷7G&öæsâ&VVæ6†–F3Â÷7ãàÐ¢Ç7ããÇ7G&öæsâG·VæF–æwÓÂ÷7G&öæsâVæFVçFW3Â÷7ãàÐ¢Ç7ããÇ7G&öæsâG¶ÖöæW’‡F÷FÂ—ÓÂ÷7G&öæsâF÷FÂW7F–ÖFóÂ÷7ãàÐ¢G¶Ö„6&E&V6÷&G2æÆVæwF‚ò Ð¢ÆF—b6Æ73Ò&FÖ–âÖÖ‚Ö6&B×7VÖÖ'’"&–ÖÆ&VÃÒ$Ö–÷&W2&Vv—7G&÷2÷"6&B#àÐ¢G¶Ö„6&E&V6÷&G2æÖ†—FVÒÓâ Ð¢Ç7ãàÐ¢Ç7G&öæsâG¶—FVÒæÆ&VÇÓÂ÷7G&öæsâÒG¶—FVÒçVçF—G’çFôÆö6ÆU7G&–ær‚'BÔ%""—ÒÂG¶f÷&ÖDFFT%"†—FVÒæFFR—ÐÐ¢Â÷7ãàÐ¢’æ¦ö–â‚""—ÐÐ¢ÂöF—càÐ¢¢"'ÐÐ¢ÂöF—càÐ¢G¶6&EF÷FÇ2æÆVæwF‚ò Ð¢ÆF—b6Æ73Ò&FÖ–â×66†ööÂÖ6&B×F÷FÂ×æVÂ#àÐ¢ÆF—b6Æ73Ò'66†ööÂ×F÷FÂÖ—FVÒFÖ–â×66†ööÂ×F÷FÂÖ—FVÒ#àÐ¢Ç7ãâG·66†ööÂç6†÷'DæÖWÓÂ÷7ãàÐ¢ÆF—b6Æ73Ò'66†ööÂÖ6&B×F÷FÇ2#àÐ¢G¶6&EF÷FÇ2æÖ†—FVÒÓâ Ð¢ÆF—b6Æ73Ò'66†ööÂÖ6&B×F÷FÂÖÆ–æR#àÐ¢Ç7ãâG¶—FVÒæÆ&VÇÓÂ÷7ãàÐ¢Ç7G&öæsâG¶—FVÒçVçF—G’çFôÆö6ÆU7G&–ær‚'BÔ%""—ÓÂ÷7G&öæsàÐ¢ÂöF—càÐ¢’æ¦ö–â‚""—ÐÐ¢ÂöF—càÐ¢ÆF—b6Æ73Ò'66†ööÂ×F÷FÂÖvVæW&Â#àÐ¢Ç7ãåF÷FÂvW&ÃÂ÷7ãàÐ¢Ç7G&öæsâG¶ÖöæW’‡F÷FÂ—ÓÂ÷7G&öæsàÐ¢ÂöF—càÐ¢ÂöF—càÐ¢ÂöF—càÐ¢¢"'ÐÐ¢ÆF—b6Æ73Ò&FÖ–âÖFFRÖÆ—7B#àÐ¢G¶FFW2æÖ†FFRÓâFÖ–äFFT6&B‡66†ööÂÂFFR’’æ¦ö–â‚""—ÐÐ¢ÂöF—càÐ¢Â÷6V7F–öãàÐ¢°Ð§ÐÐ Ð¦gVæ7F–öâFÖ–äFFT6&B‡66†ööÂÂFFR’°Ð¢6öç7BVçG&–W2ÒFÖ–äFFTVçG&–W2‡66†ööÂæ–BÂFFR“°Ð¢6öç7B6ö×ÆWFTVçG&–W2ÒVçG&–W2æf–ÇFW"†—46ö×ÆWFTVçG'’“°Ð¢6öç7B6ö×ÆWFRÒ6ö×ÆWFTVçG&–W2æÆVæwF‚â°Ð¢6öç7BF÷FÂÒ6ö×ÆWFTVçG&–W2ç&VGV6R‚‡7VÒÂVçG'’’Óâ7VÒ²VçF—F–W5F÷FÂ†VçG'’çVçF—F–W2’Â“°Ð¢6öç7B7FGW2Ò6ö×ÆWFRò†6ö×ÆWFTVçG&–W2ç6öÖR†VçG'’ÓâVçG'’ç7FGW2ÓÓÒ&æ÷E÷6W'fVB"’ò%6VÒFVæF–ÖVçFò"¢%&VVæ6†–Fò"’¢%VæFVçFR#°Ð¢6öç7B¶W’ÒFFU7FFT¶W’‡66†ööÂæ–BÂFFR“°Ð¢6öç7BW‡æFVBÒ7FFRæW‡æFVDFÖ–äFFW2æ†2†¶W’“°Ð¢&WGW&â Ð¢Æ'F–6ÆR6Æ73Ò&FÖ–âÖFFRÖ6&BG¶W‡æFVBò""¢&6öÆÆ6VB'Ò#àÐ¢Æ'WGFöâ6Æ73Ò&ÖöçF‚ÖFFR×&÷r"G—SÒ&'WGFöâ"FFÖFÖ–âÖFFR×FövvÆSÒ"G¶¶W—Ò"&–ÖW‡æFVCÒ"G¶W‡æFVGÒ#àÐ¢Ç7G&öæsâG¶f÷&ÖDFFT%"†FFR—ÓÂ÷7G&öæsàÐ¢Ç7â6Æ73Ò&&FvRG¶6ö×ÆWFRò&FöæR"¢'v&â'Ò#âG·7FGW7ÓÂ÷7ãàÐ¢Ç7ãâG¶6ö×ÆWFTVçG&–W2æÖ†VçG'’ÓâVçG'’æçWG&—F–öæ—7DæÖR’æf–ÇFW"„&ööÆVâ’æ¦ö–â‚"Â"—ÓÂ÷7ãàÐ¢Ç7ãâG¶6ö×ÆWFRòÖöæW’‡F÷FÂ’¢"'ÓÂ÷7ãàÐ¢Ç7â6Æ73Ò&6†Wg&öâ#âG¶W‡æFVBò"Ò"¢"²'ÓÂ÷7ãàÐ¢Âö'WGFöãàÐ¢G¶W‡æFVBòÆF—b6Æ73Ò&FÖ–âÖFFRÖFWF–Â#âG¶FÖ–äFFTFWF–Â†VçG&–W2Â6ö×ÆWFTVçG&–W2—ÓÂöF—cæ¢"'ÐÐ¢Âö'F–6ÆSàÐ¢°Ð§ÐÐ Ð¦gVæ7F–öâFÖ–äFFTFWF–Â†VçG&–W2Â6ö×ÆWFTVçG&–W2’°Ð¢–b‚VçG&–W2æÆVæwF‚’&WGW&âÇ7â6Æ73Ò&×WFVB#äæVæ‡VÒ&VVæ6†–ÖVçFò–æ–6–FòæW76FFãÂ÷7ãæ°Ð¢–b‚6ö×ÆWFTVçG&–W2æÆVæwF‚’&WGW&âÇ7â6Æ73Ò&×WFVB#å&VVæ6†–ÖVçFò–æ–6–FòÂÖ2–æFVæFVçFRFRf–æÆ—¦f66VF–Ã²fF–ÆFS¶òãÂ÷7ãæ°Ð¢&WGW&â6ö×ÆWFTVçG&–W2æÖ†VçG'’Óâ°Ð¢6öç7BF÷FÂÒVçF—F–W5F÷FÂ†VçG'’çVçF—F–W2“°Ð¢6öç7B6&G2Òf–ÆÆVD6&DÆ–æW2†VçG'’“°Ð¢&WGW&â Ð¢ÆF—b6Æ73Ò&FÖ–âÖVçG'’ÖFWF–Â#àÐ¢ÆF—b6Æ73Ò&FÖ–âÖVçG'’Ö†VB#àÐ¢Ç7G&öæsâG¶VçG'’æçWG&—F–öæ—7DæÖRÇÂ$çWG&–6–öæ—7F'ÓÂ÷7G&öæsàÐ¢Ç7ãâG¶VçG'’ç7FGW2ÓÓÒ&æ÷E÷6W'fVB"ò%6VÒFVæF–ÖVçFò"¢F÷FÃ¢G¶ÖöæW’‡F÷FÂ—ÖÓÂ÷7ãàÐ¢ÂöF—càÐ¢G¶VçG'’ç7FGW2ÓÓÒ&æ÷E÷6W'fVB"òÇ7ãäÖ÷F—fó¢G¶VçG'’ç&V6öçÓÂ÷7ãæ¢6&G2æÆVæwF‚ò Ð¢ÆF—b6Æ73Ò&6&BÖÆ–æW2#àÐ¢G¶6&G2æÖ†—FVÒÓâ Ð¢ÆF—b6Æ73Ò&6&BÖÆ–æR#àÐ¢Ç7ãâG¶—FVÒæÆ&VÇÓÂ÷7ãàÐ¢Ç7G&öæsâG¶—FVÒçG—ÓÂ÷7G&öæsàÐ¢Ç7ãâG¶ÖöæW’‡VçF—G”çVÖ&W"†—FVÒçG’’¢—FVÒç&–6R—ÓÂ÷7ãàÐ¢ÂöF—càÐ¢’æ¦ö–â‚""—ÐÐ¢ÂöF—càÐ¢¢Ç7â6Æ73Ò&×WFVB#äæVæ‡VÒ6&B&VVæ6†–FòãÂ÷7ãæÐÐ¢G¶VçG'’ææ÷FW2òÇ7ãäö'6W'ff66VF–Ã²fF–ÆFS¶ó¢G¶VçG'’ææ÷FW7ÓÂ÷7ãæ¢"'ÐÐ¢ÂöF—càÐ¢°Ð¢Ò’æ¦ö–â‚""“°Ð§ÐÐ¦gVæ7F–öâ&VæFW$6öæf–r‚’°Ð¢6†VÆÂ† Ð¢ÆF—b6Æ73Ò'F÷&"#àÐ¢ÆF—b6Æ73Ò'vR×F—FÆR#ãÆƒä6öæf–wW&:|;VW3ÂöƒãÇäFVf–æçWG&–6–öæ—7F2Â&÷F2RW66öÆ26ö"&W7öç6&–Æ–FFRãÂ÷ãÂöF—càÐ¢Æ'WGFöâ6Æ73Ò'&–Ö'’"–CÒ&FB×W6W"#äæ÷fçWG&–6–öæ—7FÂö'WGFöãàÐ¢ÂöF—càÐ¢Ç6V7F–öâ6Æ73Ò'æVÂ#àÐ¢Æƒ#äçWG&–6–öæ—7F3Âöƒ#àÐ¢ÆF—b6Æ73Ò'F&ÆR×w&#àÐ¢ÇF&ÆSàÐ¢ÇF†VCãÇG#ãÇFƒäæöÖSÂ÷FƒãÇFƒåW7\:&–óÂ÷FƒãÇFƒå6Væ†Â÷FƒãÇFƒäW66öÆ3Â÷FƒãÇFƒä:|;VW3Â÷FƒãÂ÷G#ãÂ÷F†VCàÐ¢ÇF&öG“âG¶çWG&—F–öæ—7G2‚’æÖ‡W6W%&÷r’æ¦ö–â‚""—ÓÂ÷F&öG“àÐ¢Â÷F&ÆSàÐ¢ÂöF—càÐ¢Â÷6V7F–öãàÐ¢Ç6V7F–öâ6Æ73Ò'æVÂ#àÐ¢ÆF—b6Æ73Ò'6V7F–öâÖ†VB#àÐ¢Æƒ#ål:Öæ7VÆò÷"W66öÆÂöƒ#àÐ¢Æ'WGFöâ6Æ73Ò'6V6öæF'’"–CÒ&FB×66†ööÂ"G—SÒ&'WGFöâ#äF–6–öæ"W66öÆÂö'WGFöãàÐ¢ÂöF—càÐ¢ÆF—b6Æ73Ò&f–ÇFW'2#àÐ¢ÆF—b6Æ73Ò&f–VÆB"7G–ÆSÒ&Ö–â×v–GFƒ£##‚#ãÆÆ&VÃå&÷FÂöÆ&VÃãÇ6VÆV7B–CÒ'&÷WFRÖf–ÇFW"#ãÆ÷F–öâfÇVSÒ'FöF2#åFöF3Âö÷F–öãâG·&÷WFW2‚’æÖ‡&÷WFRÓâÆ÷F–öâG·7FFRç&÷WFTf–ÇFW"ÓÓÒ&÷WFRò'6VÆV7FVB"¢"'ÓâG·&÷WFWÓÂö÷F–öãæ’æ¦ö–â‚""—ÓÂ÷6VÆV7CãÂöF—càÐ¢ÂöF—càÐ¢G¶76–væÖVçEF&ÆR‚—ÐÐ¢Ç6Æ73Ò'7FGW2ÖÆ–æR#âG·7FFRæÖW76vWÓÂ÷àÐ¢Â÷6V7F–öãàÐ¢“°Ð¢B‚"6FB×W6W""’æFDWfVçDÆ—7FVæW"‚&6Æ–6²"Â‚’Óâ°Ð¢7FFRæF"çW6W'2çW6‚‡²–C¢V–B‚'W6W""’ÂæÖS¢$æ÷fçWG&–6–öæ—7F"ÂW6W&æÖS¢çWG&’G¶çWG&—F–öæ—7G2‚’æÆVæwF‚²ÖÂ77v÷&C¢""Â&öÆS¢&çWG&—F–öæ—7B"Â7F—fS¢G'VRÒ“°Ð¢6fTF"‚$çWG&–6–öæ—7F7&–Fâ"“°Ð¢Ò“°Ð¢B‚"6FB×66†ööÂ"’æFDWfVçDÆ—7FVæW"‚&6Æ–6²"Â‚’Óâ°Ð¢6öç7BæW‡E&÷rÒÖF‚æÖ‚ƒÂââç7FFRæF"ç66†ööÇ2æÖ‡66†ööÂÓâçVÖ&W"‡66†ööÂç&÷r’ÇÂ’’²°Ð¢6öç7Bf—'7DçWG&—F–öæ—7BÒçWG&—F–öæ—7G2‚•³Óòæ–BÇÂ"#°Ð¢6öç7B&÷WFRÒ7FFRç&÷WFTf–ÇFW"ÓÒ'FöF2"ò7FFRç&÷WFTf–ÇFW"¢&÷WFT÷F–öç2‚•³ÒÇÂ$u$R4TåE$ò#°Ð¢6öç7B66†ööÂÒ°Ð¢–C¢V–B‚'66†ööÂ"’ÀÐ¢&÷s¢æW‡E&÷rÀÐ¢æÖS¢æ÷fW66öÆG¶æW‡E&÷wÖÀÐ¢6†÷'DæÖS¢æ÷fW66öÆG¶æW‡E&÷wÖÀÐ¢&÷WFRÀÐ¢6ö×ç“¢""ÀÐ¢FG&W73¢""ÀÐ¢7F—fS¢G'VRÀÐ¢çWG&—F–öæ—7D–G3¢f—'7DçWG&—F–öæ—7Bò¶f—'7DçWG&—F–öæ—7EÒ¢µÐÐ¢Ó°Ð¢7FFRæF"ç66†ööÇ2çW6‚‡66†ööÂ“°Ð¢6fTF"‚$W66öÆ7&–Fâ§W7FRæöÖRÂ&÷FRçWG&–6–öæ—7FæF&VÆâ"“°Ð¢Ò“°Ð¢Fö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚%¶FF×W6W"Öf–VÆEÒ"’æf÷$V6‚†–çWBÓâ°Ð¢–çWBæFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢6öç7BW6W"Ò7FFRæF"çW6W'2æf–æB†—FVÒÓâ—FVÒæ–BÓÓÒWfVçBçF&vWBæFF6WBçW6W"“°Ð¢W6W%¶WfVçBçF&vWBæFF6WBçW6W$f–VÆEÒÒWfVçBçF&vWBçfÇVS°Ð¢6fTF"‚$FF÷2FçWG&–6–öæ—7FGVÆ—¦F÷2â"“°Ð¢Ò“°Ð¢Ò“°Ð¢Fö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚%¶FFÖFVÆWFR×W6W%Ò"’æf÷$V6‚†'WGFöâÓâ°Ð¢'WGFöâæFDWfVçDÆ—7FVæW"‚&6Æ–6²"Â‚’Óâ°Ð¢6öç7B–BÒ'WGFöâæFF6WBæFVÆWFUW6W#°Ð¢7FFRæF"çW6W'2æf–æB‡W6W"ÓâW6W"æ–BÓÓÒ–B’æ7F—fRÒfÇ6S°Ð¢7FFRæF"ç66†ööÇ2æf÷$V6‚‡66†ööÂÓâ‡66†ööÂæçWG&—F–öæ—7D–G2Ò66†ööÂæçWG&—F–öæ—7D–G2æf–ÇFW"†—FVÒÓâ—FVÒÓÒ–B’’“°Ð¢6fTF"‚$çWG&–6–öæ—7FFW6F—fFâ"“°Ð¢Ò“°Ð¢Ò“°Ð¢B‚"7&÷WFRÖf–ÇFW""’æFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢7FFRç&÷WFTf–ÇFW"ÒWfVçBçF&vWBçfÇVS°Ð¢&VæFW"‚“°Ð¢Ò“°Ð¢Fö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚%¶FF×66†ööÂÖf–VÆEÒ"’æf÷$V6‚†–çWBÓâ°Ð¢–çWBæFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢6öç7B66†ööÂÒ7FFRæF"ç66†ööÇ2æf–æB†—FVÒÓâ—FVÒæ–BÓÓÒWfVçBçF&vWBæFF6WBç66†ööÂ“°Ð¢6öç7BfÇVRÒWfVçBçF&vWBçfÇVRçG&–Ò‚“°Ð¢66†ööÅ¶WfVçBçF&vWBæFF6WBç66†ööÄf–VÆEÒÒfÇVS°Ð¢–b†WfVçBçF&vWBæFF6WBç66†ööÄf–VÆBÓÓÒ'6†÷'DæÖR"’66†ööÂææÖRÒfÇVS°Ð¢6fTF"‚$W66öÆGVÆ—¦Fâ"“°Ð¢Ò“°Ð¢Ò“°Ð¢Fö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚%¶FF×66†ööÂ×&÷WFUÒ"’æf÷$V6‚‡6VÆV7BÓâ°Ð¢6VÆV7BæFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢6öç7B66†ööÂÒ7FFRæF"ç66†ööÇ2æf–æB†—FVÒÓâ—FVÒæ–BÓÓÒWfVçBçF&vWBæFF6WBç66†ööÅ&÷WFR“°Ð¢66†ööÂç&÷WFRÒWfVçBçF&vWBçfÇVS°Ð¢6fTF"‚%&÷FFW66öÆGVÆ—¦Fâ"“°Ð¢Ò“°Ð¢Ò“°Ð¢Fö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚%¶FF×66†ööÂÖçWG&—F–öæ—7EÒ"’æf÷$V6‚‡6VÆV7BÓâ°Ð¢6VÆV7BæFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢6öç7B66†ööÂÒ7FFRæF"ç66†ööÇ2æf–æB†—FVÒÓâ—FVÒæ–BÓÓÒWfVçBçF&vWBæFF6WBç66†ööÄçWG&—F–öæ—7B“°Ð¢66†ööÂæçWG&—F–öæ—7D–G2ÒWfVçBçF&vWBçfÇVRò¶WfVçBçF&vWBçfÇVUÒ¢µÓ°Ð¢6fTF"‚%l:Öæ7VÆòGVÆ—¦Fòâ"“°Ð¢Ò“°Ð¢Ò“°Ð§ÐÐ Ð¦gVæ7F–öâW6W%&÷r‡W6W"’°Ð¢6öç7B6÷VçBÒ7FFRæF"ç66†ööÇ2æf–ÇFW"‡66†ööÂÓâ66†ööÂæçWG&—F–öæ—7D–G2æ–æ6ÇVFW2‡W6W"æ–B’’æÆVæwFƒ°Ð¢&WGW&â Ð¢ÇG#àÐ¢ÇFCãÆ–çWBFF×W6W#Ò"G·W6W"æ–GÒ"FF×W6W"Öf–VÆCÒ&æÖR"fÇVSÒ"G·W6W"ææÖWÒ"óãÂ÷FCàÐ¢ÇFCãÆ–çWBFF×W6W#Ò"G·W6W"æ–GÒ"FF×W6W"Öf–VÆCÒ'W6W&æÖR"fÇVSÒ"G·W6W"çW6W&æÖWÒ"óãÂ÷FCàÐ¢ÇFCãÆ–çWBFF×W6W#Ò"G·W6W"æ–GÒ"FF×W6W"Öf–VÆCÒ'77v÷&B"fÇVSÒ"G·W6W"ç77v÷&GÒ"óãÂ÷FCàÐ¢ÇFCâG¶6÷VçGÓÂ÷FCàÐ¢ÇFCãÆ'WGFöâ6Æ73Ò&FævW""FFÖFVÆWFR×W6W#Ò"G·W6W"æ–GÒ#äFW6F—f#Âö'WGFöããÂ÷FCàÐ¢Â÷G#àÐ¢°Ð§ÐÐ Ð¦gVæ7F–öâ76–væÖVçEF&ÆR‚’°Ð¢ÆWB66†ööÇ2Ò7FFRæF"ç66†ööÇ3°Ð¢–b‡7FFRç&÷WFTf–ÇFW"ÓÒ'FöF2"’66†ööÇ2Ò66†ööÇ2æf–ÇFW"‡66†ööÂÓâ66†ööÂç&÷WFRÓÓÒ7FFRç&÷WFTf–ÇFW"“°Ð¢6öç7B&÷WFT6†ö–6W2Ò&÷WFT÷F–öç2‚“°Ð¢6öç7BçWG&—F–öæ—7D6†ö–6W2ÒçWG&—F–öæ—7G2‚“°Ð¢&WGW&â Ð¢ÆF—b6Æ73Ò'F&ÆR×w&#àÐ¢ÇF&ÆR6Æ73Ò&6öæf–r×66†ööÂ×F&ÆR#àÐ¢ÇF†VCãÇG#ãÇFƒäW66öÆÂ÷FƒãÇFƒå&÷FÂ÷FƒãÇFƒäçWG&–6–öæ—7FÂ÷FƒãÂ÷G#ãÂ÷F†VCàÐ¢ÇF&öG“àÐ¢G·66†ööÇ2æÖ‡66†ööÂÓâ°Ð¢6öç7B6VÆV7FVDçWG&—F–öæ—7BÒ66†ööÂæçWG&—F–öæ—7D–G3òå³ÒÇÂ"#°Ð¢&WGW&â Ð¢ÇG#àÐ¢ÇFCàÐ¢Æ–çW@Ð¢FF×66†ööÃÒ"G·66†ööÂæ–GÒ Ð¢FF×66†ööÂÖf–VÆCÒ'6†÷'DæÖR Ð¢fÇVSÒ"G·66†ööÂç6†÷'DæÖRÇÂ66†ööÂææÖRÇÂ"'Ò Ð¢&–ÖÆ&VÃÒ$æöÖRFW66öÆ Ð¢óàÐ¢Â÷FCàÐ¢ÇFCàÐ¢Ç6VÆV7BFF×66†ööÂ×&÷WFSÒ"G·66†ööÂæ–GÒ"&–ÖÆ&VÃÒ%&÷FFW66öÆ#àÐ¢G·&÷WFT6†ö–6W2æÖ‡&÷WFRÓâ Ð¢Æ÷F–öâfÇVSÒ"G·&÷WFWÒ"G·66†ööÂç&÷WFRÓÓÒ&÷WFRò'6VÆV7FVB"¢"'ÓâG·&÷WFWÓÂö÷F–öãàÐ¢’æ¦ö–â‚""—ÐÐ¢Â÷6VÆV7CàÐ¢Â÷FCàÐ¢ÇFCàÐ¢Ç6VÆV7BFF×66†ööÂÖçWG&—F–öæ—7CÒ"G·66†ööÂæ–GÒ"&–ÖÆ&VÃÒ$çWG&–6–öæ—7F&W7öç6fVÂ#àÐ¢Æ÷F–öâfÇVSÒ"#å6VÒ&W7öç6fVÃÂö÷F–öãàÐ¢G¶çWG&—F–öæ—7D6†ö–6W2æÖ‡W6W"Óâ Ð¢Æ÷F–öâfÇVSÒ"G·W6W"æ–GÒ"G·6VÆV7FVDçWG&—F–öæ—7BÓÓÒW6W"æ–Bò'6VÆV7FVB"¢"'ÓâG·W6W"ææÖWÓÂö÷F–öãàÐ¢’æ¦ö–â‚""—ÐÐ¢Â÷6VÆV7CàÐ¢Â÷FCàÐ¢Â÷G#àÐ¢°Ð¢Ò’æ¦ö–â‚""—ÐÐ¢Â÷F&öG“àÐ¢Â÷F&ÆSàÐ¢ÂöF—càÐ¢°Ð§ÐÐ Ð¦gVæ7F–öâ&VæFW$W‡÷'B‚’°Ð¢6†VÆÂ† Ð¢ÆF—b6Æ73Ò'F÷&"#àÐ¢ÆF—b6Æ73Ò'vR×F—FÆR#ãÆƒäW‡÷'F:|:6óÂöƒãÇävW&RVÖ;¦æ–6Ææ–Æ†6öç6öÆ–FF&6ö÷&FVæ:|:6òãÂ÷ãÂöF—càÐ¢ÂöF—càÐ¢Ç6V7F–öâ6Æ73Ò'æVÂ#àÐ¢ÆF—b6Æ73Ò'FööÆ&"#àÐ¢ÆF—b6Æ73Ò&f–VÆB"7G–ÆSÒ&Ö–â×v–GFƒ¢ƒ‚#ãÆÆ&VÃäÜ:§3ÂöÆ&VÃãÆ–çWB–CÒ&ÖöçF‚"G—SÒ&ÖöçF‚"fÇVSÒ"G·7FFRç6VÆV7FVDÖöçF‡Ò"óãÂöF—càÐ¢Æ'WGFöâ6Æ73Ò'&–Ö'’"–CÒ&W‡÷'B#ävW&"W†6VÂ6öç6öÆ–FFóÂö'WGFöãàÐ¢ÂöF—càÐ¢Ç6Æ73Ò'7FGW2ÖÆ–æR#âG·7FFRæÖW76vWÓÂ÷àÐ¢Â÷6V7F–öãàÐ¢Ç6V7F–öâ6Æ73Ò'æVÂ#àÐ¢Æƒ#äW‡÷'F:|;VW2&V6VçFW3Âöƒ#àÐ¢ÆF—b6Æ73Ò'F&ÆR×w&#àÐ¢ÇF&ÆSàÐ¢ÇF†VCãÇG#ãÇFƒäÜ:§3Â÷FƒãÇFƒä'V—fóÂ÷FƒãÇFƒä7&–FòVÓÂ÷FƒãÂ÷G#ãÂ÷F†VCàÐ¢ÇF&öG“âG²‡7FFRæF"æW‡÷'G2ÇÂµÒ’ç6Æ–6R‚’ç&WfW'6R‚’æÖ†—FVÒÓâÇG#ãÇFCâG¶—FVÒæÖöçF‡ÓÂ÷FCãÇFCãÆ‡&VcÒ"öW‡÷'G2òG¶—FVÒæf–ÆVæÖWÒ#âG¶—FVÒæf–ÆVæÖWÓÂöãÂ÷FCãÇFCâG¶—FVÒæ7&VFVDGÓÂ÷FCãÂ÷G#æ’æ¦ö–â‚""’ÇÂÇG#ãÇFB6öÇ7ãÒ#2#äæVæ‡VÖW‡÷'F:|:6òvW&FãÂ÷FCãÂ÷G#æÓÂ÷F&öG“àÐ¢Â÷F&ÆSàÐ¢ÂöF—càÐ¢Â÷6V7F–öãàÐ¢“°Ð¢B‚"6ÖöçF‚"’æFDWfVçDÆ—7FVæW"‚&6†ævR"ÂWfVçBÓâ°Ð¢7FFRç6VÆV7FVDÖöçF‚ÒWfVçBçF&vWBçfÇVS°Ð¢7FFRæÖW76vRÒ"#°Ð¢&VæFW$W‡÷'B‚“°Ð¢Ò“°Ð¢B‚"6W‡÷'B"’æFDWfVçDÆ—7FVæW"‚&6Æ–6²"Â7–æ2‚’Óâ°Ð¢6öç7BÖöçF‚ÒB‚"6ÖöçF‚"’çfÇVS°Ð¢7FFRç6VÆV7FVDÖöçF‚ÒÖöçFƒ°Ð¢7FFRæÖW76vRÒvW&æFòÆæ–Æ†FRG¶ÖöçF‡Òââæ°Ð¢&VæFW$W‡÷'B‚“°Ð¢G'’°Ð¢6öç7B&W7VÇBÒv—B’‚"ö’öW‡÷'B"Â²ÖWF†öC¢%õ5B"Â&öG“¢²ÖöçF‚ÒÒ“°Ð¢–b‡&W7VÇBæ&6ScB’F÷væÆöD&6ScDf–ÆR‡&W7VÇB“°Ð¢7FFRæF"Òv—B’‚"ö’öFF"“°Ð¢7FFRç6VÆV7FVDÖöçF‚ÒÖöçFƒ°Ð¢7FFRæÖW76vRÒÆæ–Æ†FRG¶ÖöçF‡ÒvW&F¢G·&W7VÇBæf–ÆVæÖWÖ°Ð¢&VæFW$W‡÷'B‚“°Ð¢Ò6F6‚†W'&÷"’°Ð¢7FFRæÖW76vRÒW'&÷"æÖW76vS°Ð¢&VæFW$W‡÷'B‚“°Ð¢ÐÐ¢Ò“°Ð§ÐÐ Ð¦gVæ7F–öâ&VæFW"‚’°Ð¢–b‡7FFRçf–WrÓÒ&F6†&ö&B"bb7FFRæFÖ–å&Vg&W6…F–ÖW"’°Ð¢6ÆV$–çFW'fÂ‡7FFRæFÖ–å&Vg&W6…F–ÖW"“°Ð¢7FFRæFÖ–å&Vg&W6…F–ÖW"ÒçVÆÃ°Ð¢ÐÐ¢–b‚7FFRçW6W"’&WGW&â&VæFW$Æöv–â‚“°Ð¢–b‡7FFRçf–WrÓÓÒ&Ææ6ÖVçF÷2"’&WGW&â&VæFW$çWG&—F–öæ—7Df÷&Ò‚“°Ð¢–b‡7FFRçf–WrÓÓÒ&ÖWRÖÖW2"’&WGW&â&VæFW$×”ÖöçF‚‚“°Ð¢–b‡7FFRçf–WrÓÓÒ&F6†&ö&B"’&WGW&â&VæFW$F6†&ö&B‚“°Ð¢–b‡7FFRçf–WrÓÓÒ&6öæf–r"’&WGW&â&VæFW$6öæf–r‚“°Ð¢–b‡7FFRçf–WrÓÓÒ&W‡÷'F""’&WGW&â&VæFW$W‡÷'B‚“°Ð§ÐÐ Ð¦gVæ7F–öâÆVv7”–æ—F–ÄÆöDF—6&ÆVB‚’°Ð¢–b‡7FFRç6W76–öåFö¶Vâbb—57FF–4ÖöFR‚’’°Ð¢&WGW&âÆöDFF‚Ð¢çF†Vâ‚‚’Óâ°Ð¢7FFRçW6W"Ò7FFRæF"æ7W'&VçEW6W"ÇÂ7FFRæF"çW6W'5³ÒÇÂçVÆÃ°Ð¢7FFRçf–WrÒ7FFRçW6W#òç&öÆRÓÓÒ&FÖ–â"ò&F6†&ö&B"¢&Ææ6ÖVçF÷2#°Ð¢&VæFW"‚“°Ð¢ÒÐ¢æ6F6‚‚‚’Óâ°Ð¢7FFRç6W76–öåFö¶VâÒ"#°Ð¢Æö6Å7F÷&vRç&VÖ÷fT—FVÒ†WF…7F÷&vT¶W’‚’“°Ð¢&VæFW$Æöv–â‚“°Ð¢Ò“°Ð¢ÐÐ¢–b†—57FF–4ÖöFR‚’’°Ð¢&WGW&âÆöDFF‚’çF†Vâ‚‚’Óâ&VæFW$Æöv–â‚’“°Ð¢ÐÐ¢&VæFW$Æöv–â‚“°Ð¢&WGW&â&öÖ—6Rç&W6öÇfR‚“°Ð§ÐÐ Ð¦ÆVv7”–æ—F–ÄÆöDF—6&ÆVB‚“°
+          Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a>
+        </footer>
+      </main>
+    </div>
+  `;
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.addEventListener("click", () => {
+      const nextView = button.dataset.view;
+      if (!isAdmin && nextView === "lancamentos") {
+        state.selectedMonth = state.db.settings.currentMonth;
+        state.selectedDate = `${state.selectedMonth}-01`;
+      }
+      if (isAdmin && nextView !== "dashboard") state.adminPeriodDirty = false;
+      state.view = nextView;
+      state.message = "";
+      render();
+    });
+  });
+  $("#logout").addEventListener("click", () => {
+    state.user = null;
+    state.sessionToken = "";
+    state.message = "";
+    localStorage.removeItem(authStorageKey());
+    renderLogin();
+  });
+}
+
+function entryKey(date, schoolId, nutritionistId = state.user.id) {
+  return state.db.entries.find(entry => entry.date === date && entry.schoolId === schoolId && entry.nutritionistId === nutritionistId);
+}
+
+function cardPreferenceKey(schoolId, nutritionistId = state.user.id) {
+  return `${nutritionistId}:${schoolId}`;
+}
+
+function selectedCardPreference(schoolId) {
+  return state.db.settings?.cardPreferences?.[cardPreferenceKey(schoolId)] || [];
+}
+
+function saveCardPreference(schoolId, quantities) {
+  state.db.settings = state.db.settings || {};
+  state.db.settings.cardPreferences = state.db.settings.cardPreferences || {};
+  state.db.settings.cardPreferences[cardPreferenceKey(schoolId)] = Object.keys(quantities || {});
+}
+
+function defaultQuantitiesForSchool(schoolId) {
+  return Object.fromEntries(selectedCardPreference(schoolId).map(cardId => [cardId, ""]));
+}
+
+function dateStateKey(schoolId, date) {
+  return `${schoolId}:${date}`;
+}
+
+function quantitiesTotal(quantities = {}) {
+  return Object.entries(quantities).reduce((sum, [cardId, qty]) => {
+    const card = state.db.cards.find(item => item.id === cardId);
+    return sum + quantityNumber(qty) * Number(card?.price || 0);
+  }, 0);
+}
+
+function filledCardLines(entry) {
+  return Object.entries(entry?.quantities || {})
+    .map(([cardId, qty]) => {
+      const card = state.db.cards.find(item => item.id === cardId);
+      return { label: card?.label || cardId, qty, price: Number(card?.price || 0) };
+    })
+    .filter(item => item.qty !== "" && item.qty !== null && item.qty !== undefined);
+}
+
+function monthCompletionStatus(userId = state.user.id, month = state.selectedMonth) {
+  const schools = assignedSchools(userId);
+  const dates = businessDates(month);
+  const expected = schools.length * dates.length;
+  let complete = 0;
+  schools.forEach(school => {
+    dates.forEach(date => {
+      if (isCompleteEntry(entryKey(date, school.id, userId))) complete += 1;
+    });
+  });
+  return { schools, dates, expected, complete, pending: Math.max(expected - complete, 0) };
+}
+
+function upsertClosure(month, status, extra = {}) {
+  const existing = state.db.closures.find(item => item.month === month && item.nutritionistId === state.user.id);
+  const patch = {
+    month,
+    nutritionistId: state.user.id,
+    nutritionistName: state.user.name,
+    status,
+    updatedAt: new Date().toISOString(),
+    ...extra
+  };
+  if (status === "partial") patch.partialAt = new Date().toISOString();
+  if (status === "sent") patch.sentAt = new Date().toISOString();
+  if (existing) Object.assign(existing, patch);
+  else state.db.closures.push({ id: uid("closure"), ...patch });
+}
+
+function isMonthFinalized(month = state.selectedMonth) {
+  return state.db.closures.some(item => item.month === month && item.nutritionistId === state.user.id && item.status === "sent");
+}
+
+function schoolMonthTotal(schoolId, userId = state.user.id, month = state.selectedMonth) {
+  return completeEntriesFor({ month, userId, schoolId }).reduce((sum, entry) => sum + quantitiesTotal(entry.quantities), 0);
+}
+
+function schoolMonthCardTotals(schoolId, userId = state.user.id, month = state.selectedMonth) {
+  const totals = new Map();
+  completeEntriesFor({ month, userId, schoolId })
+    .filter(entry => entry.status !== "not_served")
+    .forEach(entry => {
+      Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+        const value = quantityNumber(quantity);
+        if (!value) return;
+        totals.set(cardId, (totals.get(cardId) || 0) + value);
+      });
+    });
+  return state.db.cards
+    .map(card => ({ card, quantity: totals.get(card.id) || 0 }))
+    .filter(item => item.quantity > 0);
+}
+
+function upsertEntry(schoolId, patch, date = state.selectedDate) {
+  if (isMonthFinalized(String(date).slice(0, 7))) return;
+  let entry = entryKey(date, schoolId);
+  if (!entry) {
+    entry = {
+      id: uid("entry"),
+      date,
+      month: date.slice(0, 7),
+      schoolId,
+      nutritionistId: state.user.id,
+      nutritionistName: state.user.name,
+      status: "served",
+      reason: "",
+      notes: "",
+      quantities: defaultQuantitiesForSchool(schoolId),
+      updatedAt: new Date().toISOString()
+    };
+    state.db.entries.push(entry);
+  }
+  Object.assign(entry, patch, { updatedAt: new Date().toISOString() });
+  saveLocalDraft("edit");
+}
+
+function renderNutritionistForm() {
+  const activeMonth = state.db.settings.currentMonth;
+  if (state.selectedMonth !== activeMonth) {
+    state.selectedMonth = activeMonth;
+    state.selectedDate = `${activeMonth}-01`;
+  }
+  const schools = assignedSchools();
+  const monthDates = businessDates();
+  const completion = monthCompletionStatus();
+  const filled = completion.complete;
+  const expected = completion.expected;
+  const cards = state.db.cards;
+  shell(`
+    <div class="topbar">
+      <div class="page-title">
+        <h1>Lan&ccedil;amentos</h1>
+        <p>${schools.length} escolas sob sua responsabilidade.</p>
+      </div>
+      <div class="active-period" aria-label="Compet&ecirc;ncia ativa">
+        <span>Compet&ecirc;ncia ativa</span>
+        <strong>${formatMonthBR(activeMonth)}</strong>
+        <small>${expectedBusinessDays(activeMonth)} dias &uacute;teis</small>
+      </div>
+    </div>
+    <section class="grid cols-3">
+      <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
+      <div class="metric"><strong>${filled}</strong><span>Registros no m&ecirc;s</span></div>
+      <div class="metric"><strong>${Math.max(expected - filled, 0)}</strong><span>Pendentes no m&ecirc;s</span></div>
+    </section>
+    <div class="toolbar">
+      <button class="secondary" id="save-partial" ${isMonthFinalized() || state.isSaving ? "disabled" : ""}>${state.isSaving ? "Salvando..." : "Salvar"}</button>
+      <button class="primary" id="send-final" ${completion.pending || isMonthFinalized() || state.isSaving ? "disabled" : ""}>Encerrar e Enviar para Coordena&ccedil;&atilde;o</button>
+      ${getLocalDraft() ? `<button class="secondary" id="restore-draft" ${state.isSaving ? "disabled" : ""}>Restaurar rascunho local</button>` : ""}
+      ${isMonthFinalized() ? `<span class="status-line">Compet&ecirc;ncia encerrada e bloqueada para edi&ccedil;&atilde;o.</span>` : ""}
+      <span class="status-line">${state.message}</span>
+    </div>
+    <section class="school-list">
+      ${schools.map(school => schoolCard(school, cards, monthDates)).join("") || `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`}
+    </section>
+  `);
+  document.querySelectorAll("[data-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.schoolToggle;
+      if (state.expandedSchools.has(schoolId)) state.expandedSchools.delete(schoolId);
+      else state.expandedSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.dateToggle;
+      if (state.expandedLaunchDates.has(key)) state.expandedLaunchDates.delete(key);
+      else state.expandedLaunchDates.add(key);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-card-toggle]").forEach(input => {
+    input.addEventListener("change", event => {
+      const { school, card, date } = event.target.dataset;
+      const entry = entryKey(date, school);
+      const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
+      if (event.target.checked) quantities[card] = quantities[card] ?? "";
+      else delete quantities[card];
+      upsertEntry(school, { status: "served", quantities }, date);
+      saveCardPreference(school, quantities);
+      pruneEntryIfEmpty(entryKey(date, school));
+      render();
+    });
+  });
+  document.querySelectorAll("[data-qty]").forEach(input => {
+    input.addEventListener("input", event => {
+      const { school, card, date } = event.target.dataset;
+      const entry = entryKey(date, school);
+      const quantities = { ...(entry?.quantities || defaultQuantitiesForSchool(school)) };
+      quantities[card] = parseQuantity(event.target.value);
+      upsertEntry(school, { status: "served", quantities }, date);
+    });
+  });
+  document.querySelectorAll("[data-reason]").forEach(select => {
+    select.addEventListener("change", event => {
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { status: event.target.value ? "not_served" : "served", reason: event.target.value, quantities: event.target.value ? {} : entryKey(date, school)?.quantities || defaultQuantitiesForSchool(school) }, date);
+      pruneEntryIfEmpty(entryKey(date, school));
+      render();
+    });
+  });
+  document.querySelectorAll("[data-notes]").forEach(textarea => {
+    textarea.addEventListener("change", event => {
+      const { school, date } = event.target.dataset;
+      upsertEntry(school, { notes: event.target.value }, date);
+    });
+  });
+  $("#save-partial").addEventListener("click", async () => {
+    if (isMonthFinalized()) return;
+    upsertClosure(state.selectedMonth, "partial", { expected: completion.expected, complete: completion.complete, pending: completion.pending });
+    await saveDb("Dados salvos.");
+  });
+  const restoreDraftButton = $("#restore-draft");
+  if (restoreDraftButton) restoreDraftButton.addEventListener("click", () => {
+    if (restoreLocalDraft()) renderNutritionistForm();
+  });
+  $("#send-final").addEventListener("click", async () => {
+    if (isMonthFinalized()) return;
+    const latest = monthCompletionStatus();
+    if (latest.pending > 0) {
+      state.message = `Ainda existem ${latest.pending} pend&ecirc;ncias. Preencha todas as datas de todas as escolas antes de enviar.`;
+      renderNutritionistForm();
+      return;
+    }
+    upsertClosure(state.selectedMonth, "sent", { expected: latest.expected, complete: latest.complete, pending: 0 });
+    await saveDb("M&ecirc;s enviado para coordena&ccedil;&atilde;o.");
+  });
+}
+
+function schoolCard(school, cards, dates) {
+  const collapsed = !state.expandedSchools.has(school.id);
+  const schoolEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id, schoolId: school.id });
+  const pending = Math.max(dates.length - schoolEntries.length, 0);
+  return `
+    <article class="school-card ${collapsed ? "collapsed" : ""}">
+      <button class="school-toggle" type="button" data-school-toggle="${school.id}" aria-expanded="${!collapsed}">
+        <div>
+          <h3>${school.shortName}</h3>
+          <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+        </div>
+        <div class="school-status">
+          <span class="badge done">${schoolEntries.length} registradas</span>
+          <span class="badge ${pending ? "warn" : "done"}">${pending} pendentes</span>
+          <span class="chevron">${collapsed ? "+" : "-"}</span>
+        </div>
+      </button>
+      ${collapsed ? "" : `<div class="date-list">${dates.map(date => dateCard(school, cards, date)).join("")}</div>`}
+    </article>
+  `;
+}
+
+function dateCard(school, cards, date) {
+  const entry = entryKey(date, school.id);
+  const quantities = entry?.quantities || defaultQuantitiesForSchool(school.id);
+  const isNotServed = entry?.status === "not_served";
+  const finalized = isMonthFinalized(String(date).slice(0, 7));
+  const complete = isCompleteEntry(entry);
+  const total = quantitiesTotal(quantities);
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedLaunchDates.has(key);
+  return `
+    <article class="date-card ${expanded ? "" : "collapsed"}">
+      <button class="date-toggle" type="button" data-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <div class="date-summary">
+          <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
+          <span class="muted">${complete ? money(total) : ""}</span>
+          <span class="chevron">${expanded ? "-" : "+"}</span>
+        </div>
+      </button>
+      ${expanded ? `
+        <div class="field">
+          <label>Motivo sem atendimento</label>
+          <select data-reason data-school="${school.id}" data-date="${date}" ${finalized ? "disabled" : ""}>
+            <option value="">Teve atendimento</option>
+            ${state.db.settings.reasons.map(reason => `<option ${entry?.reason === reason ? "selected" : ""}>${reason}</option>`).join("")}
+          </select>
+        </div>
+        ${isNotServed ? "" : `
+          <div class="card-selector">
+            ${cards.map(card => `
+              <label class="check-pill">
+                <input type="checkbox" data-card-toggle data-school="${school.id}" data-date="${date}" data-card="${card.id}" ${quantities[card.id] !== undefined ? "checked" : ""} ${finalized ? "disabled" : ""} />
+                ${card.label}
+              </label>
+            `).join("")}
+          </div>
+          <div class="qty-grid">
+            ${cards.filter(card => quantities[card.id] !== undefined).map(card => `
+              <div class="field">
+                <label>${card.label} &bull; ${money(card.price)}</label>
+                <input type="text" inputmode="numeric" placeholder="Quantidade" data-qty data-school="${school.id}" data-date="${date}" data-card="${card.id}" value="${quantities[card.id]}" ${finalized ? "disabled" : ""} />
+              </div>
+            `).join("")}
+          </div>
+        `}
+        <div class="field">
+          <label>Observa&ccedil;&atilde;o</label>
+          <textarea data-notes data-school="${school.id}" data-date="${date}" ${finalized ? "disabled" : ""}>${entry?.notes || ""}</textarea>
+        </div>
+        <strong>Total do dia: ${money(total)}</strong>
+      ` : ""}
+    </article>
+  `;
+}
+function renderMyMonth() {
+  const schools = assignedSchools();
+  const monthDates = businessDates();
+  const monthEntries = completeEntriesFor({ month: state.selectedMonth, userId: state.user.id });
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>Meu m&ecirc;s</h1><p>Acompanhamento do preenchimento da compet&ecirc;ncia.</p></div>
+      <div class="field" style="min-width: 180px"><label>M&ecirc;s</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+    </div>
+    <section class="grid cols-3">
+      <div class="metric"><strong>${monthEntries.length}</strong><span>Registros no m&ecirc;s</span></div>
+      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas com algum lan&ccedil;amento</span></div>
+      <div class="metric"><strong>${schools.length}</strong><span>Escolas vinculadas</span></div>
+    </section>
+    ${schoolTotalSummary(schools)}
+    ${myMonthBySchool(schools, monthDates)}
+  `);
+  $("#month").addEventListener("change", event => {
+    state.selectedMonth = event.target.value;
+    render();
+  });
+  document.querySelectorAll("[data-month-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.monthSchoolToggle;
+      if (state.expandedMonthSchools.has(schoolId)) state.expandedMonthSchools.delete(schoolId);
+      else state.expandedMonthSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-month-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.monthDateToggle;
+      if (state.expandedMonthDates.has(key)) state.expandedMonthDates.delete(key);
+      else state.expandedMonthDates.add(key);
+      render();
+    });
+  });
+}
+
+function schoolTotalSummary(schools) {
+  if (!schools.length) return "";
+  return `
+    <section class="panel">
+      <h2>Total por escola</h2>
+      <div class="school-total-grid">
+        ${schools.map(school => {
+          const cardTotals = schoolMonthCardTotals(school.id);
+          return `
+            <div class="school-total-item">
+              <span>${school.shortName}</span>
+              <div class="school-card-totals">
+                ${cardTotals.length
+                  ? cardTotals.map(({ card, quantity }) => `
+                    <div class="school-card-total-line">
+                      <span>${card.label}</span>
+                      <strong>${quantity.toLocaleString("pt-BR")}</strong>
+                    </div>
+                  `).join("")
+                  : `<span class="muted">Nenhum card preenchido no mÃªs.</span>`}
+              </div>
+              <div class="school-total-general">
+                <span>Total geral</span>
+                <strong>${money(schoolMonthTotal(school.id))}</strong>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function myMonthBySchool(schools, dates) {
+  if (!schools.length) return `<div class="empty">Nenhuma escola vinculada ao seu usu&aacute;rio.</div>`;
+  return `
+    <section class="month-school-list">
+      ${schools.map(school => {
+        const completeCount = dates.filter(date => isCompleteEntry(entryKey(date, school.id))).length;
+        const collapsed = !state.expandedMonthSchools.has(school.id);
+        const total = schoolMonthTotal(school.id);
+        return `
+          <article class="month-school ${collapsed ? "collapsed" : ""}">
+            <button class="school-toggle" type="button" data-month-school-toggle="${school.id}" aria-expanded="${!collapsed}">
+              <div>
+                <h3>${school.shortName}</h3>
+                <p class="muted">${school.route}${school.address ? ` &bull; ${school.address}` : ""}</p>
+              </div>
+              <div class="school-status">
+                <span class="badge ${completeCount === dates.length ? "done" : "warn"}">${completeCount}/${dates.length} registradas</span>
+                <span class="badge progress">${money(total)}</span>
+                <span class="chevron">${collapsed ? "+" : "-"}</span>
+              </div>
+            </button>
+            ${collapsed ? "" : `<div class="month-date-list">
+              ${dates.map(date => monthDateRow(school, date)).join("")}
+            </div>`}
+          </article>
+        `;
+      }).join("")}
+    </section>
+  `;
+}
+
+function monthDateRow(school, date) {
+  const entry = entryKey(date, school.id);
+  const complete = isCompleteEntry(entry);
+  const total = quantitiesTotal(entry?.quantities || {});
+  const status = entry?.status === "not_served" ? "Sem atendimento" : complete ? "Preenchido" : "Pendente";
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedMonthDates.has(key);
+  const cards = filledCardLines(entry);
+  return `
+    <article class="month-date-card ${expanded ? "" : "collapsed"}">
+      <button class="month-date-row" type="button" data-month-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+        <span>${entry?.reason || ""}</span>
+        <span>${complete ? money(total) : ""}</span>
+        <span class="chevron">${expanded ? "-" : "+"}</span>
+      </button>
+      ${expanded ? `
+        <div class="month-date-detail">
+          <strong>Total da refei&ccedil;&atilde;o: ${money(total)}</strong>
+          ${entry?.status === "not_served" ? `<span>Motivo: ${entry.reason}</span>` : cards.length ? `
+            <div class="card-lines">
+              ${cards.map(item => `
+                <div class="card-line">
+                  <span>${item.label}</span>
+                  <strong>${item.qty}</strong>
+                  <span>${money(quantityNumber(item.qty) * item.price)}</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<span class="muted">Nenhum card preenchido nessa data.</span>`}
+          ${entry?.notes ? `<span>Observa&ccedil;&atilde;o: ${entry.notes}</span>` : ""}
+        </div>
+      ` : ""}
+    </article>
+  `;
+}
+function renderDashboard() {
+  const monthEntries = completeEntriesFor({ month: state.selectedMonth });
+  const sent = state.db.closures.filter(item => item.month === state.selectedMonth && item.status === "sent");
+  const sentNames = [...new Set(sent.map(item => {
+    return item.nutritionistName || state.db.users.find(user => user.id === item.nutritionistId)?.name;
+  }).filter(Boolean))].sort((left, right) => left.localeCompare(right, "pt-BR"));
+  const expectedDays = expectedBusinessDays();
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>Painel da CoordenaÃ§Ã£o</h1><p>Acompanhe preenchimentos, responsÃ¡veis e pendÃªncias.</p></div>
+      <div class="toolbar">
+        <div class="field" style="min-width: 180px"><label>MÃªs</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+        <div class="field" style="width: 150px"><label>Dias Ãºteis</label><input id="working-days" type="number" min="1" max="31" inputmode="numeric" value="${expectedDays}" /></div>
+        <button class="primary" id="save-period" ${state.isSaving ? "disabled" : ""}>${state.isSaving ? "Salvando..." : "Salvar competÃªncia"}</button>
+        <span class="status-line">${state.message}</span>
+      </div>
+    </div>
+    <section class="grid cols-4">
+      <div class="metric"><strong>${state.db.schools.length}</strong><span>Escolas cadastradas</span></div>
+      <div class="metric"><strong>${monthEntries.length}</strong><span>Dias preenchidos</span></div>
+      <div class="metric"><strong>${new Set(monthEntries.map(e => e.schoolId)).size}</strong><span>Escolas preenchidas</span></div>
+      <div class="metric"><strong>${sent.length}</strong><span>Envios finais</span><small class="metric-detail">${sentNames.length ? sentNames.join(", ") : "Nenhuma nutricionista finalizou."}</small></div>
+    </section>
+    <div class="filters">
+      <div class="field" style="min-width: 220px"><label>Rota</label><select id="route-filter"><option value="todas">Todas</option>${routes().map(route => `<option ${state.routeFilter === route ? "selected" : ""}>${route}</option>`).join("")}</select></div>
+      <div class="field" style="min-width: 220px"><label>Nutricionista</label><select id="nutri-filter"><option value="todos">Todas</option>${nutritionists().map(user => `<option value="${user.id}" ${state.nutritionistFilter === user.id ? "selected" : ""}>${user.name}</option>`).join("")}</select></div>
+    </div>
+    ${adminSchoolTable()}
+  `);
+  $("#month").addEventListener("change", event => {
+    state.selectedMonth = event.target.value;
+    state.adminPeriodDirty = true;
+    state.message = "";
+    renderDashboard();
+  });
+  $("#working-days").addEventListener("input", () => {
+    state.adminPeriodDirty = true;
+  });
+  $("#save-period").addEventListener("click", async () => {
+    const month = $("#month").value;
+    const workingDays = Math.trunc(Number($("#working-days").value));
+    if (!/^\d{4}-\d{2}$/.test(month) || workingDays < 1 || workingDays > 31) {
+      state.message = "Informe uma competÃªncia e uma quantidade de dias Ãºteis entre 1 e 31.";
+      renderDashboard();
+      return;
+    }
+    state.selectedMonth = month;
+    state.db.settings.currentMonth = month;
+    setExpectedBusinessDays(month, workingDays);
+    state.adminPeriodDirty = false;
+    await saveDb(`CompetÃªncia global atualizada para ${formatMonthBR(month)} com ${workingDays} dias Ãºteis.`);
+    if (state.message.startsWith("Nao foi possivel salvar")) state.adminPeriodDirty = true;
+  });
+  $("#route-filter").addEventListener("change", event => {
+    state.routeFilter = event.target.value;
+    render();
+  });
+  $("#nutri-filter").addEventListener("change", event => {
+    state.nutritionistFilter = event.target.value;
+    render();
+  });
+  document.querySelectorAll("[data-admin-school-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const schoolId = event.currentTarget.dataset.adminSchoolToggle;
+      if (state.expandedAdminSchools.has(schoolId)) state.expandedAdminSchools.delete(schoolId);
+      else state.expandedAdminSchools.add(schoolId);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-admin-date-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const key = event.currentTarget.dataset.adminDateToggle;
+      if (state.expandedAdminDates.has(key)) state.expandedAdminDates.delete(key);
+      else state.expandedAdminDates.add(key);
+      render();
+    });
+  });
+
+  if (state.adminRefreshTimer) clearInterval(state.adminRefreshTimer);
+  state.adminRefreshTimer = setInterval(async () => {
+    if (!state.user || state.user.role !== "admin" || state.view !== "dashboard" || state.adminPeriodDirty) return;
+    try {
+      const selectedMonth = state.selectedMonth;
+      state.db = await api("/api/data");
+      state.selectedMonth = selectedMonth;
+      renderDashboard();
+    } catch (_) {
+      // Keep the current view when a background refresh is temporarily unavailable.
+    }
+  }, 15000);
+}
+
+function adminSchoolTable() {
+  let schools = state.db.schools;
+  const expectedDays = expectedBusinessDays();
+  if (state.routeFilter !== "todas") schools = schools.filter(school => school.route === state.routeFilter);
+  if (state.nutritionistFilter !== "todos") schools = schools.filter(school => school.nutritionistIds.includes(state.nutritionistFilter));
+  return `
+    <div class="table-wrap">
+      <table class="responsive-table admin-progress-table">
+        <thead><tr><th>Escola</th><th>Rota</th><th>Respons&aacute;veis</th><th>Preenchimento</th><th>Status</th></tr></thead>
+        <tbody>
+          ${schools.map(school => {
+            const entries = completeEntriesFor({ month: state.selectedMonth, schoolId: school.id, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
+            const filledDays = new Set(entries.map(entry => entry.date)).size;
+            const percent = Math.min(100, (filledDays / expectedDays) * 100);
+            const displayPercent = percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+            const status = percent === 0 ? "pendente" : percent >= 100 ? "completo" : "em andamento";
+            const badgeClass = percent === 0 ? "warn" : percent >= 100 ? "done" : "progress";
+            const names = school.nutritionistIds.map(id => state.db.users.find(user => user.id === id)?.name).filter(Boolean).join(", ");
+            const expanded = state.expandedAdminSchools.has(school.id);
+            return `<tr class="admin-school-row ${expanded ? "expanded" : ""}">
+              <td data-label="Escola">
+                <button class="admin-school-button" type="button" data-admin-school-toggle="${school.id}" aria-expanded="${expanded}">
+                  <span>${school.shortName}</span>
+                  <span class="chevron">${expanded ? "-" : "+"}</span>
+                </button>
+              </td>
+              <td data-label="Rota">${school.route}</td>
+              <td data-label="Respons&aacute;veis">${names || "Sem respons&aacute;vel"}</td>
+              <td data-label="Preenchimento">
+                <div class="progress-cell">
+                  <strong>${displayPercent}%</strong>
+                  <span>${filledDays} de ${expectedDays} dias</span>
+                  <div class="progress-bar"><i style="width:${percent}%"></i></div>
+                </div>
+              </td>
+              <td data-label="Status"><span class="badge ${badgeClass}">${status}</span></td>
+            </tr>
+            ${expanded ? `<tr class="admin-detail-row"><td colspan="5">${adminSchoolDetail(school)}</td></tr>` : ""}`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function adminDateEntries(schoolId, date) {
+  return entriesFor({ schoolId, date, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
+}
+
+function adminSchoolMaxCardRecords(school, dates) {
+  const maxByCard = new Map();
+  dates.forEach(date => {
+    adminDateEntries(school.id, date)
+      .filter(entry => isCompleteEntry(entry) && entry.status !== "not_served")
+      .forEach(entry => {
+        Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+          const value = quantityNumber(quantity);
+          if (!value || value <= (maxByCard.get(cardId)?.quantity || 0)) return;
+          const card = state.db.cards.find(item => item.id === cardId);
+          maxByCard.set(cardId, {
+            label: card?.label || cardId,
+            quantity: value,
+            date: entry.date
+          });
+        });
+      });
+  });
+  return [...maxByCard.values()].sort((a, b) => b.quantity - a.quantity);
+}
+
+function adminSchoolCardTotals(school, dates) {
+  const totals = new Map();
+  dates.forEach(date => {
+    adminDateEntries(school.id, date)
+      .filter(entry => isCompleteEntry(entry) && entry.status !== "not_served")
+      .forEach(entry => {
+        Object.entries(entry.quantities || {}).forEach(([cardId, quantity]) => {
+          const value = quantityNumber(quantity);
+          if (!value) return;
+          totals.set(cardId, (totals.get(cardId) || 0) + value);
+        });
+      });
+  });
+  return state.db.cards
+    .map(card => ({
+      label: card.label,
+      quantity: totals.get(card.id) || 0,
+      total: (totals.get(card.id) || 0) * Number(card.price || 0)
+    }))
+    .filter(item => item.quantity > 0)
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
+}
+
+function adminSchoolDetail(school) {
+  const dates = businessDates();
+  const filled = dates.filter(date => adminDateEntries(school.id, date).some(isCompleteEntry)).length;
+  const pending = Math.max(dates.length - filled, 0);
+  const total = dates.reduce((sum, date) => {
+    return sum + adminDateEntries(school.id, date).filter(isCompleteEntry).reduce((daySum, entry) => daySum + quantitiesTotal(entry.quantities), 0);
+  }, 0);
+  const maxCardRecords = adminSchoolMaxCardRecords(school, dates);
+  const cardTotals = adminSchoolCardTotals(school, dates);
+  return `
+    <section class="admin-school-detail">
+      <div class="admin-detail-summary">
+        <span><strong>${filled}</strong> preenchidas</span>
+        <span><strong>${pending}</strong> pendentes</span>
+        <span><strong>${money(total)}</strong> total estimado</span>
+        ${maxCardRecords.length ? `
+          <div class="admin-max-card-summary" aria-label="Maiores registros por card">
+            ${maxCardRecords.map(item => `
+              <span>
+                <strong>${item.label}</strong> - ${item.quantity.toLocaleString("pt-BR")} | ${formatDateBR(item.date)}
+              </span>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+      ${cardTotals.length ? `
+        <div class="admin-school-card-total-panel">
+          <div class="school-total-item admin-school-total-item">
+            <span>${school.shortName}</span>
+            <div class="school-card-totals">
+              ${cardTotals.map(item => `
+                <div class="school-card-total-line">
+                  <span>${item.label}</span>
+                  <strong>${item.quantity.toLocaleString("pt-BR")}</strong>
+                </div>
+              `).join("")}
+            </div>
+            <div class="school-total-general">
+              <span>Total geral</span>
+              <strong>${money(total)}</strong>
+            </div>
+          </div>
+        </div>
+      ` : ""}
+      <div class="admin-date-list">
+        ${dates.map(date => adminDateCard(school, date)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function adminDateCard(school, date) {
+  const entries = adminDateEntries(school.id, date);
+  const completeEntries = entries.filter(isCompleteEntry);
+  const complete = completeEntries.length > 0;
+  const total = completeEntries.reduce((sum, entry) => sum + quantitiesTotal(entry.quantities), 0);
+  const status = complete ? (completeEntries.some(entry => entry.status === "not_served") ? "Sem atendimento" : "Preenchido") : "Pendente";
+  const key = dateStateKey(school.id, date);
+  const expanded = state.expandedAdminDates.has(key);
+  return `
+    <article class="admin-date-card ${expanded ? "" : "collapsed"}">
+      <button class="month-date-row" type="button" data-admin-date-toggle="${key}" aria-expanded="${expanded}">
+        <strong>${formatDateBR(date)}</strong>
+        <span class="badge ${complete ? "done" : "warn"}">${status}</span>
+        <span>${completeEntries.map(entry => entry.nutritionistName).filter(Boolean).join(", ")}</span>
+        <span>${complete ? money(total) : ""}</span>
+        <span class="chevron">${expanded ? "-" : "+"}</span>
+      </button>
+      ${expanded ? `<div class="admin-date-detail">${adminDateDetail(entries, completeEntries)}</div>` : ""}
+    </article>
+  `;
+}
+
+function adminDateDetail(entries, completeEntries) {
+  if (!entries.length) return `<span class="muted">Nenhum preenchimento iniciado nessa data.</span>`;
+  if (!completeEntries.length) return `<span class="muted">Preenchimento iniciado, mas ainda pendente de finaliza&ccedil;&atilde;o.</span>`;
+  return completeEntries.map(entry => {
+    const total = quantitiesTotal(entry.quantities);
+    const cards = filledCardLines(entry);
+    return `
+      <div class="admin-entry-detail">
+        <div class="admin-entry-head">
+          <strong>${entry.nutritionistName || "Nutricionista"}</strong>
+          <span>${entry.status === "not_served" ? "Sem atendimento" : `Total: ${money(total)}`}</span>
+        </div>
+        ${entry.status === "not_served" ? `<span>Motivo: ${entry.reason}</span>` : cards.length ? `
+          <div class="card-lines">
+            ${cards.map(item => `
+              <div class="card-line">
+                <span>${item.label}</span>
+                <strong>${item.qty}</strong>
+                <span>${money(quantityNumber(item.qty) * item.price)}</span>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<span class="muted">Nenhum card preenchido.</span>`}
+        ${entry.notes ? `<span>Observa&ccedil;&atilde;o: ${entry.notes}</span>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+function renderConfig() {
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>ConfiguraÃ§Ãµes</h1><p>Defina nutricionistas, rotas e escolas sob responsabilidade.</p></div>
+      <button class="primary" id="add-user">Nova nutricionista</button>
+    </div>
+    <section class="panel">
+      <h2>Nutricionistas</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>UsuÃ¡rio</th><th>Senha</th><th>Escolas</th><th>AÃ§Ãµes</th></tr></thead>
+          <tbody>${nutritionists().map(userRow).join("")}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-head">
+        <h2>VÃ­nculo por escola</h2>
+        <button class="secondary" id="add-school" type="button">Adicionar Escola</button>
+      </div>
+      <div class="filters">
+        <div class="field" style="min-width:220px"><label>Rota</label><select id="route-filter"><option value="todas">Todas</option>${routes().map(route => `<option ${state.routeFilter === route ? "selected" : ""}>${route}</option>`).join("")}</select></div>
+      </div>
+      ${assignmentTable()}
+      <p class="status-line">${state.message}</p>
+    </section>
+  `);
+  $("#add-user").addEventListener("click", () => {
+    state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "", role: "nutritionist", active: true });
+    saveDb("Nutricionista criada.");
+  });
+  $("#add-school").addEventListener("click", () => {
+    const nextRow = Math.max(0, ...state.db.schools.map(school => Number(school.row) || 0)) + 1;
+    const firstNutritionist = nutritionists()[0]?.id || "";
+    const route = state.routeFilter !== "todas" ? state.routeFilter : routeOptions()[0] || "GRE CENTRO";
+    const school = {
+      id: uid("school"),
+      row: nextRow,
+      name: `Nova escola ${nextRow}`,
+      shortName: `Nova escola ${nextRow}`,
+      route,
+      company: "",
+      address: "",
+      active: true,
+      nutritionistIds: firstNutritionist ? [firstNutritionist] : []
+    };
+    state.db.schools.push(school);
+    saveDb("Escola criada. Ajuste nome, rota e nutricionista na tabela.");
+  });
+  document.querySelectorAll("[data-user-field]").forEach(input => {
+    input.addEventListener("change", event => {
+      const user = state.db.users.find(item => item.id === event.target.dataset.user);
+      user[event.target.dataset.userField] = event.target.value;
+      saveDb("Dados da nutricionista atualizados.");
+    });
+  });
+  document.querySelectorAll("[data-delete-user]").forEach(button => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.deleteUser;
+      state.db.users.find(user => user.id === id).active = false;
+      state.db.schools.forEach(school => (school.nutritionistIds = school.nutritionistIds.filter(item => item !== id)));
+      saveDb("Nutricionista desativada.");
+    });
+  });
+  $("#route-filter").addEventListener("change", event => {
+    state.routeFilter = event.target.value;
+    render();
+  });
+  document.querySelectorAll("[data-school-field]").forEach(input => {
+    input.addEventListener("change", event => {
+      const school = state.db.schools.find(item => item.id === event.target.dataset.school);
+      const value = event.target.value.trim();
+      school[event.target.dataset.schoolField] = value;
+      if (event.target.dataset.schoolField === "shortName") school.name = value;
+      saveDb("Escola atualizada.");
+    });
+  });
+  document.querySelectorAll("[data-school-route]").forEach(select => {
+    select.addEventListener("change", event => {
+      const school = state.db.schools.find(item => item.id === event.target.dataset.schoolRoute);
+      school.route = event.target.value;
+      saveDb("Rota da escola atualizada.");
+    });
+  });
+  document.querySelectorAll("[data-school-nutritionist]").forEach(select => {
+    select.addEventListener("change", event => {
+      const school = state.db.schools.find(item => item.id === event.target.dataset.schoolNutritionist);
+      school.nutritionistIds = event.target.value ? [event.target.value] : [];
+      saveDb("VÃ­nculo atualizado.");
+    });
+  });
+}
+
+function userRow(user) {
+  const count = state.db.schools.filter(school => school.nutritionistIds.includes(user.id)).length;
+  return `
+    <tr>
+      <td><input data-user="${user.id}" data-user-field="name" value="${user.name}" /></td>
+      <td><input data-user="${user.id}" data-user-field="username" value="${user.username}" /></td>
+      <td><input data-user="${user.id}" data-user-field="password" value="${user.password}" /></td>
+      <td>${count}</td>
+      <td><button class="danger" data-delete-user="${user.id}">Desativar</button></td>
+    </tr>
+  `;
+}
+
+function assignmentTable() {
+  let schools = state.db.schools;
+  if (state.routeFilter !== "todas") schools = schools.filter(school => school.route === state.routeFilter);
+  const routeChoices = routeOptions();
+  const nutritionistChoices = nutritionists();
+  return `
+    <div class="table-wrap">
+      <table class="config-school-table">
+        <thead><tr><th>Escola</th><th>Rota</th><th>Nutricionista</th></tr></thead>
+        <tbody>
+          ${schools.map(school => {
+            const selectedNutritionist = school.nutritionistIds?.[0] || "";
+            return `
+              <tr>
+              <td>
+                <input
+                  data-school="${school.id}"
+                  data-school-field="shortName"
+                  value="${school.shortName || school.name || ""}"
+                  aria-label="Nome da escola"
+                />
+              </td>
+              <td>
+                <select data-school-route="${school.id}" aria-label="Rota da escola">
+                  ${routeChoices.map(route => `
+                    <option value="${route}" ${school.route === route ? "selected" : ""}>${route}</option>
+                  `).join("")}
+                </select>
+              </td>
+              <td>
+                <select data-school-nutritionist="${school.id}" aria-label="Nutricionista responsavel">
+                  <option value="">Sem responsavel</option>
+                  ${nutritionistChoices.map(user => `
+                    <option value="${user.id}" ${selectedNutritionist === user.id ? "selected" : ""}>${user.name}</option>
+                  `).join("")}
+                </select>
+              </td>
+            </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderExport() {
+  shell(`
+    <div class="topbar">
+      <div class="page-title"><h1>ExportaÃ§Ã£o</h1><p>Gere uma Ãºnica planilha consolidada para a coordenaÃ§Ã£o.</p></div>
+    </div>
+    <section class="panel">
+      <div class="toolbar">
+        <div class="field" style="min-width: 180px"><label>MÃªs</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
+        <button class="primary" id="export">Gerar Excel consolidado</button>
+      </div>
+      <p class="status-line">${state.message}</p>
+    </section>
+    <section class="panel">
+      <h2>ExportaÃ§Ãµes recentes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>MÃªs</th><th>Arquivo</th><th>Criado em</th></tr></thead>
+          <tbody>${(state.db.exports || []).slice().reverse().map(item => `<tr><td>${item.month}</td><td><a href="/exports/${item.filename}">${item.filename}</a></td><td>${item.createdAt}</td></tr>`).join("") || `<tr><td colspan="3">Nenhuma exportaÃ§Ã£o gerada.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </section>
+  `);
+  $("#month").addEventListener("change", event => {
+    state.selectedMonth = event.target.value;
+    state.message = "";
+    renderExport();
+  });
+  $("#export").addEventListener("click", async () => {
+    const month = $("#month").value;
+    state.selectedMonth = month;
+    state.message = `Gerando planilha de ${month}...`;
+    renderExport();
+    try {
+      const result = await api("/api/export", { method: "POST", body: { month } });
+      if (result.base64) downloadBase64File(result);
+      state.db = await api("/api/data");
+      state.selectedMonth = month;
+      state.message = `Planilha de ${month} gerada: ${result.filename}`;
+      renderExport();
+    } catch (error) {
+      state.message = error.message;
+      renderExport();
+    }
+  });
+}
+
+function render() {
+  if (state.view !== "dashboard" && state.adminRefreshTimer) {
+    clearInterval(state.adminRefreshTimer);
+    state.adminRefreshTimer = null;
+  }
+  if (!state.user) return renderLogin();
+  if (state.view === "lancamentos") return renderNutritionistForm();
+  if (state.view === "meu-mes") return renderMyMonth();
+  if (state.view === "dashboard") return renderDashboard();
+  if (state.view === "config") return renderConfig();
+  if (state.view === "exportar") return renderExport();
+}
+
+function legacyInitialLoadDisabled() {
+  if (state.sessionToken && !isStaticMode()) {
+    return loadData()
+      .then(() => {
+        state.user = state.db.currentUser || state.db.users[0] || null;
+        state.view = state.user?.role === "admin" ? "dashboard" : "lancamentos";
+        render();
+      })
+      .catch(() => {
+        state.sessionToken = "";
+        localStorage.removeItem(authStorageKey());
+        renderLogin();
+      });
+  }
+  if (isStaticMode()) {
+    return loadData().then(() => renderLogin());
+  }
+  renderLogin();
+  return Promise.resolve();
+}
+
+legacyInitialLoadDisabled();
