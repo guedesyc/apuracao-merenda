@@ -334,6 +334,60 @@ function entryItemRowsFromDb(db, actor) {
   return rows;
 }
 
+function entryIdentityKey(entry) {
+  const date = entry?.date || entry?.entry_date || "";
+  const schoolId = entry?.schoolId || entry?.school_id || "";
+  const nutritionistId = entry?.nutritionistId || entry?.nutritionist_id || "";
+  return `${date}:${schoolId}:${nutritionistId}`;
+}
+
+function reconcileEntriesWithExisting(incomingEntries, existingEntries, nutritionistId) {
+  const existingByKey = new Map((existingEntries || [])
+    .map(entry => [entryIdentityKey(entry), entry]));
+  const reconciledByKey = new Map();
+
+  for (const entry of incomingEntries || []) {
+    if (entry.nutritionistId !== nutritionistId) continue;
+    const key = entryIdentityKey(entry);
+    const existing = existingByKey.get(key);
+    reconciledByKey.set(key, existing ? { ...entry, id: existing.id } : entry);
+  }
+
+  return [
+    ...(incomingEntries || []).filter(entry => entry.nutritionistId !== nutritionistId),
+    ...reconciledByKey.values()
+  ];
+}
+
+async function reconcileEntryIds(client, actor, db) {
+  const { data: existingEntries, error } = await client
+    .from("entries")
+    .select("id, entry_date, school_id, nutritionist_id")
+    .eq("nutritionist_id", actor.id);
+  if (error) throw error;
+  return {
+    ...db,
+    entries: reconcileEntriesWithExisting(db.entries, existingEntries || [], actor.id)
+  };
+}
+
+function isEntryIdentityConflict(error) {
+  return error?.code === "23505"
+    && String(error.message || "").includes("entries_entry_date_school_id_nutritionist_id_key");
+}
+
+async function upsertNutritionistEntries(client, actor, db) {
+  let reconciledDb = await reconcileEntryIds(client, actor, db);
+  try {
+    await replaceRows(client, "entries", entryRowsFromDb(reconciledDb, actor), "id");
+  } catch (error) {
+    if (!isEntryIdentityConflict(error)) throw error;
+    reconciledDb = await reconcileEntryIds(client, actor, reconciledDb);
+    await replaceRows(client, "entries", entryRowsFromDb(reconciledDb, actor), "id");
+  }
+  return reconciledDb;
+}
+
 function hasValidQuantities(entry) {
   if (!entry || entry.status === "not_served") return false;
   const quantities = entry.quantities;
@@ -468,16 +522,16 @@ async function saveRelationalState(client, actor, db, options = {}) {
       await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
     }
   } else {
-    const entriesToReplace = await entryIdsWithChangedQuantities(client, actor, db);
+    const reconciledDb = await upsertNutritionistEntries(client, actor, db);
+    const entriesToReplace = await entryIdsWithChangedQuantities(client, actor, reconciledDb);
     if (entriesToReplace.length) await client.from("entry_items").delete().in("entry_id", entriesToReplace);
-    await replaceRows(client, "entries", entryRowsFromDb(db, actor), "id");
     await replaceRows(
       client,
       "entry_items",
-      entryItemRowsFromDb(db, actor).filter(row => entriesToReplace.includes(row.entry_id)),
+      entryItemRowsFromDb(reconciledDb, actor).filter(row => entriesToReplace.includes(row.entry_id)),
       "entry_id,card_id"
     );
-    await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
+    await replaceRows(client, "monthly_closures", closureRowsFromDb(reconciledDb, actor), "month,nutritionist_id");
   }
 
   if (!options.seed) await logAudit(client, actor, "save", "app_state", null, { role: actor.role });
@@ -603,4 +657,10 @@ exports.handler = async event => {
   } catch (error) {
     return json(error.statusCode || 500, { error: error.message });
   }
+};
+
+exports._test = {
+  entryIdentityKey,
+  reconcileEntriesWithExisting,
+  isEntryIdentityConflict
 };

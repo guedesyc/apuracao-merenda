@@ -8,6 +8,7 @@
     "dev": "node server.js",
     "dev:netlify": "netlify dev",
     "start": "node server.js",
+    "test": "node --test tests/*.test.js",
     "backup:prod": "node scripts/backup_supabase.js",
     "backup:audit": "node scripts/audit_backup_recovery.js",
     "backup:restore-items": "node scripts/restore_backup_items.js",

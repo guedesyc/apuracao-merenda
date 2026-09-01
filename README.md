@@ -32,6 +32,7 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - O envio final só é liberado quando todas as datas de todas as escolas vinculadas estiverem registradas.
 - Depois do envio final, a competência fica bloqueada para edição.
 - Em `Meu Mês`, pode selecionar a competência atual ou meses anteriores apenas para consulta.
+- Rascunhos e salvamentos concorrentes são reconciliados por data, escola e nutricionista, preservando o registro já existente no banco.
 
 ## Como rodar localmente
 
@@ -68,4 +69,5 @@ O HML usa dados fictícios e salva as alterações somente no navegador. Consult
 - Nunca publique `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`, `.env` ou `env.env`.
 - Não execute `supabase/seed.sql` sobre uma produção que já contém dados reais.
 - Faça backup antes de alterações estruturais ou manutenções importantes.
+- A chave única dos lançamentos é `data + escola + nutricionista`; o backend reutiliza o `id` existente antes de salvar e não exige alteração de schema para isso.
 - Consulte [DEPLOY.md](DEPLOY.md) para a configuração da Hostinger e [BACKUP.md](BACKUP.md) para a rotina de backup do Supabase.
