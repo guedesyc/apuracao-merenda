@@ -612,26 +612,33 @@ function businessDaysForMonth(db, month) {
   return total || 22;
 }
 
-async function exportAverageWorkbook(db, month) {
+function monthsWithEntries(db) {
+  return [...new Set((db.entries || [])
+    .map(entry => String(entry.date || "").slice(0, 7))
+    .filter(Boolean))].sort();
+}
+
+async function exportMaximumWorkbook(db) {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Médias");
-  const days = businessDaysForMonth(db, month);
+  const worksheet = workbook.addWorksheet("Máximos");
+  const months = monthsWithEntries(db);
   const columns = [
+    { header: "Mês", key: "month", width: 13 },
     { header: "Escola", key: "school", width: 42 },
     { header: "Rota", key: "route", width: 22 },
     { header: "Nutricionista(s)", key: "nutritionists", width: 34 },
     { header: "Dias úteis", key: "days", width: 12 },
-    ...(db.cards || []).map(card => ({ header: `${card.label} - Média diária`, key: card.id, width: 19 })),
-    { header: "Total geral - Média diária", key: "generalAverage", width: 25 }
+    ...(db.cards || []).map(card => ({ header: `${card.label} - Máximo diário`, key: card.id, width: 20 })),
+    { header: "Total geral - Máximo diário", key: "generalMaximum", width: 25 }
   ];
   worksheet.columns = columns;
   worksheet.mergeCells(1, 1, 1, columns.length);
-  worksheet.getCell(1, 1).value = `Médias por escola e card - ${month}`;
+  worksheet.getCell(1, 1).value = "Máximos por escola, card e mês";
   worksheet.getCell(1, 1).font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
   worksheet.getCell(1, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF146B5B" } };
   worksheet.getCell(1, 1).alignment = { horizontal: "center" };
   worksheet.mergeCells(2, 1, 2, columns.length);
-  worksheet.getCell(2, 1).value = `Média diária = total registrado no card dividido por ${days} dias úteis.`;
+  worksheet.getCell(2, 1).value = "Cada máximo corresponde à maior quantidade registrada em um único dia para o card.";
   worksheet.getCell(2, 1).font = { italic: true, color: { argb: "FF53635D" } };
   worksheet.getRow(4).values = columns.map(column => column.header);
   worksheet.getRow(4).font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -639,32 +646,37 @@ async function exportAverageWorkbook(db, month) {
   worksheet.getRow(4).alignment = { wrapText: true, vertical: "middle" };
   worksheet.getRow(4).height = 32;
 
-  const totalsBySchool = new Map();
-  const nutritionistsBySchool = new Map();
+  const maxByMonthSchool = new Map();
+  const nutritionistsByMonthSchool = new Map();
   for (const entry of db.entries || []) {
-    if (!String(entry.date || "").startsWith(month)) continue;
     if (!isCompleteEntry(entry) || entry.status === "not_served") continue;
-    if (!totalsBySchool.has(entry.schoolId)) totalsBySchool.set(entry.schoolId, new Map());
-    if (!nutritionistsBySchool.has(entry.schoolId)) nutritionistsBySchool.set(entry.schoolId, new Set());
-    if (entry.nutritionistName) nutritionistsBySchool.get(entry.schoolId).add(entry.nutritionistName);
+    const month = String(entry.date || "").slice(0, 7);
+    const key = `${month}:${entry.schoolId}`;
+    if (!maxByMonthSchool.has(key)) maxByMonthSchool.set(key, new Map());
+    if (!nutritionistsByMonthSchool.has(key)) nutritionistsByMonthSchool.set(key, new Set());
+    if (entry.nutritionistName) nutritionistsByMonthSchool.get(key).add(entry.nutritionistName);
     for (const [cardId, quantity] of Object.entries(entry.quantities || {})) {
       const numericQuantity = Number(String(quantity ?? "").replace(",", ".")) || 0;
-      const schoolTotals = totalsBySchool.get(entry.schoolId);
-      schoolTotals.set(cardId, (schoolTotals.get(cardId) || 0) + numericQuantity);
+      const schoolMaximums = maxByMonthSchool.get(key);
+      schoolMaximums.set(cardId, Math.max(schoolMaximums.get(cardId) || 0, numericQuantity));
     }
   }
 
-  for (const school of db.schools || []) {
-    const totals = totalsBySchool.get(school.id) || new Map();
-    const values = [school.shortName, school.route, [...(nutritionistsBySchool.get(school.id) || [])].sort().join(", "), days];
-    let generalTotal = 0;
-    for (const card of db.cards || []) {
-      const total = totals.get(card.id) || 0;
-      generalTotal += total;
-      values.push(Number((total / days).toFixed(2)));
+  for (const month of months) {
+    const days = businessDaysForMonth(db, month);
+    for (const school of db.schools || []) {
+      const key = `${month}:${school.id}`;
+      const maximums = maxByMonthSchool.get(key) || new Map();
+      const values = [month, school.shortName, school.route, [...(nutritionistsByMonthSchool.get(key) || [])].sort().join(", "), days];
+      let generalMaximum = 0;
+      for (const card of db.cards || []) {
+        const maximum = maximums.get(card.id) || 0;
+        generalMaximum += maximum;
+        values.push(maximum);
+      }
+      values.push(generalMaximum);
+      worksheet.addRow(values);
     }
-    values.push(Number((generalTotal / days).toFixed(2)));
-    worksheet.addRow(values);
   }
   for (let rowNumber = 5; rowNumber <= worksheet.rowCount; rowNumber += 1) {
     worksheet.getRow(rowNumber).eachCell((cell, columnNumber) => {
@@ -730,18 +742,15 @@ exports.handler = async event => {
       });
     }
 
-    if (event.httpMethod === "POST" && action === "export-media") {
+    if (event.httpMethod === "POST" && action === "export-maximo") {
       if (actor.role !== "admin") return json(403, { error: "Apenas a coordenação pode exportar." });
       const body = parseBody(event);
-      if (!body.month || !/^\d{4}-\d{2}$/.test(body.month)) {
-        return json(400, { error: "Informe a competência no formato AAAA-MM." });
-      }
       const db = await loadRelationalState(client, actor);
-      const buffer = await exportAverageWorkbook(db, body.month);
+      const buffer = await exportMaximumWorkbook(db);
       const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
-      const filename = `apuracao-medias-${body.month}-${stamp}.xlsx`;
-      await client.from("exports").insert({ id: `export-media-${Date.now()}`, month: body.month, filename, rows: db.schools.length });
-      await logAudit(client, actor, "export", "xlsx-media", filename, { month: body.month });
+      const filename = `apuracao-maximos-todos-os-meses-${stamp}.xlsx`;
+      await client.from("exports").insert({ id: `export-maximo-${Date.now()}`, month: "todos", filename, rows: db.schools.length * monthsWithEntries(db).length });
+      await logAudit(client, actor, "export", "xlsx-maximo", filename, { months: monthsWithEntries(db) });
       return json(200, {
         ok: true,
         filename,
@@ -761,5 +770,5 @@ exports._test = {
   reconcileEntriesWithExisting,
   isEntryIdentityConflict,
   businessDaysForMonth,
-  exportAverageWorkbook
+  exportMaximumWorkbook
 };

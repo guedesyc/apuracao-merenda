@@ -5,7 +5,7 @@ const {
   reconcileEntriesWithExisting,
   isEntryIdentityConflict,
   businessDaysForMonth,
-  exportAverageWorkbook
+  exportMaximumWorkbook
 } = require("../netlify/functions/api")._test;
 const ExcelJS = require("exceljs");
 
@@ -68,7 +68,7 @@ test("only retries the known natural-key conflict", () => {
   assert.equal(isEntryIdentityConflict({ code: "23503", message: "foreign key" }), false);
 });
 
-test("exports an independent average for each card using configured business days", async () => {
+test("exports the maximum of each card for every available month", async () => {
   const db = {
     settings: { workingDaysByMonth: { "2026-08": 20 } },
     cards: [
@@ -77,17 +77,25 @@ test("exports an independent average for each card using configured business day
     ],
     schools: [{ id: "school-1", shortName: "Escola Mario Altenfelder", route: "GRE CENTRO" }],
     entries: [
+      { date: "2026-07-01", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-3": 80, "card-5": 60 }, reason: "" },
       { date: "2026-08-01", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-3": 100, "card-5": 40 }, reason: "" },
-      { date: "2026-08-02", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-3": 50, "card-5": 20 }, reason: "" }
+      { date: "2026-08-02", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-3": 50, "card-5": 20 }, reason: "" },
+      { date: "2026-08-03", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-3": 120, "card-5": 10 }, reason: "" }
     ]
   };
 
   assert.equal(businessDaysForMonth(db, "2026-08"), 20);
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(await exportAverageWorkbook(db, "2026-08"));
-  const row = workbook.getWorksheet("Médias").getRow(5);
+  await workbook.xlsx.load(await exportMaximumWorkbook(db));
+  const worksheet = workbook.getWorksheet("Máximos");
+  const julyRow = worksheet.getRow(5);
+  const augustRow = worksheet.getRow(6);
 
-  assert.equal(row.getCell(5).value, 7.5);
-  assert.equal(row.getCell(6).value, 3);
-  assert.equal(row.getCell(7).value, 10.5);
+  assert.equal(julyRow.getCell(1).value, "2026-07");
+  assert.equal(julyRow.getCell(6).value, 80);
+  assert.equal(julyRow.getCell(7).value, 60);
+  assert.equal(augustRow.getCell(1).value, "2026-08");
+  assert.equal(augustRow.getCell(6).value, 120);
+  assert.equal(augustRow.getCell(7).value, 40);
+  assert.equal(augustRow.getCell(8).value, 160);
 });

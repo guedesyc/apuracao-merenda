@@ -22,6 +22,7 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - Visualiza valores, cards, quantidades, pendências e nutricionistas que realizaram o envio final.
 - Administra nutricionistas, escolas, rotas e vínculos.
 - Exporta a consolidação selecionando o mês desejado.
+- Usa a `Exportação - Máximo` para gerar uma planilha com o maior valor diário de cada card, por escola e por mês, reunindo todos os meses para filtragem no Excel.
 
 ### Nutricionista
 
@@ -33,7 +34,6 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - Depois do envio final, a competência fica bloqueada para edição.
 - Em `Meu Mês`, pode selecionar a competência atual ou meses anteriores apenas para consulta.
 - No resumo `Total por escola`, cada card pode ser aberto para consultar as quantidades registradas dia a dia.
-- A coordenação possui a `Exportação - Média`, que gera uma planilha com uma média diária independente para cada card de cada escola, calculada pelos dias úteis da competência.
 - Rascunhos e salvamentos concorrentes são reconciliados por data, escola e nutricionista, preservando o registro já existente no banco.
 
 ## Como rodar localmente
