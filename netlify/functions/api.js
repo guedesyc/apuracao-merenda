@@ -599,6 +599,83 @@ async function exportWorkbook(db, month) {
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
+function businessDaysForMonth(db, month) {
+  const configured = db.settings?.workingDaysByMonth?.[month];
+  if (configured) return Number(configured);
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(year, monthNumber, 0).getDate();
+  let total = 0;
+  for (let day = 1; day <= lastDay; day += 1) {
+    const weekday = new Date(year, monthNumber - 1, day).getDay();
+    if (weekday !== 0 && weekday !== 6) total += 1;
+  }
+  return total || 22;
+}
+
+async function exportAverageWorkbook(db, month) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Médias");
+  const days = businessDaysForMonth(db, month);
+  const columns = [
+    { header: "Escola", key: "school", width: 42 },
+    { header: "Rota", key: "route", width: 22 },
+    { header: "Nutricionista(s)", key: "nutritionists", width: 34 },
+    { header: "Dias úteis", key: "days", width: 12 },
+    ...(db.cards || []).map(card => ({ header: `${card.label} - Média diária`, key: card.id, width: 19 })),
+    { header: "Total geral - Média diária", key: "generalAverage", width: 25 }
+  ];
+  worksheet.columns = columns;
+  worksheet.mergeCells(1, 1, 1, columns.length);
+  worksheet.getCell(1, 1).value = `Médias por escola e card - ${month}`;
+  worksheet.getCell(1, 1).font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
+  worksheet.getCell(1, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF146B5B" } };
+  worksheet.getCell(1, 1).alignment = { horizontal: "center" };
+  worksheet.mergeCells(2, 1, 2, columns.length);
+  worksheet.getCell(2, 1).value = `Média diária = total registrado no card dividido por ${days} dias úteis.`;
+  worksheet.getCell(2, 1).font = { italic: true, color: { argb: "FF53635D" } };
+  worksheet.getRow(4).values = columns.map(column => column.header);
+  worksheet.getRow(4).font = { bold: true, color: { argb: "FFFFFFFF" } };
+  worksheet.getRow(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF257B6A" } };
+  worksheet.getRow(4).alignment = { wrapText: true, vertical: "middle" };
+  worksheet.getRow(4).height = 32;
+
+  const totalsBySchool = new Map();
+  const nutritionistsBySchool = new Map();
+  for (const entry of db.entries || []) {
+    if (!String(entry.date || "").startsWith(month)) continue;
+    if (!isCompleteEntry(entry) || entry.status === "not_served") continue;
+    if (!totalsBySchool.has(entry.schoolId)) totalsBySchool.set(entry.schoolId, new Map());
+    if (!nutritionistsBySchool.has(entry.schoolId)) nutritionistsBySchool.set(entry.schoolId, new Set());
+    if (entry.nutritionistName) nutritionistsBySchool.get(entry.schoolId).add(entry.nutritionistName);
+    for (const [cardId, quantity] of Object.entries(entry.quantities || {})) {
+      const numericQuantity = Number(String(quantity ?? "").replace(",", ".")) || 0;
+      const schoolTotals = totalsBySchool.get(entry.schoolId);
+      schoolTotals.set(cardId, (schoolTotals.get(cardId) || 0) + numericQuantity);
+    }
+  }
+
+  for (const school of db.schools || []) {
+    const totals = totalsBySchool.get(school.id) || new Map();
+    const values = [school.shortName, school.route, [...(nutritionistsBySchool.get(school.id) || [])].sort().join(", "), days];
+    let generalTotal = 0;
+    for (const card of db.cards || []) {
+      const total = totals.get(card.id) || 0;
+      generalTotal += total;
+      values.push(Number((total / days).toFixed(2)));
+    }
+    values.push(Number((generalTotal / days).toFixed(2)));
+    worksheet.addRow(values);
+  }
+  for (let rowNumber = 5; rowNumber <= worksheet.rowCount; rowNumber += 1) {
+    worksheet.getRow(rowNumber).eachCell((cell, columnNumber) => {
+      if (columnNumber >= 5) cell.numFmt = "0.00";
+    });
+  }
+  worksheet.autoFilter = { from: "A4", to: `${String.fromCharCode(64 + columns.length)}${worksheet.rowCount}` };
+  worksheet.views = [{ state: "frozen", ySplit: 4 }];
+  return Buffer.from(await workbook.xlsx.writeBuffer());
+}
+
 exports.handler = async event => {
   try {
     const client = supabase();
@@ -653,6 +730,26 @@ exports.handler = async event => {
       });
     }
 
+    if (event.httpMethod === "POST" && action === "export-media") {
+      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenação pode exportar." });
+      const body = parseBody(event);
+      if (!body.month || !/^\d{4}-\d{2}$/.test(body.month)) {
+        return json(400, { error: "Informe a competência no formato AAAA-MM." });
+      }
+      const db = await loadRelationalState(client, actor);
+      const buffer = await exportAverageWorkbook(db, body.month);
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
+      const filename = `apuracao-medias-${body.month}-${stamp}.xlsx`;
+      await client.from("exports").insert({ id: `export-media-${Date.now()}`, month: body.month, filename, rows: db.schools.length });
+      await logAudit(client, actor, "export", "xlsx-media", filename, { month: body.month });
+      return json(200, {
+        ok: true,
+        filename,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        base64: buffer.toString("base64")
+      });
+    }
+
     return json(404, { error: "Rota nao encontrada." });
   } catch (error) {
     return json(error.statusCode || 500, { error: error.message });
@@ -662,5 +759,7 @@ exports.handler = async event => {
 exports._test = {
   entryIdentityKey,
   reconcileEntriesWithExisting,
-  isEntryIdentityConflict
+  isEntryIdentityConflict,
+  businessDaysForMonth,
+  exportAverageWorkbook
 };

@@ -32,6 +32,8 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - O envio final só é liberado quando todas as datas de todas as escolas vinculadas estiverem registradas.
 - Depois do envio final, a competência fica bloqueada para edição.
 - Em `Meu Mês`, pode selecionar a competência atual ou meses anteriores apenas para consulta.
+- No resumo `Total por escola`, cada card pode ser aberto para consultar as quantidades registradas dia a dia.
+- A coordenação possui a `Exportação - Média`, que gera uma planilha com uma média diária independente para cada card de cada escola, calculada pelos dias úteis da competência.
 - Rascunhos e salvamentos concorrentes são reconciliados por data, escola e nutricionista, preservando o registro já existente no banco.
 
 ## Como rodar localmente
