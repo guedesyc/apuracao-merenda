@@ -334,6 +334,66 @@ function entryItemRowsFromDb(db, actor) {
   return rows;
 }
 
+async function selectApuracoesPage(client, actor, { page = 1, pageSize = 50, nutritionistId = "", date = "", route = "" } = {}) {
+  if (actor.role !== "admin") {
+    const error = new Error("Apenas a coordenação pode consultar as apurações.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const [profiles, routes, schools] = await Promise.all([
+    selectAll(client, "profiles", "id, name, role"),
+    selectAll(client, "routes", "id, name"),
+    selectAll(client, "schools", "id, name, short_name, route_id")
+  ]);
+  const routeById = new Map(routes.map(item => [item.id, item.name]));
+  const schoolById = new Map(schools.map(item => [item.id, item]));
+  const profileById = new Map(profiles.map(item => [item.id, item]));
+  let schoolIds = schools.map(item => item.id);
+
+  if (route) {
+    schoolIds = schools.filter(item => routeById.get(item.route_id) === route).map(item => item.id);
+    if (!schoolIds.length) return { entries: [], total: 0, page, pageSize };
+  }
+
+  const from = (page - 1) * pageSize;
+  let query = client
+    .from("entries")
+    .select("id, entry_date, month, school_id, nutritionist_id, status, reason, notes, updated_at, entry_items(card_id, quantity)", { count: "exact" })
+    .in("school_id", schoolIds)
+    .order("entry_date", { ascending: true })
+    .order("updated_at", { ascending: true })
+    .range(from, from + pageSize - 1);
+  if (nutritionistId) query = query.eq("nutritionist_id", nutritionistId);
+  if (date) query = query.eq("entry_date", date);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return {
+    page,
+    pageSize,
+    total: count || 0,
+    entries: (data || []).map(entry => {
+      const school = schoolById.get(entry.school_id);
+      return {
+        id: entry.id,
+        date: entry.entry_date,
+        month: entry.month,
+        schoolId: entry.school_id,
+        schoolName: school?.short_name || school?.name || entry.school_id,
+        schoolRoute: routeById.get(school?.route_id) || "SEM ROTA",
+        nutritionistId: entry.nutritionist_id,
+        nutritionistName: profileById.get(entry.nutritionist_id)?.name || "",
+        status: entry.status,
+        reason: entry.reason || "",
+        notes: entry.notes || "",
+        quantities: Object.fromEntries((entry.entry_items || []).map(item => [item.card_id, Number(item.quantity)])),
+        updatedAt: entry.updated_at
+      };
+    })
+  };
+}
+
 function entryIdentityKey(entry) {
   const date = entry?.date || entry?.entry_date || "";
   const schoolId = entry?.schoolId || entry?.school_id || "";
@@ -763,6 +823,18 @@ exports.handler = async event => {
 
     if (event.httpMethod === "GET" && (action === "data" || action === "bootstrap")) {
       return json(200, await loadRelationalState(client, actor));
+    }
+
+    if (event.httpMethod === "GET" && action === "apuracoes") {
+      const params = event.queryStringParameters || {};
+      const page = Math.max(1, Math.trunc(Number(params.page) || 1));
+      return json(200, await selectApuracoesPage(client, actor, {
+        page,
+        pageSize: 50,
+        nutritionistId: String(params.nutritionistId || ""),
+        date: String(params.date || ""),
+        route: String(params.route || "")
+      }));
     }
 
     if (event.httpMethod === "POST" && action === "save") {

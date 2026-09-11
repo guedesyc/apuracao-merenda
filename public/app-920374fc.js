@@ -38,6 +38,7 @@ const state = {
   expandedAdminSchools: new Set(),
   expandedAdminDates: new Set(),
   expandedAdminEntries: new Set(),
+  apuracoes: { entries: [], total: 0, page: 1, pageSize: 50, loading: false, loadedKey: "", error: "" },
   apuracoesNutritionistFilter: "todos",
   apuracoesDateFilter: "",
   apuracoesRouteFilter: "todas",
@@ -302,6 +303,25 @@ async function getStaticDb() {
 async function staticApi(path, options = {}) {
   const db = await getStaticDb();
   if (path === "/api/data") return db;
+
+  if (path.startsWith("/api/apuracoes?")) {
+    const params = new URLSearchParams(path.split("?")[1]);
+    const page = Math.max(1, Math.trunc(Number(params.get("page")) || 1));
+    const pageSize = 50;
+    const schoolsById = new Map((db.schools || []).map(school => [school.id, school]));
+    const filtered = (db.entries || [])
+      .filter(entry => !params.get("nutritionistId") || entry.nutritionistId === params.get("nutritionistId"))
+      .filter(entry => !params.get("date") || entry.date === params.get("date"))
+      .filter(entry => !params.get("route") || schoolsById.get(entry.schoolId)?.route === params.get("route"))
+      .sort((left, right) => String(left.date || "").localeCompare(String(right.date || "")) || String(left.updatedAt || "").localeCompare(String(right.updatedAt || "")));
+    const from = (page - 1) * pageSize;
+    return {
+      page,
+      pageSize,
+      total: filtered.length,
+      entries: filtered.slice(from, from + pageSize)
+    };
+  }
 
   if (path === "/api/login") {
     const body = options.body || {};
@@ -975,21 +995,28 @@ function monthDateRow(school, date) {
   `;
 }
 
-function apuracoesEntries() {
-  const schoolsById = new Map(state.db.schools.map(school => [school.id, school]));
-  return state.db.entries
-    .filter(entry => {
-      const school = schoolsById.get(entry.schoolId);
-      if (state.apuracoesNutritionistFilter !== "todos" && entry.nutritionistId !== state.apuracoesNutritionistFilter) return false;
-      if (state.apuracoesDateFilter && entry.date !== state.apuracoesDateFilter) return false;
-      if (state.apuracoesRouteFilter !== "todas" && school?.route !== state.apuracoesRouteFilter) return false;
-      return true;
-    })
-    .sort((left, right) => {
-      const dateOrder = String(left.date || "").localeCompare(String(right.date || ""));
-      if (dateOrder) return dateOrder;
-      return String(left.updatedAt || "").localeCompare(String(right.updatedAt || ""));
+function apuracoesFilterKey(page = state.apuracoes.page) {
+  return [page, state.apuracoesNutritionistFilter, state.apuracoesDateFilter, state.apuracoesRouteFilter].join("|");
+}
+
+async function loadApuracoesPage(page = 1) {
+  const key = apuracoesFilterKey(page);
+  state.apuracoes = { ...state.apuracoes, page, loading: true, error: "" };
+  renderApuracoes();
+  try {
+    const params = new URLSearchParams({
+      page: String(page),
+      nutritionistId: state.apuracoesNutritionistFilter === "todos" ? "" : state.apuracoesNutritionistFilter,
+      date: state.apuracoesDateFilter,
+      route: state.apuracoesRouteFilter === "todas" ? "" : state.apuracoesRouteFilter
     });
+    const result = await api(`/api/apuracoes?${params.toString()}`);
+    if (state.view !== "apuracoes" || apuracoesFilterKey(page) !== key) return;
+    state.apuracoes = { ...result, loading: false, loadedKey: key, error: "" };
+  } catch (error) {
+    state.apuracoes = { ...state.apuracoes, loading: false, loadedKey: key, error: error.message };
+  }
+  renderApuracoes();
 }
 
 function apuracaoStatus(entry) {
@@ -1035,7 +1062,11 @@ function adminApuracaoEntry(entry) {
 }
 
 function renderApuracoes() {
-  const entries = apuracoesEntries();
+  const entries = state.apuracoes.entries || [];
+  const totalPages = Math.max(1, Math.ceil((state.apuracoes.total || 0) / state.apuracoes.pageSize));
+  const page = state.apuracoes.page || 1;
+  const rangeStart = state.apuracoes.total ? ((page - 1) * state.apuracoes.pageSize) + 1 : 0;
+  const rangeEnd = Math.min(page * state.apuracoes.pageSize, state.apuracoes.total || 0);
   shell(`
     <div class="topbar">
       <div class="page-title"><h1>Apurações</h1><p>Acompanhe os preenchimentos de todas as nutricionistas.</p></div>
@@ -1047,33 +1078,44 @@ function renderApuracoes() {
         <div class="field" style="min-width: 220px"><label>Região</label><select id="apuracoes-route"><option value="todas">Todas</option>${routes().map(route => `<option value="${route}" ${state.apuracoesRouteFilter === route ? "selected" : ""}>${route}</option>`).join("")}</select></div>
         <button class="secondary" id="clear-apuracoes-filters" type="button">Limpar filtros</button>
       </div>
-      <p class="status-line">${entries.length} preenchimento(s) encontrado(s).</p>
+      <p class="status-line">${state.apuracoes.loading ? "Carregando apurações..." : state.apuracoes.error || `${state.apuracoes.total} preenchimento(s) encontrado(s).`}</p>
     </section>
     <section class="panel">
       <div class="admin-apuracoes-list">
-        ${entries.length ? entries.map(adminApuracaoEntry).join("") : `<div class="empty">Nenhum preenchimento encontrado com os filtros selecionados.</div>`}
+        ${state.apuracoes.loading ? `<div class="empty">Carregando registros...</div>` : entries.length ? entries.map(adminApuracaoEntry).join("") : `<div class="empty">Nenhum preenchimento encontrado com os filtros selecionados.</div>`}
       </div>
+      ${!state.apuracoes.loading && state.apuracoes.total ? `<div class="pagination" aria-label="Paginação das apurações">
+        <span>Mostrando ${rangeStart} a ${rangeEnd} de ${state.apuracoes.total}</span>
+        <button class="secondary" type="button" id="apuracoes-previous" ${page <= 1 ? "disabled" : ""}>Anterior</button>
+        <strong>Página ${page} de ${totalPages}</strong>
+        <button class="secondary" type="button" id="apuracoes-next" ${page >= totalPages ? "disabled" : ""}>Próxima</button>
+      </div>` : ""}
     </section>
   `);
   $("#apuracoes-nutritionist").addEventListener("change", event => {
     state.apuracoesNutritionistFilter = event.target.value;
-    renderApuracoes();
+    state.expandedAdminEntries.clear();
+    loadApuracoesPage(1);
   });
   $("#apuracoes-date").addEventListener("change", event => {
     state.apuracoesDateFilter = event.target.value;
-    renderApuracoes();
+    state.expandedAdminEntries.clear();
+    loadApuracoesPage(1);
   });
   $("#apuracoes-route").addEventListener("change", event => {
     state.apuracoesRouteFilter = event.target.value;
-    renderApuracoes();
+    state.expandedAdminEntries.clear();
+    loadApuracoesPage(1);
   });
   $("#clear-apuracoes-filters").addEventListener("click", () => {
     state.apuracoesNutritionistFilter = "todos";
     state.apuracoesDateFilter = "";
     state.apuracoesRouteFilter = "todas";
     state.expandedAdminEntries.clear();
-    renderApuracoes();
+    loadApuracoesPage(1);
   });
+  $("#apuracoes-previous")?.addEventListener("click", () => loadApuracoesPage(page - 1));
+  $("#apuracoes-next")?.addEventListener("click", () => loadApuracoesPage(page + 1));
   document.querySelectorAll("[data-admin-apuracao-toggle]").forEach(button => {
     button.addEventListener("click", event => {
       const entryId = event.currentTarget.dataset.adminApuracaoToggle;
@@ -1082,6 +1124,7 @@ function renderApuracoes() {
       renderApuracoes();
     });
   });
+  if (!state.apuracoes.loading && state.apuracoes.loadedKey !== apuracoesFilterKey()) loadApuracoesPage(state.apuracoes.page || 1);
 }
 
 function renderDashboard() {

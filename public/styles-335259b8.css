@@ -917,6 +917,29 @@ th {
   padding: 12px 14px 14px 126px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pagination strong {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.pagination button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .admin-date-list {
   display: grid;
   gap: 0;
