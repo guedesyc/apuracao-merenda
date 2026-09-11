@@ -23,6 +23,7 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - Administra nutricionistas, escolas, rotas e vínculos.
 - Exporta a consolidação selecionando o mês desejado.
 - Usa a `Exportação - Máximo` para gerar uma planilha com o maior valor diário de cada card, por escola e por mês, reunindo todos os meses para filtragem no Excel.
+- Usa a `Exportação - Sem Atendimento` para listar todas as escolas, datas e motivos classificados como sem atendimento, reunindo todos os meses para filtragem no Excel.
 
 ### Nutricionista
 

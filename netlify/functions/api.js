@@ -688,6 +688,59 @@ async function exportMaximumWorkbook(db) {
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
+async function exportNotServedWorkbook(db) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Sem Atendimento");
+  const columns = [
+    { header: "Mês", key: "month", width: 13 },
+    { header: "Data", key: "date", width: 14 },
+    { header: "Escola", key: "school", width: 42 },
+    { header: "Rota", key: "route", width: 22 },
+    { header: "Nutricionista", key: "nutritionist", width: 28 },
+    { header: "Motivo", key: "reason", width: 28 }
+  ];
+  worksheet.columns = columns;
+  worksheet.mergeCells(1, 1, 1, columns.length);
+  worksheet.getCell(1, 1).value = "Apurações sem atendimento";
+  worksheet.getCell(1, 1).font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
+  worksheet.getCell(1, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF146B5B" } };
+  worksheet.getCell(1, 1).alignment = { horizontal: "center" };
+  worksheet.mergeCells(2, 1, 2, columns.length);
+  worksheet.getCell(2, 1).value = "Relatório com todas as ocorrências classificadas como Sem atendimento.";
+  worksheet.getCell(2, 1).font = { italic: true, color: { argb: "FF53635D" } };
+  worksheet.getRow(4).values = columns.map(column => column.header);
+  worksheet.getRow(4).font = { bold: true, color: { argb: "FFFFFFFF" } };
+  worksheet.getRow(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF257B6A" } };
+  worksheet.getRow(4).alignment = { wrapText: true, vertical: "middle" };
+  worksheet.getRow(4).height = 32;
+
+  const schoolsById = new Map((db.schools || []).map(school => [school.id, school]));
+  const entries = (db.entries || [])
+    .filter(entry => entry.status === "not_served")
+    .sort((left, right) => {
+      const dateOrder = String(left.date || "").localeCompare(String(right.date || ""));
+      if (dateOrder) return dateOrder;
+      const leftSchool = schoolsById.get(left.schoolId)?.shortName || left.schoolId || "";
+      const rightSchool = schoolsById.get(right.schoolId)?.shortName || right.schoolId || "";
+      return leftSchool.localeCompare(rightSchool, "pt-BR");
+    });
+  for (const entry of entries) {
+    const school = schoolsById.get(entry.schoolId);
+    const row = worksheet.addRow([
+      String(entry.date || "").slice(0, 7),
+      entry.date ? new Date(`${entry.date}T00:00:00`) : null,
+      school?.shortName || entry.schoolId || "",
+      school?.route || "",
+      entry.nutritionistName || "",
+      entry.reason || "Não informado"
+    ]);
+    row.getCell(2).numFmt = "dd/mm/yyyy";
+  }
+  worksheet.autoFilter = { from: "A4", to: `F${worksheet.rowCount}` };
+  worksheet.views = [{ state: "frozen", ySplit: 4 }];
+  return Buffer.from(await workbook.xlsx.writeBuffer());
+}
+
 exports.handler = async event => {
   try {
     const client = supabase();
@@ -759,6 +812,23 @@ exports.handler = async event => {
       });
     }
 
+    if (event.httpMethod === "POST" && action === "export-sem-atendimento") {
+      if (actor.role !== "admin") return json(403, { error: "Apenas a coordenação pode exportar." });
+      const db = await loadRelationalState(client, actor);
+      const buffer = await exportNotServedWorkbook(db);
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
+      const filename = `apuracao-sem-atendimento-todos-os-meses-${stamp}.xlsx`;
+      const notServedCount = (db.entries || []).filter(entry => entry.status === "not_served").length;
+      await client.from("exports").insert({ id: `export-sem-atendimento-${Date.now()}`, month: "todos", filename, rows: notServedCount });
+      await logAudit(client, actor, "export", "xlsx-sem-atendimento", filename, { rows: notServedCount });
+      return json(200, {
+        ok: true,
+        filename,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        base64: buffer.toString("base64")
+      });
+    }
+
     return json(404, { error: "Rota nao encontrada." });
   } catch (error) {
     return json(error.statusCode || 500, { error: error.message });
@@ -770,5 +840,6 @@ exports._test = {
   reconcileEntriesWithExisting,
   isEntryIdentityConflict,
   businessDaysForMonth,
-  exportMaximumWorkbook
+  exportMaximumWorkbook,
+  exportNotServedWorkbook
 };

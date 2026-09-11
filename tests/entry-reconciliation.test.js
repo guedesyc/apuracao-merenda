@@ -5,7 +5,8 @@ const {
   reconcileEntriesWithExisting,
   isEntryIdentityConflict,
   businessDaysForMonth,
-  exportMaximumWorkbook
+  exportMaximumWorkbook,
+  exportNotServedWorkbook
 } = require("../netlify/functions/api")._test;
 const ExcelJS = require("exceljs");
 
@@ -98,4 +99,29 @@ test("exports the maximum of each card for every available month", async () => {
   assert.equal(augustRow.getCell(6).value, 120);
   assert.equal(augustRow.getCell(7).value, 40);
   assert.equal(augustRow.getCell(8).value, 160);
+});
+
+test("exports only sem atendimento occurrences with date, school and reason", async () => {
+  const db = {
+    schools: [{ id: "school-1", shortName: "Escola Mario Altenfelder", route: "GRE CENTRO" }],
+    entries: [
+      { date: "2026-07-03", schoolId: "school-1", nutritionistName: "Nutri", status: "not_served", reason: "Feriado" },
+      { date: "2026-08-04", schoolId: "school-1", nutritionistName: "Nutri", status: "not_served", reason: "Sem aula" },
+      { date: "2026-08-05", schoolId: "school-1", nutritionistName: "Nutri", status: "served", quantities: { "card-1": 10 }, reason: "" }
+    ]
+  };
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await exportNotServedWorkbook(db));
+  const worksheet = workbook.getWorksheet("Sem Atendimento");
+  const julyRow = worksheet.getRow(5);
+  const augustRow = worksheet.getRow(6);
+
+  assert.equal(worksheet.rowCount, 6);
+  assert.equal(julyRow.getCell(1).value, "2026-07");
+  assert.equal(julyRow.getCell(3).value, "Escola Mario Altenfelder");
+  assert.equal(julyRow.getCell(6).value, "Feriado");
+  assert.equal(augustRow.getCell(1).value, "2026-08");
+  assert.equal(augustRow.getCell(6).value, "Sem aula");
+  assert.ok(worksheet.autoFilter);
 });
