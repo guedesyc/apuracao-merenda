@@ -361,8 +361,8 @@ async function selectApuracoesPage(client, actor, { page = 1, pageSize = 50, nut
     .from("entries")
     .select("id, entry_date, month, school_id, nutritionist_id, status, reason, notes, updated_at, entry_items(card_id, quantity)", { count: "exact" })
     .in("school_id", schoolIds)
-    .order("entry_date", { ascending: true })
-    .order("updated_at", { ascending: true })
+    .order("entry_date", { ascending: false })
+    .order("updated_at", { ascending: false })
     .range(from, from + pageSize - 1);
   if (nutritionistId) query = query.eq("nutritionist_id", nutritionistId);
   if (date) query = query.eq("entry_date", date);

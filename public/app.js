@@ -313,7 +313,7 @@ async function staticApi(path, options = {}) {
       .filter(entry => !params.get("nutritionistId") || entry.nutritionistId === params.get("nutritionistId"))
       .filter(entry => !params.get("date") || entry.date === params.get("date"))
       .filter(entry => !params.get("route") || schoolsById.get(entry.schoolId)?.route === params.get("route"))
-      .sort((left, right) => String(left.date || "").localeCompare(String(right.date || "")) || String(left.updatedAt || "").localeCompare(String(right.updatedAt || "")));
+      .sort((left, right) => String(right.date || "").localeCompare(String(left.date || "")) || String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
     const from = (page - 1) * pageSize;
     return {
       page,
