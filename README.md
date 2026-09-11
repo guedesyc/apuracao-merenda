@@ -19,6 +19,7 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - Define a competência global e a quantidade de dias úteis no Painel ADM.
 - A competência salva passa a valer para todas as nutricionistas.
 - Acompanha preenchimentos por rota, nutricionista, escola e data.
+- Consulta a aba `Apurações` para visualizar os lançamentos de todas as nutricionistas, com filtros opcionais de nutricionista, data e região.
 - Visualiza valores, cards, quantidades, pendências e nutricionistas que realizaram o envio final.
 - Administra nutricionistas, escolas, rotas e vínculos.
 - Exporta a consolidação selecionando o mês desejado.
