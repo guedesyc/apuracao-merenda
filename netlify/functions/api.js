@@ -178,8 +178,6 @@ async function loadRelationalState(client, actor) {
   }
   const { data: schoolsData, error: schoolsError } = await schoolsQuery;
   if (schoolsError) throw schoolsError;
-  const visibleSchoolIds = new Set((schoolsData || []).map(school => school.id));
-
   const entriesData = await selectEntriesPaged(client, actor);
 
   const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
@@ -215,8 +213,7 @@ async function loadRelationalState(client, actor) {
     users: actor.role === "admin"
       ? profiles.map(publicUser)
       : [publicUser(actor)],
-    entries: (entriesData || [])
-      .filter(entry => visibleSchoolIds.has(entry.school_id))
+    entries: entriesForActorState(entriesData, actor)
       .map(entry => ({
         id: entry.id,
         date: entry.entry_date,
@@ -332,6 +329,11 @@ function entryItemRowsFromDb(db, actor) {
     }
   }
   return rows;
+}
+
+function entriesForActorState(entries, actor) {
+  if (actor.role === "admin") return entries || [];
+  return (entries || []).filter(entry => entry.nutritionist_id === actor.id);
 }
 
 async function selectApuracoesPage(client, actor, { page = 1, pageSize = 50, nutritionistId = "", date = "", route = "" } = {}) {
@@ -909,6 +911,7 @@ exports.handler = async event => {
 
 exports._test = {
   entryIdentityKey,
+  entriesForActorState,
   reconcileEntriesWithExisting,
   isEntryIdentityConflict,
   businessDaysForMonth,

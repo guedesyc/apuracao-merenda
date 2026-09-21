@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   reconcileEntriesWithExisting,
+  entriesForActorState,
   isEntryIdentityConflict,
   businessDaysForMonth,
   exportMaximumWorkbook,
@@ -11,6 +12,18 @@ const {
 const ExcelJS = require("exceljs");
 
 const nutritionistId = "nutritionist-1";
+
+test("keeps historical entries for a nutritionist after a school transfer", () => {
+  const ownHistoricalEntry = { id: "entry-history", nutritionist_id: nutritionistId, school_id: "school-transferred" };
+  const anotherNutritionistEntry = { id: "entry-other", nutritionist_id: "nutritionist-2", school_id: "school-current" };
+
+  const result = entriesForActorState(
+    [ownHistoricalEntry, anotherNutritionistEntry],
+    { id: nutritionistId, role: "nutritionist" }
+  );
+
+  assert.deepEqual(result, [ownHistoricalEntry]);
+});
 
 function entry(id, date, quantities = {}) {
   return {
