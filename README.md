@@ -37,7 +37,7 @@ Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaome
 - A transferência de uma escola mantém os lançamentos históricos da responsável anterior preservados para validação; a escola continua aparecendo em Lançamentos apenas para a responsável atual.
 - Em `Meu Mês`, pode selecionar a competência atual ou meses anteriores apenas para consulta.
 - No resumo `Total por escola`, cada card pode ser aberto para consultar as quantidades registradas dia a dia.
-- Rascunhos e salvamentos concorrentes são reconciliados por data, escola e nutricionista, preservando o registro já existente no banco.
+- Rascunhos e salvamentos concorrentes são reconciliados por data, escola e nutricionista, preservando o registro já existente no banco. A consulta dos lançamentos é paginada também durante a validação e o salvamento.
 
 ## Como rodar localmente
 

@@ -100,7 +100,7 @@ async function selectAll(client, table, columns = "*") {
   return data || [];
 }
 
-async function selectEntriesPaged(client, actor) {
+async function selectEntriesPaged(client, actor, { columns = "*, entry_items(card_id, quantity)", months = null } = {}) {
   const pageSize = 1000;
   const rows = [];
   let from = 0;
@@ -108,10 +108,11 @@ async function selectEntriesPaged(client, actor) {
   while (true) {
     let query = client
       .from("entries")
-      .select("*, entry_items(card_id, quantity)")
-      .order("entry_date", { ascending: true })
+      .select(columns)
+      .order("id", { ascending: true })
       .range(from, from + pageSize - 1);
     if (actor.role !== "admin") query = query.eq("nutritionist_id", actor.id);
+    if (months) query = query.in("month", months);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -422,11 +423,7 @@ function reconcileEntriesWithExisting(incomingEntries, existingEntries, nutritio
 }
 
 async function reconcileEntryIds(client, actor, db) {
-  const { data: existingEntries, error } = await client
-    .from("entries")
-    .select("id, entry_date, school_id, nutritionist_id")
-    .eq("nutritionist_id", actor.id);
-  if (error) throw error;
+  const existingEntries = await selectEntriesPaged(client, actor, { columns: "id, entry_date, school_id, nutritionist_id" });
   return {
     ...db,
     entries: reconcileEntriesWithExisting(db.entries, existingEntries || [], actor.id)
@@ -495,12 +492,10 @@ async function assertFinalizedMonthsUnchanged(client, actor, db) {
     }
   }
 
-  const { data: existingEntries, error: entriesError } = await client
-    .from("entries")
-    .select("id, entry_date, month, status, reason, notes, entry_items(card_id, quantity)")
-    .eq("nutritionist_id", actor.id)
-    .in("month", [...finalizedMonths]);
-  if (entriesError) throw entriesError;
+  const existingEntries = await selectEntriesPaged(client, actor, {
+    columns: "id, entry_date, month, status, reason, notes, entry_items(card_id, quantity)",
+    months: [...finalizedMonths]
+  });
 
   for (const month of finalizedMonths) {
     const current = new Map((existingEntries || [])
@@ -519,11 +514,7 @@ async function assertFinalizedMonthsUnchanged(client, actor, db) {
 }
 
 async function entryIdsWithChangedQuantities(client, actor, db) {
-  const { data: existingEntries, error } = await client
-    .from("entries")
-    .select("id, entry_items(card_id, quantity)")
-    .eq("nutritionist_id", actor.id);
-  if (error) throw error;
+  const existingEntries = await selectEntriesPaged(client, actor, { columns: "id, entry_items(card_id, quantity)" });
   const existingById = new Map((existingEntries || []).map(entry => [entry.id, entry]));
 
   return (db.entries || [])
@@ -910,6 +901,9 @@ exports.handler = async event => {
 };
 
 exports._test = {
+  selectEntriesPaged,
+  reconcileEntryIds,
+  entryIdsWithChangedQuantities,
   entryIdentityKey,
   entriesForActorState,
   reconcileEntriesWithExisting,
