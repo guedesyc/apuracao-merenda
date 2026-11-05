@@ -31,11 +31,46 @@ function load() {
   modules.km ||= { vehicles: {}, logs: {} };
   modules.trainings ||= [];
   modules.trainingSubmissions ||= {};
+  modules.settings = { ...DEFAULT_SETTINGS, ...(modules.settings || {}) };
   if ((modules.version || 1) < 2) migrateV2(modules);
   if (modules.version < 3) migrateV3(modules);
   if (modules.version < 4) migrateV4(modules);
+  if (modules.version < 5) migrateV5(modules);
   ensureAdmProfile();
   return modules;
+}
+
+// Valores de referência editáveis pela coordenação (Analytics → Controle de KM).
+const DEFAULT_SETTINGS = { fuelPrice: 6.2, kmPerLiter: 10 };
+
+// v5: histórico dos ajustes de pedido. Ajustes que já existiam viram um registro "importado"
+// com o que estava gravado (quantidade prevista -> ajustada), na data do envio ou do rascunho.
+function migrateV5(db) {
+  for (const order of db.orders) {
+    order.history ||= [];
+    if (order.history.length) continue;
+    const byId = new Map(order.lines.map(line => [line.id, line]));
+    for (const [nutriId, adjustment] of Object.entries(order.adjustments || {})) {
+      if (!adjustment) continue;
+      const changes = Object.entries(adjustment.values || {})
+        .map(([lineId, to]) => orderChange(byId.get(lineId), undefined, to))
+        .filter(Boolean);
+      const at = adjustment.sentAt || adjustment.savedAt;
+      if (at && changes.length) order.history.push({ id: uid("hist"), at, nutritionistId: nutriId, by: adjustment.sentBy || "", action: adjustment.sentAt ? "sent" : "draft", changes, imported: true });
+      if (adjustment.finalizedAt) order.history.push({ id: uid("hist"), at: adjustment.finalizedAt, nutritionistId: nutriId, by: adjustment.finalizedBy || "", action: "finalized", changes: [] });
+    }
+    order.history.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  }
+  db.version = 5;
+  const tmp = `${MODULES_FILE}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
+  fs.renameSync(tmp, MODULES_FILE);
+}
+
+// Uma linha do histórico: o que estava (from) e o que ficou (to). null = "sem ajuste" (vale o previsto).
+function orderChange(line, from, to) {
+  if (!line) return null;
+  return { lineId: line.id, schoolId: line.schoolId, item: line.item, unit: line.unit || "", qty: line.qty, from: from ?? null, to: to ?? null };
 }
 
 // v4: público alvo vira categoria (Alunos / Adultos / Alunos e adultos) com quantidades separadas.
@@ -144,6 +179,7 @@ function stateFor(actor) {
     trainings: db.trainings,
     trainingSubmissions: actor.role === "nutritionist" ? pickNutri(db.trainingSubmissions, actor.id) : db.trainingSubmissions,
     people: actor.role === "nutritionist" ? [] : directory().nutris.map(nutri => ({ id: nutri.id, name: nutri.name, username: nutri.username })),
+    settings: isAdmin ? db.settings : {},
     ownSchoolIds: own ? [...own] : null
   };
 }
@@ -229,7 +265,12 @@ function deadlineOf(db, month, schoolId) {
 
 function ordersForNutri(db, nutriId) {
   return db.orders
-    .map(order => ({ ...order, unmatched: undefined, lines: order.lines.filter(line => line.nutritionistId === nutriId), adjustments: { [nutriId]: order.adjustments?.[nutriId] || null } }))
+    .map(order => ({
+      ...order, unmatched: undefined,
+      lines: order.lines.filter(line => line.nutritionistId === nutriId),
+      adjustments: { [nutriId]: order.adjustments?.[nutriId] || null },
+      history: (order.history || []).filter(entry => entry.nutritionistId === nutriId)
+    }))
     .filter(order => order.lines.length);
 }
 
@@ -471,7 +512,7 @@ function nutriIdsOf(schoolId) {
   return localStore().nutritionist_schools.filter(item => item.school_id === schoolId).map(item => item.profile_id);
 }
 
-// Evento sob responsabilidade da nutricionista que está agindo (a coordenação só cria e edita os dados).
+// Evento sob responsabilidade da nutricionista que está agindo (a coordenação cria, edita e aprova).
 function ownEvent(actor, id) {
   const db = load();
   const item = db.events.find(evt => evt.id === id);
@@ -864,7 +905,7 @@ const handlers = {
       adultMeal,
       quantity,
       hasFruit: body.hasFruit === true || body.hasFruit === "sim",
-      approval: existing?.approval || "pendente",
+      approval: APPROVAL.includes(body.approval) ? body.approval : existing?.approval || "pendente",
       food: String(body.food || "").slice(0, 1000),
       notes: String(body.notes || "").slice(0, 2000),
       eventDate: String(body.eventDate || ""),
@@ -884,7 +925,9 @@ const handlers = {
     return item;
   },
   "POST events/approve": (actor, body) => {
-    const item = ownEvent(actor, body.id);
+    requireAdmin(actor);
+    const item = load().events.find(evt => evt.id === body.id);
+    if (!item) fail(404, "Evento não encontrado.");
     if (!APPROVAL.includes(body.approval)) fail(400, "Situação de aprovação inválida.");
     item.approval = body.approval;
     item.approvalAt = new Date().toISOString();
@@ -924,15 +967,19 @@ const handlers = {
       .map(text => ({ id: uid("q"), text: text.slice(0, 600) }));
     if (!String(body.title || "").trim()) fail(400, "Informe o título.");
     if (!questions.length) fail(400, "Adicione pelo menos uma pergunta.");
-    const nutriIds = new Set(localStore().profiles.filter(item => item.role === "nutritionist" && item.active !== false).map(item => item.id));
-    const targetIds = (Array.isArray(body.targetIds) && body.targetIds.length ? body.targetIds : [...nutriIds]).filter(id => nutriIds.has(id));
-    if (!targetIds.length) fail(400, "Selecione ao menos uma nutricionista.");
+    // A notificação é para uma ou mais escolas; quem responde é a nutricionista responsável por cada escola.
+    const dir = directory();
+    const schoolIds = [...new Set((Array.isArray(body.schoolIds) ? body.schoolIds : []).map(String))].filter(id => dir.schoolsById.has(id));
+    if (!schoolIds.length) fail(400, "Selecione ao menos uma escola.");
+    const targetIds = [...new Set(schoolIds.map(id => dir.schoolsById.get(id).nutritionistIds?.[0]).filter(Boolean))];
+    if (!targetIds.length) fail(400, "As escolas escolhidas não têm nutricionista responsável.");
     const record = {
       id: uid("ntf"),
       title: String(body.title).trim().slice(0, 200),
       description: String(body.description || "").slice(0, 2000),
       dueDate: String(body.dueDate || ""),
       questions,
+      schoolIds,
       targetIds,
       responses: {},
       finalFile: null,
@@ -973,6 +1020,21 @@ const handlers = {
     db.notifications = db.notifications.filter(item => item.id !== body.id);
     save();
     return { ok: true };
+  },
+
+  // ---------- Configurações do Analytics ----------
+  "POST settings/save": (actor, body) => {
+    requireAdmin(actor);
+    const db = load();
+    const number = (raw, label, max) => {
+      const value = Number(String(raw ?? "").replace(",", "."));
+      if (!Number.isFinite(value) || value <= 0 || value > max) fail(400, `${label} inválido.`);
+      return Math.round(value * 1000) / 1000;
+    };
+    if (body.fuelPrice !== undefined) db.settings.fuelPrice = number(body.fuelPrice, "Valor da gasolina", 100);
+    if (body.kmPerLiter !== undefined) db.settings.kmPerLiter = number(body.kmPerLiter, "Consumo (km/l)", 100);
+    save();
+    return db.settings;
   },
 
   // ---------- Inventário ----------
@@ -1175,6 +1237,7 @@ const handlers = {
     if (!mine.size) fail(403, "Este pedido não tem escolas suas.");
     const current = order.adjustments[actor.id] ||= { values: {} };
     if (current.sentAt) fail(409, "O ajuste deste pedido já foi enviado e não pode mais ser alterado.");
+    const before = { ...current.values };
     for (const [lineId, raw] of Object.entries(body.values || {})) {
       if (!mine.has(lineId)) continue;
       if (raw === "" || raw === null || raw === undefined) { delete current.values[lineId]; continue; }
@@ -1186,6 +1249,14 @@ const handlers = {
     if (body.send) {
       current.sentAt = current.savedAt;
       current.sentBy = actor.name;
+    }
+    const byId = new Map(order.lines.map(line => [line.id, line]));
+    const changes = [...new Set([...Object.keys(before), ...Object.keys(current.values)])]
+      .filter(lineId => before[lineId] !== current.values[lineId])
+      .map(lineId => orderChange(byId.get(lineId), before[lineId], current.values[lineId]))
+      .filter(Boolean);
+    if (changes.length || body.send) {
+      (order.history ||= []).push({ id: uid("hist"), at: current.savedAt, nutritionistId: actor.id, by: actor.name, action: body.send ? "sent" : "draft", changes });
     }
     save();
     return { ok: true, adjustment: current };
@@ -1199,12 +1270,16 @@ const handlers = {
     for (const nutriId of ids) {
       const adjustment = order.adjustments[nutriId];
       if (body.action === "return") {
-        if (adjustment && !adjustment.finalizedAt) { delete adjustment.sentAt; delete adjustment.sentBy; }
+        if (adjustment && !adjustment.finalizedAt) {
+          delete adjustment.sentAt; delete adjustment.sentBy;
+          (order.history ||= []).push({ id: uid("hist"), at: new Date().toISOString(), nutritionistId: nutriId, by: actor.name, action: "returned", changes: [] });
+        }
         continue;
       }
       if (!adjustment?.sentAt) fail(400, "A nutricionista ainda não enviou o ajuste.");
       adjustment.finalizedAt = new Date().toISOString();
       adjustment.finalizedBy = actor.name;
+      (order.history ||= []).push({ id: uid("hist"), at: adjustment.finalizedAt, nutritionistId: nutriId, by: actor.name, action: "finalized", changes: [] });
     }
     save();
     return { ok: true };

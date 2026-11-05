@@ -474,7 +474,7 @@ function renderLogin(error = "") {
           </label>
           <button class="auth-submit" type="submit" id="login-submit"><span>Entrar no painel</span>${icon("arrowRight")}</button>
           <p class="error" role="alert">${error}</p>
-          <footer class="auth-footer">Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a></footer>
+          <footer class="auth-footer">Desenvolvido por <a href="https://instagram.com/guedesyc" target="_blank" rel="noopener noreferrer">Yago Guedes</a></footer>
         </form>
       </section>
     </main>
@@ -552,7 +552,7 @@ function shell(content) {
           ${content}
         </div>
         <footer class="app-footer">
-          Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a>
+          Desenvolvido por <a href="https://instagram.com/guedesyc" target="_blank" rel="noopener noreferrer">Yago Guedes</a>
         </footer>
       </main>
     </div>

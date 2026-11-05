@@ -202,6 +202,7 @@ const ICONS = {
   chart: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
   party: '<path d="M5.8 11.3 2 22l10.7-3.8"/><path d="M4 3h.01M22 8h.01M15 2h.01M22 20h.01"/><path d="m22 2-2.2.8a2.9 2.9 0 0 0-1.9 3.1v0a2 2 0 0 1-1.6 2.2L15 8.5"/><path d="M11 13c1.9 1.9 2.8 4.1 2 4.9s-3-.1-4.9-2-2.8-4.1-2-4.9 3 .1 4.9 2Z"/>',
+  alertCircle: '<circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 17h.01"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
   package: '<path d="m7.5 4.3 9 5.2"/><path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/>',
   calculator: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>',
@@ -292,13 +293,14 @@ function defaultUi() {
     an: null,
     mat: { search: "", route: "todas", nutri: "todas", seg: "todos", onlyEmpty: false, dirty: {} },
     evt: { search: "", route: "todas", nutri: "todas", status: "todos", showForm: false, editing: null },
-    ntf: { showForm: false, open: new Set(), filter: "todas" },
+    ntf: { showForm: false, open: new Set(), filter: "todas", school: "todas" },
     inv: { month: currentMonth(), search: "", show: "todos", school: "", dirty: {}, showForm: false, editing: null },
     reg: { month: currentMonth(), search: "", status: "todos", open: new Set(), openSchool: "" },
     dl: { month: currentMonth(), open: false, dirty: null },
     exp: { faturamento: currentMonth(), inventario: currentMonth(), busy: "" },
     ped: { step: "list", upload: null, openOrder: "", open: new Set(), openSchool: "" },
     aped: { order: "", dirty: {}, search: "" },
+    hist: { order: "todos", school: "todas", nutri: "todas", action: "todas", search: "", open: new Set(), limit: 30 },
     km: { month: currentMonth(), dirty: {}, open: "", search: "" },
     cap: { month: currentMonth(), files: [], notes: "", uploading: 0, status: "todos" },
     pend: {}
@@ -363,22 +365,25 @@ function navConfig(isAdmin) {
       ]
     },
     {
-      id: "pedidos", label: "Pedidos", items: isAdmin
-        ? [{ view: "pedidos", label: "Pedidos", icon: "cart", badge: pend.groups.find(group => group.id === "ped")?.items.length || 0 }]
-        : [{ view: "ajuste-pedido", label: "Ajuste de Pedido", icon: "cart", badge: pend.groups.find(group => group.id === "ped")?.items.length || 0, tone: "warn" }]
+      id: "pedidos", label: "Pedidos", items: [
+        isAdmin
+          ? { view: "pedidos", label: "Pedidos", icon: "cart", badge: pend.groups.find(group => group.id === "ped")?.items.length || 0 }
+          : { view: "ajuste-pedido", label: "Ajuste de Pedido", icon: "cart", badge: pend.groups.find(group => group.id === "ped")?.items.length || 0, tone: "warn" },
+        { view: "historico-pedidos", label: "Histórico", icon: "clock" }
+      ]
     },
     ...(isAdmin ? [{ id: "conferencia", label: "Conferência", items: [
       { view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" },
       { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }
     ] }] : []),
-    ...(isAdmin ? [{ id: "intel", label: "Inteligência", items: [{ view: "analytics", label: "Analytics", icon: "chart" }] }] : []),
+    ...(isAdmin ? [{ id: "analytics", label: "Analytics", items: AN_SECTIONS.map(([tab, label, iconName]) => ({ view: `an-${tab}`, label, icon: iconName })) }] : []),
     ...(isAdmin ? [] : [{ id: "rotina", label: "Rotina", items: [
       { view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" },
       { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }
     ] }]),
     {
       id: "comunicacao", label: "Comunicação", items: [
-        { view: "notificacoes", label: "Notificações", icon: "bell", badge: notifBadge },
+        { view: "notificacoes", label: "Notificações", icon: "alertCircle", badge: notifBadge },
         { view: "pendencias", label: "Pendências", icon: "listTodo", badge: pend.total, tone: "warn" }
       ]
     },
@@ -418,8 +423,9 @@ function renderModuleView(view) {
     notificacoes: renderNotificacoes,
     pendencias: renderPendencias,
     inventario: renderInventario,
+    "historico-pedidos": renderHistoricoPedidos,
     ...(isAdmin
-      ? { analytics: renderAnalytics, "registro-inventario": renderRegistroInventario, exportacoes: renderExportacoes, pedidos: renderPedidos, km: renderKm, capacitacao: renderCapacitacao }
+      ? { ...Object.fromEntries(AN_SECTIONS.map(([tab]) => [`an-${tab}`, () => { mod().ui.an ||= defaultAnalyticsUi(); mod().ui.an.tab = tab; renderAnalytics(); }])), "registro-inventario": renderRegistroInventario, exportacoes: renderExportacoes, pedidos: renderPedidos, km: renderKm, capacitacao: renderCapacitacao }
       : { "ajuste-pedido": renderAjustePedido, km: renderKm, capacitacao: renderCapacitacao })
   };
   if (!views[view]) return false;
@@ -661,7 +667,7 @@ function bindSupForms() {
     document.querySelector(".sup-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }));
   document.querySelectorAll("[data-sup-delete]").forEach(button => button.addEventListener("click", async () => {
-    if (!confirm("Excluir este relatório de supervisão?")) return;
+    if (!(await askConfirm({ title: "Excluir relatório?", text: "O relatório de supervisão e as fotos serão removidos.", yesLabel: "Excluir", danger: true }))) return;
     try { await mutate("supervision/delete", { id: button.dataset.supDelete }, "Relatório excluído."); } catch { /* */ }
   }));
 }
@@ -669,6 +675,126 @@ function bindSupForms() {
 function debounce(fn, wait) {
   let timer;
   return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), wait); };
+}
+
+// Caixa de confirmação da própria aplicação (substitui o confirm() do navegador). Resolve true/false.
+function askConfirm({ title = "Confirmar", text = "", yesLabel = "Confirmar", noLabel = "Cancelar", danger = false, iconName } = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `<div class="modal ask-modal ${danger ? "is-danger" : ""}" role="alertdialog" aria-modal="true" aria-labelledby="ask-title" aria-describedby="ask-text">
+      <div class="ask-body">
+        <span class="ask-ico">${icon(iconName || (danger ? "trash" : "alert"))}</span>
+        <h2 id="ask-title">${esc(title)}</h2>
+        ${text ? `<p id="ask-text">${esc(text)}</p>` : ""}
+      </div>
+      <div class="ask-actions">
+        <button type="button" class="secondary" data-ask-no>${esc(noLabel)}</button>
+        <button type="button" class="${danger ? "danger-btn" : "primary"}" data-ask-yes>${esc(yesLabel)}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    document.body.classList.add("modal-open");
+    const finish = value => {
+      overlay.remove();
+      if (!document.querySelector(".modal-overlay")) document.body.classList.remove("modal-open");
+      document.removeEventListener("keydown", onKey);
+      resolve(value);
+    };
+    const onKey = event => { if (event.key === "Escape") finish(false); };
+    document.addEventListener("keydown", onKey);
+    overlay.addEventListener("click", event => { if (event.target === overlay) finish(false); });
+    overlay.querySelector("[data-ask-no]").addEventListener("click", () => finish(false));
+    const yes = overlay.querySelector("[data-ask-yes]");
+    yes.addEventListener("click", () => finish(true));
+    yes.focus();
+  });
+}
+
+// Campo de escola com busca: digita parte do nome (ou da GRE) e escolhe na lista de sugestões.
+function schoolCombo({ name = "schoolId", selectedId = "", schools = state.db.schools, required = true, placeholder = "Digite o nome da escola..." } = {}) {
+  const selected = schools.find(school => school.id === selectedId);
+  return `<div class="combo" data-combo>
+    <input type="text" class="combo-input" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+      placeholder="${esc(placeholder)}" value="${esc(selected?.shortName || "")}" ${required ? "required" : ""} />
+    <button type="button" class="combo-clear" data-combo-clear title="Limpar" ${selected ? "" : "hidden"}>${icon("x")}</button>
+    <input type="hidden" name="${esc(name)}" value="${esc(selected?.id || "")}" />
+    <ul class="combo-list" role="listbox" hidden></ul>
+  </div>`;
+}
+
+function bindSchoolCombo(root, schools = state.db.schools) {
+  const box = root?.querySelector("[data-combo]");
+  if (!box) return;
+  const input = box.querySelector(".combo-input");
+  const hidden = box.querySelector("input[type=hidden]");
+  const list = box.querySelector(".combo-list");
+  const clear = box.querySelector("[data-combo-clear]");
+  const sorted = [...schools].sort((a, b) => a.shortName.localeCompare(b.shortName, "pt-BR"));
+  let matches = [];
+  let active = -1;
+  const setValue = school => {
+    hidden.value = school?.id || "";
+    input.value = school?.shortName || "";
+    clear.hidden = !school;
+    input.setCustomValidity("");
+    hidden.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; };
+  const paint = () => {
+    list.innerHTML = matches.length
+      ? matches.map((school, index) => `<li role="option" data-id="${school.id}" class="${index === active ? "active" : ""}"><strong>${esc(school.shortName)}</strong><small>${esc(routeLabel(school.route))}</small></li>`).join("")
+      : `<li class="combo-empty">Nenhuma escola encontrada</li>`;
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    list.querySelector("li.active")?.scrollIntoView({ block: "nearest" });
+  };
+  const search = () => {
+    const words = normalizeText(input.value).split(/\s+/).filter(Boolean);
+    matches = sorted.filter(school => {
+      const text = normalizeText(`${school.shortName} ${routeLabel(school.route)}`);
+      return words.every(word => text.includes(word));
+    }).slice(0, 60);
+    active = matches.length ? 0 : -1;
+    paint();
+  };
+  input.addEventListener("focus", () => { input.select(); search(); });
+  input.addEventListener("input", () => {
+    if (hidden.value) { hidden.value = ""; clear.hidden = true; hidden.dispatchEvent(new Event("change", { bubbles: true })); }
+    search();
+  });
+  input.addEventListener("keydown", event => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (list.hidden) return search();
+      if (!matches.length) return;
+      active = (active + (event.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length;
+      paint();
+    } else if (event.key === "Enter" && !list.hidden) {
+      event.preventDefault();
+      if (matches[active]) { setValue(matches[active]); close(); }
+    } else if (event.key === "Escape") close();
+  });
+  // pointerdown sem blur (mantém a lista aberta); a escolha acontece no click, para o toque
+  // não "vazar" para o campo que está embaixo da lista no celular.
+  list.addEventListener("pointerdown", event => { if (event.pointerType === "mouse") event.preventDefault(); });
+  list.addEventListener("mousedown", event => event.preventDefault());
+  list.addEventListener("click", event => {
+    const item = event.target.closest("li[data-id]");
+    if (!item) return;
+    setValue(sorted.find(school => school.id === item.dataset.id));
+    close();
+    input.blur();
+  });
+  input.addEventListener("blur", () => {
+    close();
+    if (!hidden.value) {
+      const exact = sorted.find(school => normalizeText(school.shortName) === normalizeText(input.value));
+      if (exact) setValue(exact);
+      else if (input.value.trim()) input.setCustomValidity("Escolha uma escola da lista.");
+    }
+  });
+  clear.addEventListener("click", () => { setValue(null); input.focus(); });
 }
 
 function focusEnd(selector) {
@@ -979,7 +1105,7 @@ function renderEventos() {
                 <td data-label="Fruta">${evt.hasFruit ? `<span class="chip ok">${icon("apple")} Sim</span>` : `<span class="chip neutral">Não</span>`}</td>
                 <td data-label="Alimentação" class="wrap">${esc(evt.food) || "<span class='muted'>—</span>"}</td>
                 <td data-label="Data do evento"><span class="date-pill">${icon("calendar")} ${fmtDate(evt.eventDate)}</span>${!isAdmin && !evt.attendance && !evt.done ? `<small><span class="chip ${status.tone}">${status.label}</span></small>` : ""}</td>
-                <td data-label="Aprovado">${isAdmin ? `<span class="chip ${approval[1]}">${approval[0]}</span>`
+                <td data-label="Aprovado">${!isAdmin ? `<span class="chip ${approval[1]}">${approval[0]}</span>`
                   : `<select class="approval-select tone-${approval[1]}" data-evt-approve="${evt.id}">${Object.entries(APPROVAL_LABELS).map(([key, [label]]) => `<option value="${key}" ${(evt.approval || "pendente") === key ? "selected" : ""}>${label}</option>`).join("")}</select>`}</td>
                 <td data-label="Atendimento">${attendanceCell(evt, isAdmin)}</td>
                 <td data-label="Situação">
@@ -1001,11 +1127,12 @@ function renderEventos() {
   $("#evt-route").addEventListener("change", event => { ui.route = event.target.value; renderEventos(); });
   $("#evt-nutri")?.addEventListener("change", event => { ui.nutri = event.target.value; renderEventos(); });
   document.querySelectorAll("[data-evt-status]").forEach(button => button.addEventListener("click", () => { ui.status = button.dataset.evtStatus; renderEventos(); }));
-  $("#evt-new")?.addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderEventos(); $("#evt-form select")?.focus(); });
+  $("#evt-new")?.addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderEventos(); $("#evt-form .combo-input")?.focus(); });
   $("#evt-cancel")?.addEventListener("click", () => { ui.showForm = false; ui.editing = null; renderEventos(); });
   const form = $("#evt-form");
   if (form) {
     const field = name => form.querySelector(`[name=${name}]`);
+    bindSchoolCombo(form);
     const sync = () => {
       const audience = field("audience").value;
       form.querySelector("[data-aud-students]").hidden = audience === "adultos";
@@ -1047,7 +1174,8 @@ function renderEventos() {
   }));
   document.querySelectorAll("[data-evt-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.evtEdit; ui.showForm = true; renderEventos(); window.scrollTo({ top: 0, behavior: "smooth" }); }));
   document.querySelectorAll("[data-evt-delete]").forEach(button => button.addEventListener("click", () => {
-    if (confirm("Excluir este evento?")) mutate("events/delete", { id: button.dataset.evtDelete }, "Evento excluído.").catch(() => {});
+    askConfirm({ title: "Excluir evento?", text: "O evento será removido e não poderá ser recuperado.", yesLabel: "Excluir", danger: true })
+      .then(ok => ok && mutate("events/delete", { id: button.dataset.evtDelete }, "Evento excluído.").catch(() => {}));
   }));
 }
 
@@ -1059,7 +1187,7 @@ function eventForm(evt) {
   return `<form class="card form-card pop-in" id="evt-form">
     <div class="form-title">${icon(evt ? "edit" : "plus")}<strong>${evt ? "Editar evento" : "Novo evento"}</strong></div>
     <div class="form-grid cols-4">
-      <label class="field wide2"><span>Escola</span><select name="schoolId" required><option value="">Selecione a escola...</option>${schools.map(school => `<option value="${school.id}" ${evt?.schoolId === school.id ? "selected" : ""}>${esc(school.shortName)} — ${esc(routeLabel(school.route))}</option>`).join("")}</select></label>
+      <div class="field wide2"><span>Escola</span>${schoolCombo({ selectedId: evt?.schoolId || "", schools })}</div>
       <label class="field wide2"><span>Nutricionista responsável</span><select name="nutritionistId" required><option value="">Preenchida ao escolher a escola...</option>${nutriList().map(n => `<option value="${n.id}" ${nutriId === n.id ? "selected" : ""}>${esc(n.name)}</option>`).join("")}</select></label>
       <label class="field"><span>Data da solicitação</span><input type="date" name="requestDate" value="${esc(evt?.requestDate || todayISO())}" required /></label>
       <label class="field"><span>Data do evento</span><input type="date" name="eventDate" value="${esc(evt?.eventDate || "")}" required /></label>
@@ -1074,7 +1202,7 @@ function eventForm(evt) {
         <label class="field" data-aud-adults><span>Refeição dos adultos</span><select name="adultMeal"><option value="">Selecione...</option>${Object.entries(ADULT_MEALS).map(([key, meal]) => `<option value="${key}" ${evt?.adultMeal === key ? "selected" : ""}>${meal.label} (${meal.cardId === "card11" ? "CARD 11" : "card 10"})</option>`).join("")}</select></label>
         <div class="field"><span>Quantitativo total</span><output class="total-out" data-evt-total>—</output></div>
         <label class="field"><span>Possui fruta?</span><select name="hasFruit"><option value="nao" ${evt?.hasFruit ? "" : "selected"}>Não</option><option value="sim" ${evt?.hasFruit ? "selected" : ""}>Sim</option></select></label>
-        <div class="field"><span>Aprovado</span><output class="total-out muted-out">${APPROVAL_LABELS[approval][0]} · definido pela nutri</output></div>
+        <label class="field"><span>Aprovado</span><select name="approval">${Object.entries(APPROVAL_LABELS).map(([key, [label]]) => `<option value="${key}" ${approval === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
       </div>
       <p class="bill-preview" data-evt-billing></p>
     </fieldset>
@@ -1082,7 +1210,7 @@ function eventForm(evt) {
       <label class="field wide2"><span>Alimentação</span><textarea name="food" rows="2" placeholder="Cardápio / itens solicitados">${esc(evt?.food || "")}</textarea></label>
       <label class="field wide2"><span>Observações</span><textarea name="notes" rows="2" placeholder="Informações adicionais">${esc(evt?.notes || "")}</textarea></label>
     </div>
-    <p class="form-hint">${icon("info")} A coordenação só cria o evento. <b>Aprovação</b>, <b>atendimento</b> (Realizado / Não Realizado) e <b>conclusão</b> ficam com a nutricionista responsável. Entram no faturamento apenas os eventos <b>aprovados e confirmados como realizados</b>.</p>
+    <p class="form-hint">${icon("info")} A coordenação cria e <b>aprova</b> o evento. <b>Atendimento</b> (Realizado / Não Realizado) e <b>conclusão</b> ficam com a nutricionista responsável. Entram no faturamento apenas os eventos <b>aprovados e confirmados como realizados</b>.</p>
     <div class="form-actions"><button type="button" class="secondary" id="evt-cancel">Cancelar</button><button type="submit" class="primary">${icon("save")} ${evt ? "Salvar" : "Registrar evento"}</button></div>
   </form>`;
 }
@@ -1106,7 +1234,13 @@ function renderNotificacoes() {
   const ui = mod().ui.ntf;
   const isAdmin = state.user.role === "admin";
   const items = mod().data.notifications;
+  const schools = schoolMap();
+  const schoolOptions = [...new Set(items.flatMap(item => item.schoolIds || []))]
+    .filter(id => schools.has(id))
+    .sort((a, b) => schools.get(a).shortName.localeCompare(schools.get(b).shortName, "pt-BR"));
+  if (ui.school !== "todas" && !schoolOptions.includes(ui.school)) ui.school = "todas";
   const filtered = items.filter(item => {
+    if (ui.school !== "todas" && !(item.schoolIds || []).includes(ui.school)) return false;
     if (ui.filter === "todas") return true;
     if (isAdmin) return ui.filter === "abertas" ? !item.finalFile : Boolean(item.finalFile);
     const answered = Boolean(item.responses?.[state.user.id]);
@@ -1119,17 +1253,17 @@ function renderNotificacoes() {
     ${pageHead({
       eyebrow: "Comunicação",
       title: "Notificações",
-      subtitle: isAdmin ? "Envie perguntas às nutricionistas, acompanhe as respostas e finalize com o arquivo." : "Responda às perguntas enviadas pela coordenação.",
+      subtitle: isAdmin ? "Notifique uma ou mais escolas: a nutricionista responsável por cada escola responde. Acompanhe as respostas e finalize com o arquivo." : "Responda às notificações das suas escolas enviadas pela coordenação.",
       actions: isAdmin ? `<button class="primary" id="ntf-new">${icon("plus")} Nova notificação</button>` : ""
     })}
     <section class="stat-row">
       ${isAdmin ? `
-        ${statCard({ label: "Notificações", value: fmtNumber(items.length), iconName: "bell", tone: "brand" })}
+        ${statCard({ label: "Notificações", value: fmtNumber(items.length), iconName: "alertCircle", tone: "brand" })}
         ${statCard({ label: "Aguardando respostas", value: fmtNumber(items.filter(item => !item.finalFile && notificationStage(item).step === 1).length), iconName: "clock" })}
         ${statCard({ label: "Aguardando arquivo final", value: fmtNumber(waitingFinal), iconName: "paperclip", tone: waitingFinal ? "warn" : "" })}
         ${statCard({ label: "Concluídas", value: fmtNumber(items.filter(item => item.finalFile).length), iconName: "check" })}
       ` : `
-        ${statCard({ label: "Recebidas", value: fmtNumber(items.length), iconName: "bell", tone: "brand" })}
+        ${statCard({ label: "Recebidas", value: fmtNumber(items.length), iconName: "alertCircle", tone: "brand" })}
         ${statCard({ label: "Para responder", value: fmtNumber(toAnswer), iconName: "message", tone: toAnswer ? "warn" : "" })}
         ${statCard({ label: "Concluídas", value: fmtNumber(items.filter(item => item.finalFile).length), iconName: "check" })}
       `}
@@ -1139,13 +1273,15 @@ function renderNotificacoes() {
       <div class="segmented">
         ${[["todas", "Todas"], ["abertas", isAdmin ? "Em andamento" : "Para responder"], ["concluidas", isAdmin ? "Concluídas" : "Respondidas"]].map(([key, label]) => `<button type="button" class="${ui.filter === key ? "active" : ""}" data-ntf-filter="${key}">${label}</button>`).join("")}
       </div>
+      ${schoolOptions.length ? `<label class="inline-field grow ntf-school-filter">${icon("school")}<select id="ntf-school"><option value="todas">Todas as escolas</option>${schoolOptions.map(id => `<option value="${id}" ${ui.school === id ? "selected" : ""}>${esc(schools.get(id).shortName)} (${items.filter(item => (item.schoolIds || []).includes(id)).length})</option>`).join("")}</select></label>` : ""}
     </section>
     <section class="stack">
-      ${filtered.map(item => isAdmin ? adminNotificationCard(item) : nutriNotificationCard(item)).join("") || `<div class="panel">${emptyState("Nenhuma notificação por aqui", isAdmin ? "Crie uma nova notificação para enviar perguntas às nutricionistas." : "Quando a coordenação enviar perguntas, elas aparecem aqui.", "bell")}</div>`}
+      ${filtered.map(item => isAdmin ? adminNotificationCard(item) : nutriNotificationCard(item)).join("") || `<div class="panel">${emptyState("Nenhuma notificação por aqui", ui.school !== "todas" ? "Nenhuma notificação desta escola com esse filtro." : isAdmin ? "Crie uma nova notificação para uma ou mais escolas." : "Quando a coordenação notificar uma escola sua, ela aparece aqui.", "alertCircle")}</div>`}
     </section>
   `);
 
   document.querySelectorAll("[data-ntf-filter]").forEach(button => button.addEventListener("click", () => { ui.filter = button.dataset.ntfFilter; renderNotificacoes(); }));
+  $("#ntf-school")?.addEventListener("change", event => { ui.school = event.target.value; renderNotificacoes(); });
   document.querySelectorAll("[data-ntf-toggle]").forEach(button => button.addEventListener("click", () => {
     const id = button.dataset.ntfToggle;
     if (ui.open.has(id)) ui.open.delete(id); else ui.open.add(id);
@@ -1157,8 +1293,10 @@ function renderNotificacoes() {
 }
 
 function notificationForm() {
-  const draft = mod().drafts.ntf ||= { title: "", description: "", dueDate: "", questions: [""], targets: [] };
-  const nutris = nutriList();
+  const draft = mod().drafts.ntf ||= { title: "", description: "", dueDate: "", questions: [""], schoolIds: [] };
+  draft.schoolIds ||= [];
+  const schools = schoolMap();
+  const users = userMap();
   return `<form class="card form-card pop-in" id="ntf-form">
     <div class="form-title">${icon("send")}<strong>Nova notificação</strong></div>
     <div class="form-grid cols-4">
@@ -1172,10 +1310,15 @@ function notificationForm() {
       <button type="button" class="link-btn" id="ntf-add-q">${icon("plus")} Adicionar pergunta</button>
     </div>
     <div class="targets">
-      <span class="label">Enviar para <small class="muted">(nenhuma selecionada = todas)</small></span>
-      <div class="chip-select">
-        ${nutris.map(nutri => `<label class="select-chip ${draft.targets.includes(nutri.id) ? "on" : ""}"><input type="checkbox" data-ntf-target="${nutri.id}" ${draft.targets.includes(nutri.id) ? "checked" : ""} />${esc(nutri.name)}</label>`).join("")}
-      </div>
+      <span class="label">Escola(s) notificada(s) <small class="muted">· a nutricionista responsável pela escola responde</small></span>
+      ${schoolCombo({ name: "ntfSchool", required: false, placeholder: "Digite para adicionar uma escola...", schools: state.db.schools.filter(school => !draft.schoolIds.includes(school.id)) })}
+      <ul class="ntf-schools">
+        ${draft.schoolIds.map(id => {
+          const school = schools.get(id);
+          const nutri = users.get(school?.nutritionistIds?.[0])?.name;
+          return `<li><span class="school-ico">${icon("school")}</span><span><strong>${esc(school?.shortName || id)}</strong><small>${esc(routeLabel(school?.route))} · ${nutri ? `responde: <b>${esc(nutri)}</b>` : "<em class='warn-text'>sem nutricionista</em>"}</small></span><button type="button" class="icon-btn" data-ntf-school-remove="${id}" title="Remover">${icon("x")}</button></li>`;
+        }).join("") || `<li class="empty muted">Nenhuma escola adicionada ainda.</li>`}
+      </ul>
     </div>
     <div class="form-actions"><button type="button" class="secondary" id="ntf-cancel">Cancelar</button><button type="submit" class="primary">${icon("send")} Enviar notificação</button></div>
   </form>`;
@@ -1189,21 +1332,38 @@ function bindNotificationForm() {
   form.querySelectorAll("[data-ntf-q]").forEach(input => input.addEventListener("input", () => { draft.questions[Number(input.dataset.ntfQ)] = input.value; }));
   form.querySelectorAll("[data-ntf-q-remove]").forEach(button => button.addEventListener("click", () => { draft.questions.splice(Number(button.dataset.ntfQRemove), 1); renderNotificacoes(); }));
   $("#ntf-add-q").addEventListener("click", () => { draft.questions.push(""); renderNotificacoes(); document.querySelector(`[data-ntf-q="${draft.questions.length - 1}"]`)?.focus(); });
-  form.querySelectorAll("[data-ntf-target]").forEach(input => input.addEventListener("change", () => {
-    const id = input.dataset.ntfTarget;
-    draft.targets = input.checked ? [...draft.targets, id] : draft.targets.filter(item => item !== id);
-    input.closest(".select-chip").classList.toggle("on", input.checked);
+  bindSchoolCombo(form.querySelector(".targets"), state.db.schools.filter(school => !draft.schoolIds.includes(school.id)));
+  form.querySelector("[name=ntfSchool]").addEventListener("change", event => {
+    const id = event.target.value;
+    if (!id || draft.schoolIds.includes(id)) return;
+    draft.schoolIds.push(id);
+    renderNotificacoes();
+    document.querySelector("#ntf-form .targets .combo-input")?.focus();
+  });
+  form.querySelectorAll("[data-ntf-school-remove]").forEach(button => button.addEventListener("click", () => {
+    draft.schoolIds = draft.schoolIds.filter(id => id !== button.dataset.ntfSchoolRemove);
+    renderNotificacoes();
   }));
   $("#ntf-cancel").addEventListener("click", () => { mod().ui.ntf.showForm = false; renderNotificacoes(); });
   form.addEventListener("submit", async event => {
     event.preventDefault();
     try {
-      await mutate("notifications/create", { title: draft.title, description: draft.description, dueDate: draft.dueDate, questions: draft.questions, targetIds: draft.targets }, "Notificação enviada.");
+      if (!draft.schoolIds.length) { toast("Adicione ao menos uma escola.", "error"); document.querySelector("#ntf-form .targets .combo-input")?.focus(); return; }
+      await mutate("notifications/create", { title: draft.title, description: draft.description, dueDate: draft.dueDate, questions: draft.questions, schoolIds: draft.schoolIds }, "Notificação enviada.");
       delete mod().drafts.ntf;
       mod().ui.ntf.showForm = false;
       renderNotificacoes();
     } catch { /* */ }
   });
+}
+
+// Escolas da notificação (a nutricionista vê só as dela).
+function ntfSchoolsLine(item, onlyIds = null) {
+  const schools = schoolMap();
+  const ids = (item.schoolIds || []).filter(id => !onlyIds || onlyIds.includes(id));
+  if (!ids.length) return "";
+  const names = ids.map(id => schools.get(id)?.shortName || id);
+  return `<span class="ntf-schools-line">${icon("school")} ${esc(names.slice(0, 2).join(" · "))}${names.length > 2 ? ` <b>+${names.length - 2}</b>` : ""}</span>`;
 }
 
 function dueChip(dueDate) {
@@ -1220,8 +1380,8 @@ function adminNotificationCard(item) {
   const pct = Math.round((stage.answered / Math.max(stage.total, 1)) * 100);
   return `<article class="card ntf-card ${open ? "is-open" : ""}">
     <button type="button" class="ntf-head" data-ntf-toggle="${item.id}">
-      <span class="ntf-icon tone-${stage.tone}">${icon(item.finalFile ? "check" : "bell")}</span>
-      <span class="ntf-title"><strong>${esc(item.title)}</strong><small>${item.questions.length} pergunta(s) · enviada em ${fmtDate(item.createdAt)} · ${esc(item.createdBy || "")}</small></span>
+      <span class="ntf-icon tone-${stage.tone}">${icon(item.finalFile ? "check" : "alertCircle")}</span>
+      <span class="ntf-title"><strong>${esc(item.title)}</strong>${ntfSchoolsLine(item)}<small>${item.questions.length} pergunta(s) · enviada em ${fmtDate(item.createdAt)} · ${esc(item.createdBy || "")}</small></span>
       ${item.finalFile ? "" : dueChip(item.dueDate)}
       <span class="ntf-progress"><span class="bar"><i style="width:${pct}%"></i></span><small>${stage.answered}/${stage.total} responderam</small></span>
       <span class="chip ${stage.tone}">${stage.label}</span>
@@ -1234,8 +1394,9 @@ function adminNotificationCard(item) {
         ${item.targetIds.map(id => {
           const response = item.responses?.[id];
           const name = users.get(id)?.name || response?.name || id;
+          const ofNutri = (item.schoolIds || []).filter(schoolId => schoolMap().get(schoolId)?.nutritionistIds?.[0] === id).map(schoolId => schoolMap().get(schoolId)?.shortName);
           return `<div class="response ${response ? "answered" : ""}">
-            <div class="response-head"><span class="avatar sm">${initials(name)}</span><strong>${esc(name)}</strong>
+            <div class="response-head"><span class="avatar sm">${initials(name)}</span><strong>${esc(name)}${ofNutri.length ? `<small class="muted"> · ${esc(ofNutri.join(", "))}</small>` : ""}</strong>
               ${response ? `<span class="chip ok">${icon("check")} Respondeu em ${fmtDate(response.respondedAt)}</span>` : `<span class="chip neutral">${icon("clock")} Aguardando</span>`}</div>
             ${response ? `<dl class="answers">${item.questions.map((question, index) => `<dt>${index + 1}. ${esc(question.text)}</dt><dd>${esc(response.answers?.[question.id] || "—")}</dd>`).join("")}</dl>
               ${response.attachments?.length ? `<div class="history-files">${response.attachments.map(file => fileChip(file)).join("")}</div>` : ""}` : ""}
@@ -1258,8 +1419,8 @@ function nutriNotificationCard(item) {
   const stage = item.finalFile ? { label: "Concluída", tone: "ok" } : response ? { label: "Respondida · aguardando coordenação", tone: "info" } : { label: "Aguardando sua resposta", tone: "warn" };
   return `<article class="card ntf-card ${open ? "is-open" : ""}">
     <button type="button" class="ntf-head" data-ntf-toggle="${item.id}">
-      <span class="ntf-icon tone-${stage.tone}">${icon(item.finalFile ? "check" : response ? "send" : "bell")}</span>
-      <span class="ntf-title"><strong>${esc(item.title)}</strong><small>${item.questions.length} pergunta(s) · recebida em ${fmtDate(item.createdAt)}</small></span>
+      <span class="ntf-icon tone-${stage.tone}">${icon(item.finalFile ? "check" : response ? "send" : "alertCircle")}</span>
+      <span class="ntf-title"><strong>${esc(item.title)}</strong>${ntfSchoolsLine(item, mod().data.ownSchoolIds)}<small>${item.questions.length} pergunta(s) · recebida em ${fmtDate(item.createdAt)}</small></span>
       ${!response ? dueChip(item.dueDate) : ""}
       <span class="chip ${stage.tone}">${stage.label}</span>
       <span class="chev">${icon("chevronDown")}</span>
@@ -1291,10 +1452,10 @@ function bindNotificationActions() {
     } catch (error) { toast(error.message, "error"); }
   }));
   document.querySelectorAll("[data-ntf-final-remove]").forEach(button => button.addEventListener("click", () => {
-    if (confirm("Remover o arquivo final? A notificação volta para em andamento.")) mutate("notifications/final", { id: button.dataset.ntfFinalRemove, finalFile: null }, "Arquivo final removido.").catch(() => {});
+    askConfirm({ title: "Remover arquivo final?", text: "A notificação volta para em andamento.", yesLabel: "Remover", danger: true }).then(ok => ok && mutate("notifications/final", { id: button.dataset.ntfFinalRemove, finalFile: null }, "Arquivo final removido.").catch(() => {}));
   }));
   document.querySelectorAll("[data-ntf-delete]").forEach(button => button.addEventListener("click", () => {
-    if (confirm("Excluir esta notificação e todas as respostas?")) mutate("notifications/delete", { id: button.dataset.ntfDelete }, "Notificação excluída.").catch(() => {});
+    askConfirm({ title: "Excluir notificação?", text: "A notificação e todas as respostas serão removidas.", yesLabel: "Excluir", danger: true }).then(ok => ok && mutate("notifications/delete", { id: button.dataset.ntfDelete }, "Notificação excluída.").catch(() => {}));
   }));
   document.querySelectorAll("[data-ntf-answer]").forEach(form => {
     const id = form.dataset.ntfAnswer;
@@ -1503,8 +1664,8 @@ function renderInventarioAdmin() {
   $("#inv-new").addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderInventario(); });
   document.querySelectorAll("[data-inv-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.invEdit; ui.showForm = true; renderInventario(); window.scrollTo({ top: 0, behavior: "smooth" }); }));
   $("#inv-cancel")?.addEventListener("click", () => { ui.showForm = false; ui.editing = null; renderInventario(); });
-  $("#inv-delete")?.addEventListener("click", () => {
-    if (!confirm("Excluir este insumo do catálogo?")) return;
+  $("#inv-delete")?.addEventListener("click", async () => {
+    if (!(await askConfirm({ title: "Excluir insumo?", text: "O insumo sai do catálogo de inventário.", yesLabel: "Excluir", danger: true }))) return;
     mutate("inventory/item-delete", { id: editing.id }, "Insumo excluído.").then(() => { ui.showForm = false; ui.editing = null; renderInventario(); }).catch(() => {});
   });
   $("#inv-form")?.addEventListener("submit", async event => {
@@ -1693,8 +1854,8 @@ function renderRegistroInventario() {
     ui.openSchool = ui.openSchool === button.dataset.regSchool ? "" : button.dataset.regSchool;
     renderRegistroInventario();
   }));
-  document.querySelectorAll("[data-reg-reopen]").forEach(button => button.addEventListener("click", () => {
-    if (!confirm("Reabrir este inventário? A nutricionista poderá editar e enviar novamente.")) return;
+  document.querySelectorAll("[data-reg-reopen]").forEach(button => button.addEventListener("click", async () => {
+    if (!(await askConfirm({ title: "Reabrir inventário?", text: "A nutricionista poderá editar e enviar novamente.", yesLabel: "Reabrir" }))) return;
     mutate("inventory/reopen", { month, schoolId: button.dataset.regReopen }, "Inventário reaberto para a nutricionista.").catch(() => {});
   }));
 }
@@ -1771,17 +1932,21 @@ function renderInventarioNutri() {
   `);
 
   const key = () => `${ui.month || currentMonth()}:${ui.school}`;
-  const confirmLeave = () => !Object.keys(ui.dirty[key()] || {}).length || confirm("Há quantidades não salvas nesta escola. Descartar?");
-  $("#inv-school").addEventListener("change", event => {
-    if (!confirmLeave()) { event.target.value = ui.school; return; }
+  const confirmLeave = async () => !Object.keys(ui.dirty[key()] || {}).length || askConfirm({ title: "Descartar alterações?", text: "Há quantidades não salvas nesta escola.", yesLabel: "Descartar", danger: true, iconName: "alert" });
+  $("#inv-school").addEventListener("change", async event => {
+    const next = event.target.value;
+    event.target.value = ui.school;
+    if (!(await confirmLeave())) return;
     delete ui.dirty[key()];
-    ui.school = event.target.value;
+    ui.school = next;
     renderInventario();
   });
-  $("#inv-month").addEventListener("change", event => {
-    if (!confirmLeave()) { event.target.value = month; return; }
+  $("#inv-month").addEventListener("change", async event => {
+    const next = event.target.value;
+    event.target.value = month;
+    if (!(await confirmLeave())) return;
     delete ui.dirty[key()];
-    ui.month = event.target.value || currentMonth();
+    ui.month = next || currentMonth();
     renderInventario();
   });
   $("#inv-search").addEventListener("input", debounce(event => { ui.search = event.target.value; renderInventario(); focusEnd("#inv-search"); }, 250));
@@ -1999,7 +2164,7 @@ function parseAdj(raw) {
   return typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));
 }
 
-function orderLinesTable(lines, adjustment, schools, { editable = false, draft = {} } = {}) {
+function orderLinesTable(lines, adjustment, schools, { editable = false, draft = {}, collapsed = new Set(), scope = "" } = {}) {
   const bySchool = new Map();
   for (const line of lines) {
     if (!bySchool.has(line.schoolId)) bySchool.set(line.schoolId, []);
@@ -2013,8 +2178,15 @@ function orderLinesTable(lines, adjustment, schools, { editable = false, draft =
         const value = line.id in draft ? draft[line.id] : adjustment?.values?.[line.id];
         return value !== undefined && value !== "" && value !== null;
       }).length;
-      return `<div class="order-school">
-        <header><span class="school-ico">${icon("school")}</span><div><strong>${esc(school?.shortName || schoolId)}</strong><small>${esc(routeLabel(school?.route))} · ${schoolLines.length} item(ns)${adjusted ? ` · ${adjusted} ajustado(s)` : ""}</small></div></header>
+      const key = `${scope}:${schoolId}`;
+      const isCollapsed = collapsed.has(key);
+      return `<div class="order-school ${isCollapsed ? "is-collapsed" : ""}">
+        <button type="button" class="order-school-head" data-order-school="${esc(key)}" aria-expanded="${!isCollapsed}">
+          <span class="school-ico">${icon("school")}</span>
+          <span class="order-school-name"><strong>${esc(school?.shortName || schoolId)}</strong><small>${esc(routeLabel(school?.route))} · ${schoolLines.length} item(ns)${adjusted ? ` · <b>${adjusted} ajustado(s)</b>` : ""}</small></span>
+          <span class="chev">${icon("chevronDown")}</span>
+        </button>
+        <div class="order-school-body">
         <table class="data-table order-table">
           <thead><tr><th>Item</th><th>Unid.</th><th class="num">Qtd. prevista</th><th class="num">${editable ? "Ajuste" : "Qtd. ajustada"}</th><th class="num">${editable ? "Diferença" : "Qtd. final"}</th></tr></thead>
           <tbody>${schoolLines.sort((a, b) => a.item.localeCompare(b.item, "pt-BR")).map(line => {
@@ -2023,18 +2195,32 @@ function orderLinesTable(lines, adjustment, schools, { editable = false, draft =
             const value = has ? parseAdj(raw) : null;
             const diff = has && Number.isFinite(value) ? value - line.qty : 0;
             return `<tr class="${has && diff ? "is-adjusted" : ""}">
-              <td>${esc(line.item)}</td><td>${esc(line.unit || "—")}</td><td class="num">${fmtQty(line.qty)}</td>
-              <td class="num">${editable
+              <td class="ot-item">${esc(line.item)}${line.unit ? `<small class="ot-unit">${esc(line.unit)}</small>` : ""}</td><td class="ot-unit-col">${esc(line.unit || "—")}</td><td class="num" data-label="Prevista">${fmtQty(line.qty)}</td>
+              <td class="num" data-label="${editable ? "Ajuste" : "Ajustada"}">${editable
                 ? `<input class="cell-input" inputmode="decimal" data-aped="${line.id}" value="${has ? esc(String(raw).replace(".", ",")) : ""}" placeholder="${esc(fmtQty(line.qty))}" />`
                 : has ? `<b>${fmtQty(value)}</b>` : "<span class='muted'>sem ajuste</span>"}</td>
-              <td class="num" ${editable ? `data-aped-diff="${line.id}"` : ""}>${editable
+              <td class="num" data-label="${editable ? "Diferença" : "Final"}" ${editable ? `data-aped-diff="${line.id}"` : ""}>${editable
                 ? (has && diff ? `<span class="diff ${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${fmtQty(diff)}</span>` : "<span class='muted'>—</span>")
                 : `<b>${fmtQty(orderFinal(line, adjustment))}</b>${has && diff ? ` <span class="diff ${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${fmtQty(diff)}</span>` : ""}`}</td>
             </tr>`;
           }).join("")}</tbody>
         </table>
+        </div>
       </div>`;
     }).join("");
+}
+
+// Recolhe/expande a escola sem redesenhar a tela (preserva o que já foi digitado).
+function bindOrderSchoolToggles(collapsed) {
+  document.querySelectorAll("[data-order-school]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.orderSchool;
+    const box = button.closest(".order-school");
+    const nowCollapsed = !box.classList.contains("is-collapsed");
+    box.classList.toggle("is-collapsed", nowCollapsed);
+    button.setAttribute("aria-expanded", String(!nowCollapsed));
+    if (nowCollapsed) collapsed.add(key); else collapsed.delete(key);
+    if (nowCollapsed && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: "start", behavior: "smooth" });
+  }));
 }
 
 // ---------- ADMIN: Pedidos ----------
@@ -2101,7 +2287,7 @@ function renderPedidos() {
                     ${group.status.key === "sent" ? `<span class="row-btns"><button type="button" class="link-btn" data-ped-return="${key}">Devolver</button><button type="button" class="primary sm" data-ped-finalize="${key}">${icon("check")} Finalizar</button></span>` : ""}
                     <button type="button" class="chev-btn" data-ped-nutri="${key}" aria-label="Abrir">${icon("chevronDown")}</button>
                   </div>
-                  ${openNutri ? `<div class="reg-body">${orderLinesTable(group.lines, group.adjustment, schools)}</div>` : ""}
+                  ${openNutri ? `<div class="reg-body">${orderLinesTable(group.lines, group.adjustment, schools, { collapsed: ui.collapsed ||= new Set(), scope: key })}</div>` : ""}
                 </div>`;
               }).join("") || `<p class="muted pad">Nenhuma linha distribuída.</p>`}
             </div>
@@ -2116,14 +2302,15 @@ function renderPedidos() {
     try { downloadBase64File(await mapi("orders/template", {})); } catch (error) { toast(error.message, "error"); }
   });
   bindOrderUpload();
+  bindOrderSchoolToggles(ui.collapsed ||= new Set());
   document.querySelectorAll("[data-ped-order]").forEach(button => button.addEventListener("click", () => { ui.openOrder = ui.openOrder === button.dataset.pedOrder ? "" : button.dataset.pedOrder; renderPedidos(); }));
   document.querySelectorAll("[data-ped-nutri]").forEach(button => button.addEventListener("click", () => { ui.openSchool = ui.openSchool === button.dataset.pedNutri ? "" : button.dataset.pedNutri; renderPedidos(); }));
   document.querySelectorAll("[data-ped-finalize]").forEach(button => button.addEventListener("click", () => {
     const [id, nutritionistId] = button.dataset.pedFinalize.split(":");
     mutate("orders/finalize", { id, nutritionistId }, "Ajuste finalizado.").catch(() => {});
   }));
-  document.querySelectorAll("[data-ped-return]").forEach(button => button.addEventListener("click", () => {
-    if (!confirm("Devolver o ajuste para a nutricionista? Ela poderá alterar e enviar de novo.")) return;
+  document.querySelectorAll("[data-ped-return]").forEach(button => button.addEventListener("click", async () => {
+    if (!(await askConfirm({ title: "Devolver ajuste?", text: "A nutricionista poderá alterar e enviar de novo.", yesLabel: "Devolver" }))) return;
     const [id, nutritionistId] = button.dataset.pedReturn.split(":");
     mutate("orders/finalize", { id, nutritionistId, action: "return" }, "Ajuste devolvido para a nutricionista.").catch(() => {});
   }));
@@ -2135,8 +2322,8 @@ function renderPedidos() {
   document.querySelectorAll("[data-ped-export]").forEach(button => button.addEventListener("click", async () => {
     try { downloadBase64File(await mapi("orders/export", { id: button.dataset.pedExport })); } catch (error) { toast(error.message, "error"); }
   }));
-  document.querySelectorAll("[data-ped-delete]").forEach(button => button.addEventListener("click", () => {
-    if (!confirm("Excluir este pedido? Os ajustes das nutricionistas também serão apagados.")) return;
+  document.querySelectorAll("[data-ped-delete]").forEach(button => button.addEventListener("click", async () => {
+    if (!(await askConfirm({ title: "Excluir pedido?", text: "Os ajustes das nutricionistas também serão apagados.", yesLabel: "Excluir", danger: true }))) return;
     mutate("orders/delete", { id: button.dataset.pedDelete }, "Pedido excluído.").catch(() => {});
   }));
 }
@@ -2330,19 +2517,22 @@ function renderAjustePedido() {
       </header>
       ${adjustment?.finalizedAt ? `<div class="lock-banner ok">${icon("check")}<span>Pedido <b>finalizado</b> pela coordenação em ${fmtDateTime(adjustment.finalizedAt)}.</span></div>`
         : locked ? `<div class="lock-banner warn">${icon("lock")}<span>Ajuste enviado em <b>${fmtDateTime(adjustment.sentAt)}</b>. Aguardando a coordenação finalizar — não é possível alterar.</span></div>` : ""}
-      ${lines.length ? orderLinesTable(lines, adjustment, schools, { editable: !locked, draft }) : emptyState("Nenhum item encontrado")}
+      ${lines.length ? orderLinesTable(lines, adjustment, schools, { editable: !locked, draft, collapsed: ui.collapsed ||= new Set(), scope: order.id }) : emptyState("Nenhum item encontrado")}
     </section>` : `<div class="panel">${emptyState("Nenhum pedido para ajustar", "Quando a coordenação enviar um pedido com as suas escolas, ele aparece aqui.", "cart")}</div>`}
   `);
 
   if (!order) return;
-  const confirmLeave = () => !Object.keys(ui.dirty[ui.order] || {}).length || confirm("Há ajustes não salvos neste pedido. Descartar?");
-  $("#aped-order").addEventListener("change", event => {
-    if (!confirmLeave()) { event.target.value = ui.order; return; }
+  const confirmLeave = async () => !Object.keys(ui.dirty[ui.order] || {}).length || askConfirm({ title: "Descartar ajustes?", text: "Há ajustes não salvos neste pedido.", yesLabel: "Descartar", danger: true, iconName: "alert" });
+  $("#aped-order").addEventListener("change", async event => {
+    const next = event.target.value;
+    event.target.value = ui.order;
+    if (!(await confirmLeave())) return;
     delete ui.dirty[ui.order];
-    ui.order = event.target.value;
+    ui.order = next;
     renderAjustePedido();
   });
   $("#aped-search").addEventListener("input", debounce(event => { ui.search = event.target.value; renderAjustePedido(); focusEnd("#aped-search"); }, 250));
+  bindOrderSchoolToggles(ui.collapsed ||= new Set());
   if (locked) return;
   const byId = new Map(order.lines.map(line => [line.id, line]));
   document.querySelectorAll("[data-aped]").forEach(input => input.addEventListener("input", () => {
@@ -2527,16 +2717,18 @@ function renderKmNutri() {
     </section>
   `);
 
-  $("#km-month").addEventListener("change", event => {
-    if (Object.keys(ui.dirty[month] || {}).length && !confirm("Há lançamentos não salvos neste mês. Descartar?")) { event.target.value = month; return; }
+  $("#km-month").addEventListener("change", async event => {
+    const next = event.target.value;
+    event.target.value = month;
+    if (Object.keys(ui.dirty[month] || {}).length && !(await askConfirm({ title: "Descartar lançamentos?", text: "Há lançamentos de KM não salvos neste mês.", yesLabel: "Descartar", danger: true, iconName: "alert" }))) return;
     delete ui.dirty[month];
-    ui.month = event.target.value || currentMonth();
+    ui.month = next || currentMonth();
     renderKm();
   });
-  $("#km-plate-save")?.addEventListener("click", () => {
+  $("#km-plate-save")?.addEventListener("click", async () => {
     const plate = $("#km-plate").value.trim();
     if (!plate) return toast("Informe a placa.", "error");
-    if (!confirm(`Confirmar a placa ${plate.toUpperCase()}? Ela só pode ser cadastrada uma vez.`)) return;
+    if (!(await askConfirm({ title: `Confirmar a placa ${plate.toUpperCase()}?`, text: "Ela só pode ser cadastrada uma vez.", yesLabel: "Confirmar placa", iconName: "car" }))) return;
     mutate("km/plate", { plate }, "Placa cadastrada.").catch(() => {});
   });
   if (locked || !vehicle) return;
@@ -2891,7 +3083,7 @@ function bindTrainingConfigPanel() {
   $("#cap-cfg-cancel")?.addEventListener("click", () => { ui.editing = ""; render(); });
   document.querySelectorAll("[data-cap-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.capEdit; render(); }));
   document.querySelectorAll("[data-cap-delete]").forEach(button => button.addEventListener("click", () => {
-    if (confirm("Excluir esta capacitação?")) mutate("training/delete", { month: button.dataset.capDelete }, "Capacitação excluída.").catch(() => {});
+    askConfirm({ title: "Excluir capacitação?", text: "A capacitação deste mês será removida.", yesLabel: "Excluir", danger: true }).then(ok => ok && mutate("training/delete", { month: button.dataset.capDelete }, "Capacitação excluída.").catch(() => {}));
   }));
 }
 
@@ -3259,8 +3451,9 @@ function deltaChip(current, previous) {
 
 function renderAnalytics() {
   const m = mod();
-  m.ui.an ||= defaultAnalyticsUi();
+  m.ui.an ||= { ...defaultAnalyticsUi(), tab: "faturamento" };
   const ui = m.ui.an;
+  if (ui.tab && ui.tab !== "faturamento") return renderAnalyticsSection(ui.tab);
   const data = computeAnalytics(ui);
   const fmt = ui.metric === "revenue" ? fmtMoneyShort : value => fmtNumber(value);
   const fmtFull = ui.metric === "revenue" ? money : value => fmtNumber(value);
@@ -3273,11 +3466,7 @@ function renderAnalytics() {
   const best = data.series.slice().sort((a, b) => b.total - a.total)[0];
 
   shell(`
-    ${pageHead({
-      eyebrow: "Inteligência",
-      title: "Analytics",
-      subtitle: `${metricLabel} por ${dimLabel.toLowerCase()} · ${fmtDate(ui.from)} a ${fmtDate(ui.to)} · ${esc(cardLabel)}`
-    })}
+    ${analyticsHead(`${metricLabel} por ${dimLabel.toLowerCase()} · ${fmtDate(ui.from)} a ${fmtDate(ui.to)} · ${esc(cardLabel)}`)}
     <section class="card an-filters">
       <div class="an-filter-row">
         <div class="field-group"><span class="label">Analisar por</span>
@@ -3353,9 +3542,9 @@ function renderAnalytics() {
           </table>
         </div>
       </article>
-      ${kmAnalyticsCard(ui)}
     </section>
   `);
+  bindAnalyticsTabs();
 
   const update = patch => { Object.assign(ui, patch); renderAnalytics(); };
   document.querySelectorAll("[data-an-dim]").forEach(button => button.addEventListener("click", () => update({ dim: button.dataset.anDim, selected: [], colorMap: {} })));
@@ -3539,33 +3728,6 @@ function kmAnalytics(from, to) {
     return { person, plate: vehicles[person.id]?.plate || "", total: Math.round(total * 10) / 10, days, pending };
   }).sort((a, b) => b.total - a.total);
   return { rows, grand: rows.reduce((sum, row) => sum + row.total, 0) };
-}
-
-function kmAnalyticsCard(ui) {
-  const { rows, grand } = kmAnalytics(ui.from, ui.to);
-  const active = rows.filter(row => row.total > 0);
-  const max = Math.max(1, ...active.map(row => row.total));
-  const avg = active.length ? grand / active.length : 0;
-  return `<article class="card chart-card span-2 km-an">
-    <header class="chart-head"><div><h3>${icon("car")} Controle de KM · quem está rodando mais</h3><p>KM lançado por nutricionista de ${fmtDate(ui.from)} a ${fmtDate(ui.to)} · soma de (KM final − KM inicial) dos dias lançados</p></div>
-      <div class="km-an-kpis"><span><small>KM total</small><b>${fmtKm(grand)} km</b></span><span><small>Média por nutricionista</small><b>${fmtKm(avg)} km</b></span><span><small>Com lançamento</small><b>${active.length}/${rows.length}</b></span></div></header>
-    ${active.length ? `<div class="table-scroll"><table class="data-table an-table km-an-table">
-      <thead><tr><th>#</th><th>Nutricionista</th><th>Placa</th><th class="bar-col">KM no período</th><th class="num">KM total</th><th class="num">Dias</th><th class="num">Média/dia</th><th class="num">vs. média</th></tr></thead>
-      <tbody>${active.map((row, index) => {
-        const delta = avg ? (row.total - avg) / avg * 100 : 0;
-        return `<tr>
-          <td class="muted">${index + 1}</td>
-          <td><strong>${esc(row.person.name)}</strong>${row.pending ? ` <small class="muted">· mês ainda não enviado</small>` : ""}</td>
-          <td>${row.plate ? `<span class="plate sm">${esc(row.plate)}</span>` : "<span class='muted'>—</span>"}</td>
-          <td class="bar-col"><span class="rank-bar"><i style="width:${(row.total / max * 100).toFixed(1)}%;background:${index === 0 ? "#eb6834" : "#2a78d6"}"></i></span></td>
-          <td class="num"><strong>${fmtKm(row.total)} km</strong></td>
-          <td class="num">${row.days}</td>
-          <td class="num">${fmtKm(row.days ? row.total / row.days : 0)} km</td>
-          <td class="num"><span class="diff ${delta > 0 ? "down" : "up"}">${delta > 0 ? "+" : ""}${fmtNumber(delta, 0)}%</span></td>
-        </tr>`;
-      }).join("")}</tbody>
-    </table></div>` : emptyState("Nenhum KM lançado no período", "Os lançamentos do Controle de KM aparecem aqui.", "car")}
-  </article>`;
 }
 
 function rankingBars(data, fmt, ui) {

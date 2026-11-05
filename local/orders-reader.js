@@ -68,7 +68,16 @@ function nameTokens(text) {
     .filter(word => word && !GENERIC_WORDS.has(word));
 }
 
+// Nomes que aparecem nas planilhas de pedido mas correspondem a outra escola cadastrada.
+// "de" e "para" já normalizados (maiúsculas, sem acento); basta o nome conter "de".
+const SCHOOL_ALIASES = [
+  { de: "SATURNINO CABRAL", para: "ESCOLA MUNICIPAL AILTON SOARES" }
+];
+
 function schoolMatcher(schools) {
+  const aliasTargets = SCHOOL_ALIASES
+    .map(alias => ({ de: alias.de, school: schools.find(school => normalize(school.shortName) === alias.para) }))
+    .filter(alias => alias.school);
   const tokenized = schools.map(school => ({ school, tokens: new Set(nameTokens(school.shortName)) }));
   const fuzzy = text => {
     const tokens = [...new Set(nameTokens(text))];
@@ -98,6 +107,8 @@ function schoolMatcher(schools) {
       if (code && byCode.has(code[1].padStart(4, "0"))) return byCode.get(code[1].padStart(4, "0"));
       const name = normalize(text.replace(/^\s*\d+\s*[-–.]\s*/, ""));
       if (!name) continue;
+      const alias = aliasTargets.find(item => name.includes(item.de));
+      if (alias) return alias.school;
       if (byName.has(name)) return byName.get(name);
       if (name.length >= 8) {
         const hits = schools.filter(school => {
