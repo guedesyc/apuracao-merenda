@@ -20,3 +20,6 @@ env.env
 node_modules/
 npm-debug.log*
 .netlify/
+
+# Base local (dados e anexos)
+local-data/

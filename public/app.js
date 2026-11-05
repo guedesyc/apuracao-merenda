@@ -1,4 +1,4 @@
-﻿const HML_QUERY = "hml";
+const HML_QUERY = "hml";
 const HML_STORAGE_KEY = "apuracao-comandas-hml-db";
 const PROD_SESSION_KEY = "apuracao-session-token";
 const HML_SESSION_KEY = "apuracao-hml-session-token";
@@ -427,29 +427,67 @@ async function loadData() {
 }
 
 function renderLogin(error = "") {
+  const hml = isHmlMode();
   app.innerHTML = `
     ${hmlBanner()}
-    <main class="login-screen">
-      <form class="login-card" id="login-form">
-        <img class="login-logo" src="yg-systems-monogram.png" alt="YG Systems" />
-        <h1>Apuração de Comandas</h1>
-        <p>${isHmlMode() ? "Entre com usuários fictícios para testar fluxos sem acessar o Supabase." : "Entre para lançar refeições, acompanhar pendências ou exportar a consolidação mensal."}</p>
-        ${isHmlMode() ? `<p class="hml-credentials"><strong>HML:</strong> admin/adminhml ou nutri/nutrihml</p>` : ""}
-        <div class="field">
-          <label for="username">Usuário</label>
-          <input id="username" autocomplete="username" />
+    <main class="auth">
+      <section class="auth-hero" aria-hidden="true">
+        <div class="auth-orb orb-1"></div>
+        <div class="auth-orb orb-2"></div>
+        <div class="auth-ring ring-1"></div>
+        <div class="auth-ring ring-2"></div>
+        <div class="auth-pattern"></div>
+        <header class="auth-brand">
+          <span class="auth-brand-mark">${brandMark()}</span>
+          <div><strong>Merenda Escolar</strong><span>Apuração e gestão da alimentação</span></div>
+        </header>
+        <div class="auth-emblem">${heroIllustration()}</div>
+        <div class="auth-copy">
+          <span class="eyebrow">Nutrição com propósito</span>
+          <h2>Apuração, supervisão e cardápios em um só painel.</h2>
+          <p>Acompanhe as refeições servidas, as escolas e o trabalho das nutricionistas com organização e segurança.</p>
+          <div class="auth-stats">
+            <div><strong>165</strong><span>escolas<br />acompanhadas</span></div>
+            <div><strong>13</strong><span>nutricionistas<br />em campo</span></div>
+            <div><strong>8</strong><span>gerências<br />regionais</span></div>
+          </div>
         </div>
-        <div class="field">
-          <label for="password">Senha</label>
-          <input id="password" type="password" autocomplete="current-password" />
-        </div>
-        <button class="primary" type="submit">Entrar</button>
-        <p class="error">${error}</p>
-      </form>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-glow"></div>
+        <form class="auth-form" id="login-form" autocomplete="on">
+          ${isLocalBuild() ? `<span class="env-pill"><i></i>Ambiente local · sem Supabase</span>` : ""}
+          <span class="eyebrow">Área da nutrição escolar</span>
+          <h1>Bem-vindo(a) de volta</h1>
+          <p class="auth-lead">${hml ? "Entre com usuários fictícios para testar fluxos sem acessar o Supabase." : "Entre para acessar apurações, supervisões, eventos e notificações."}</p>
+          ${hml ? `<p class="hml-credentials"><strong>HML:</strong> admin/adminhml ou nutri/nutrihml</p>` : ""}
+          <label class="float-field">
+            <span>Usuário</span>
+            <input id="username" autocomplete="username" placeholder="seu.usuario" required />
+          </label>
+          <label class="float-field">
+            <span>Senha</span>
+            <div class="password-wrap">
+              <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+              <button type="button" class="ghost-icon" id="toggle-password" aria-label="Mostrar senha">${icon("eye")}</button>
+            </div>
+          </label>
+          <button class="auth-submit" type="submit" id="login-submit"><span>Entrar no painel</span>${icon("arrowRight")}</button>
+          <p class="error" role="alert">${error}</p>
+          <footer class="auth-footer">Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a></footer>
+        </form>
+      </section>
     </main>
   `;
+  $("#toggle-password").addEventListener("click", () => {
+    const input = $("#password");
+    input.type = input.type === "password" ? "text" : "password";
+  });
   $("#login-form").addEventListener("submit", async event => {
     event.preventDefault();
+    const submit = $("#login-submit");
+    submit.classList.add("loading");
+    submit.disabled = true;
     try {
       const result = await api("/api/login", {
         method: "POST",
@@ -460,7 +498,8 @@ function renderLogin(error = "") {
       state.user = result.user;
       state.db = await api("/api/data");
       state.selectedMonth = state.db.settings.currentMonth;
-      state.view = state.user.role === "admin" ? "dashboard" : "lancamentos";
+      await loadModules();
+      state.view = homeView();
       state.message = "";
       render();
     } catch (err) {
@@ -469,33 +508,49 @@ function renderLogin(error = "") {
   });
 }
 
+function homeView() {
+  if (state.user?.role === "adm") return "km";
+  return state.user?.role === "admin" ? "apuracoes" : "lancamentos";
+}
+
 function shell(content) {
   const isAdmin = state.user.role === "admin";
-  const items = isAdmin
-    ? [["dashboard", "Painel"], ["apuracoes", "Apurações"], ["config", "Configurações"], ["exportar", "Exportar"], ["exportar-maximo", "Exportação - Máximo"], ["exportar-sem-atendimento", "Exportação - Sem Atendimento"]]
-    : [["lancamentos", "Lançamentos"], ["meu-mes", "Meu mês"]];
+  const enter = state.lastRenderedView !== state.view;
+  sessionStorage.setItem("ui-view", state.view);
+  state.lastRenderedView = state.view;
+  const collapsed = localStorage.getItem("ui-sidebar-collapsed") === "1";
+  const initials = String(state.user.name || "?").split(/\s+/).slice(0, 2).map(part => part[0] || "").join("");
   app.innerHTML = `
     ${hmlBanner()}
-    <div class="app-shell">
+    <div class="app-shell ${collapsed ? "is-collapsed" : ""} ${state.mobileNavOpen ? "nav-open" : ""}">
       <aside class="sidebar">
         <div class="brand">
-          <img src="yg-systems-monogram.png" alt="YG Systems" />
-          <div>
-            <strong>Comandas</strong>
-            <span>Controle de refeições</span>
+          <span class="brand-mark">${brandMark()}</span>
+          <div class="brand-text">
+            <strong>Merenda Escolar</strong>
+            <span>Apuração e gestão</span>
           </div>
+          <button class="collapse-btn" id="collapse-sidebar" type="button" aria-label="Recolher menu" title="Recolher menu">${icon("chevronsLeft")}</button>
         </div>
-        <nav class="nav">
-          ${items.map(([id, label]) => `<button data-view="${id}" class="${state.view === id ? "active" : ""}">${label}</button>`).join("")}
-        </nav>
+        <nav class="nav">${renderSidebarNav(isAdmin)}</nav>
         <div class="user-box">
-          <strong>${state.user.name}</strong>
-          <span>${isAdmin ? "Coordenação" : "Nutricionista"}</span>
-          <button id="logout">Sair</button>
+          <span class="avatar">${initials}</span>
+          <div class="user-meta">
+            <strong>${state.user.name}</strong>
+            <span>${isAdmin ? "Coordenação" : state.user.role === "adm" ? "ADM" : "Nutricionista"}</span>
+          </div>
+          <button id="logout" class="logout-btn" type="button" title="Sair" aria-label="Sair">${icon("logout")}</button>
         </div>
       </aside>
+      <div class="nav-scrim" id="nav-scrim"></div>
       <main class="content">
-        ${content}
+        <div class="mobile-bar">
+          <button class="ghost-icon" id="open-nav" type="button" aria-label="Abrir menu">${icon("menu")}</button>
+          <strong>Merenda Escolar</strong>
+        </div>
+        <div class="view ${enter ? "view-enter" : ""}">
+          ${content}
+        </div>
         <footer class="app-footer">
           Desenvolvido por <a href="https://instagram.com/yg.systems" target="_blank" rel="noopener noreferrer">YG Systems</a>
         </footer>
@@ -504,21 +559,48 @@ function shell(content) {
   `;
   document.querySelectorAll("[data-view]").forEach(button => {
     button.addEventListener("click", () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
       const nextView = button.dataset.view;
       if (!isAdmin && nextView === "lancamentos") {
         state.selectedMonth = state.db.settings.currentMonth;
         state.selectedDate = `${state.selectedMonth}-01`;
       }
-    if (isAdmin && nextView !== "dashboard") state.adminPeriodDirty = false;
+      if (isAdmin && nextView !== "dashboard") state.adminPeriodDirty = false;
       state.view = nextView;
       state.message = "";
+      state.mobileNavOpen = false;
       render();
+      window.scrollTo({ top: 0 });
     });
+  });
+  document.querySelectorAll("[data-nav-group]").forEach(button => {
+    button.addEventListener("click", () => {
+      const key = `ui-nav-group-${button.dataset.navGroup}`;
+      const group = button.closest(".nav-group");
+      group.classList.toggle("is-closed");
+      localStorage.setItem(key, group.classList.contains("is-closed") ? "0" : "1");
+    });
+  });
+  $("#collapse-sidebar").addEventListener("click", () => {
+    const shellEl = document.querySelector(".app-shell");
+    shellEl.classList.toggle("is-collapsed");
+    localStorage.setItem("ui-sidebar-collapsed", shellEl.classList.contains("is-collapsed") ? "1" : "0");
+  });
+  $("#open-nav").addEventListener("click", () => {
+    state.mobileNavOpen = true;
+    document.querySelector(".app-shell").classList.add("nav-open");
+  });
+  $("#nav-scrim").addEventListener("click", () => {
+    state.mobileNavOpen = false;
+    document.querySelector(".app-shell").classList.remove("nav-open");
   });
   $("#logout").addEventListener("click", () => {
     state.user = null;
     state.sessionToken = "";
     state.message = "";
+    state.lastRenderedView = "";
+    state.mod = null;
+    sessionStorage.removeItem("ui-view");
     localStorage.removeItem(authStorageKey());
     renderLogin();
   });
@@ -1429,12 +1511,26 @@ function renderConfig() {
       <div class="page-title"><h1>Configurações</h1><p>Defina nutricionistas, rotas e escolas sob responsabilidade.</p></div>
       <button class="primary" id="add-user">Nova nutricionista</button>
     </div>
+    ${typeof trainingConfigPanel === "function" ? trainingConfigPanel() : ""}
     <section class="panel">
       <h2>Nutricionistas</h2>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Escolas</th><th>Ações</th></tr></thead>
           <tbody>${nutritionists().map(userRow).join("")}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-head">
+        <h2>Perfil ADM</h2>
+        <button class="secondary" id="add-adm" type="button">Novo usuário ADM</button>
+      </div>
+      <p class="status-line">O perfil ADM confere o Controle de KM e a Capacitação enviados pelas nutricionistas. Não tem acesso às apurações.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Escolas</th><th>Ações</th></tr></thead>
+          <tbody>${state.db.users.filter(user => user.role === "adm" && user.active !== false).map(userRow).join("") || `<tr><td colspan="5">Nenhum usuário ADM.</td></tr>`}</tbody>
         </table>
       </div>
     </section>
@@ -1450,6 +1546,12 @@ function renderConfig() {
       <p class="status-line">${state.message}</p>
     </section>
   `);
+  if (typeof bindTrainingConfigPanel === "function") bindTrainingConfigPanel();
+  $("#add-adm").addEventListener("click", () => {
+    const count = state.db.users.filter(user => user.role === "adm").length;
+    state.db.users.push({ id: uid("user"), name: "Novo ADM", username: `adm${count + 1}`, password: "", role: "adm", active: true });
+    saveDb("Usuário ADM criado. Defina nome, usuário e senha na tabela.");
+  });
   $("#add-user").addEventListener("click", () => {
     state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "", role: "nutritionist", active: true });
     saveDb("Nutricionista criada.");
@@ -1714,14 +1816,18 @@ function render() {
   if (state.view === "exportar") return renderExport();
   if (state.view === "exportar-maximo") return renderMaximumExport();
   if (state.view === "exportar-sem-atendimento") return renderNotServedExport();
+  if (typeof renderModuleView === "function" && renderModuleView(state.view)) return;
+  state.view = homeView();
+  return render();
 }
 
 function legacyInitialLoadDisabled() {
   if (state.sessionToken && !isStaticMode()) {
     return loadData()
-      .then(() => {
+      .then(async () => {
         state.user = state.db.currentUser || state.db.users[0] || null;
-        state.view = state.user?.role === "admin" ? "dashboard" : "lancamentos";
+        if (typeof loadModules === "function") await loadModules();
+        state.view = restoredView();
         render();
       })
       .catch(() => {
@@ -1737,4 +1843,4 @@ function legacyInitialLoadDisabled() {
   return Promise.resolve();
 }
 
-legacyInitialLoadDisabled();
+window.addEventListener("DOMContentLoaded", () => legacyInitialLoadDisabled());
