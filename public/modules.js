@@ -127,9 +127,68 @@ function readFileAsBase64(file) {
   });
 }
 
+// Fotos são reduzidas no próprio celular antes do envio: no máximo 1600 px no lado maior e
+// cerca de 300 KB (JPEG). Assim o envio fica rápido no 4G e o armazenamento rende mais.
+// PDF, Word, planilhas e GIF vão como estão. Se algo falhar, envia o original.
+const PHOTO_TARGET_BYTES = 300 * 1024;
+const PHOTO_MAX_SIDE = 1600;
+
+function canvasToBlob(canvas, quality) {
+  return new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+}
+
+async function decodeImage(file) {
+  if (window.createImageBitmap) {
+    try { return await createImageBitmap(file, { imageOrientation: "from-image" }); } catch { /* tenta pelo <img> */ }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return img;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function shrinkPhoto(file) {
+  if (!/^image\/(jpeg|png|webp|heic|heif|bmp)$/i.test(file.type || "") || file.size <= PHOTO_TARGET_BYTES) return file;
+  try {
+    const image = await decodeImage(file);
+    const width = image.width || image.naturalWidth;
+    const height = image.height || image.naturalHeight;
+    if (!width || !height) return file;
+    let scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(width, height));
+    let best = null;
+    for (let round = 0; round < 4 && !(best && best.size <= PHOTO_TARGET_BYTES); round += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.82, 0.72, 0.62, 0.52]) {
+        const blob = await canvasToBlob(canvas, quality);
+        if (blob && (!best || blob.size < best.size)) best = blob;
+        if (blob && blob.size <= PHOTO_TARGET_BYTES) break;
+      }
+      scale *= 0.8;
+    }
+    image.close?.();
+    if (!best || best.size >= file.size) return file;
+    const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    return new File([best], name, { type: "image/jpeg", lastModified: Date.now() });
+  } catch {
+    return file;
+  }
+}
+
 async function uploadFiles(fileList) {
   const uploaded = [];
-  for (const file of [...fileList]) {
+  for (const original of [...fileList]) {
+    const file = await shrinkPhoto(original);
     if (file.size > 25 * 1024 * 1024) { toast(`${file.name}: maior que 25 MB.`, "error"); continue; }
     const data = await readFileAsBase64(file);
     uploaded.push(await mapi("upload", { name: file.name, type: file.type, data }));
