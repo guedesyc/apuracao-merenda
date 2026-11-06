@@ -16,8 +16,11 @@ if (LOCAL) {
   }
 }
 const { handler } = require("./netlify/functions/api");
-const modulesApi = LOCAL ? require("./local/modules-api") : null;
+// API dos módulos novos: no modo local usa local-data/; em produção, Supabase (tabelas + Storage).
+const modulesApi = require("./local/modules-api");
 const MAX_BODY = LOCAL ? 60_000_000 : 5_000_000;
+// Envio de anexos (até 25 MB em base64 ≈ 34 MB) e planilhas de pedido.
+const MAX_MODULES_BODY = 40_000_000;
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -41,12 +44,12 @@ function send(res, status, body, type = "application/json; charset=utf-8", heade
   res.end(payload);
 }
 
-function readBody(req) {
+function readBody(req, limit = MAX_BODY) {
   return new Promise((resolve, reject) => {
     let data = "";
     req.on("data", chunk => {
       data += chunk;
-      if (data.length > MAX_BODY) {
+      if (data.length > limit) {
         reject(new Error("Payload muito grande."));
         req.destroy();
       }
@@ -61,7 +64,7 @@ function serveStatic(req, res) {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
   let baseDir = PUBLIC_DIR;
-  if (modulesApi && pathname.startsWith("/uploads/")) {
+  if (LOCAL && pathname.startsWith("/uploads/")) {
     baseDir = modulesApi.UPLOADS_DIR;
     pathname = pathname.slice("/uploads".length);
   }
@@ -101,9 +104,9 @@ const server = http.createServer(async (req, res) => {
     if (req.url.split("?")[0] === "/local-env.js") {
       return send(res, 200, LOCAL ? "window.__LOCAL__ = true;" : "", "application/javascript; charset=utf-8");
     }
-    if (modulesApi && req.url.startsWith("/api/m/")) {
+    if (req.url.startsWith("/api/m/")) {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const result = await modulesApi.handleModules({ method: req.method, pathname: url.pathname, headers: req.headers, body: await readBody(req) });
+      const result = await modulesApi.handleModules({ method: req.method, pathname: url.pathname, headers: req.headers, body: await readBody(req, MAX_MODULES_BODY) });
       return send(res, result.status, result.body);
     }
     if (req.url.startsWith("/api/")) {

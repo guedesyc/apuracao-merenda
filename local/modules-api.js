@@ -1,5 +1,6 @@
-// API dos novos módulos (Supervisão, Matriculados, Eventos, Notificações, Inventário).
-// Versão local: dados em local-data/modules.json e anexos em local-data/uploads/.
+// API dos novos módulos (Supervisão, Matriculados, Eventos, Notificações, Inventário, Pedidos, KM, Capacitação).
+// Modo local (LOCAL_MODE=1 ou sem SUPABASE_URL): dados em local-data/modules.json e anexos em local-data/uploads/.
+// Produção: dados nas tabelas do Supabase e anexos no Storage (bucket "anexos"), via local/modules-store.js.
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -8,6 +9,14 @@ const coreApi = require("../netlify/functions/api");
 const { _local: core } = coreApi;
 const xl = require("./xlsx-helpers");
 const ordersReader = require("./orders-reader");
+const remote = require("./modules-store");
+
+const LOCAL = process.env.LOCAL_MODE === "1" || !process.env.SUPABASE_URL;
+
+// Cadastros do sistema original (escolas, rotas, nutricionistas, cards).
+function refs() {
+  return LOCAL ? localStore() : remote.refs();
+}
 
 const MODULES_FILE = path.join(DATA_DIR, "modules.json");
 const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
@@ -17,6 +26,7 @@ let modules = null;
 
 function load() {
   if (modules) return modules;
+  if (!LOCAL) throw new Error("Base dos módulos ainda não carregada.");
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   modules = fs.existsSync(MODULES_FILE) ? JSON.parse(fs.readFileSync(MODULES_FILE, "utf8")) : {};
   modules.supervisionReports ||= [];
@@ -37,6 +47,31 @@ function load() {
   if (modules.version < 4) migrateV4(modules);
   if (modules.version < 5) migrateV5(modules);
   ensureAdmProfile();
+  return modules;
+}
+
+function fillDefaults(doc) {
+  doc.supervisionReports ||= [];
+  doc.enrollments ||= {};
+  doc.events ||= [];
+  doc.notifications ||= [];
+  doc.inventoryItems ||= [];
+  doc.inventoryCounts ||= {};
+  doc.inventorySubmissions ||= {};
+  doc.inventoryDeadlines ||= {};
+  doc.orders ||= [];
+  doc.km ||= { vehicles: {}, logs: {} };
+  doc.trainings ||= [];
+  doc.trainingSubmissions ||= {};
+  doc.settings = { ...DEFAULT_SETTINGS, ...(doc.settings || {}) };
+  return doc;
+}
+
+// Produção: carrega o documento do Supabase (uma vez; de novo só depois de falha ao gravar).
+async function ensureLoaded() {
+  if (LOCAL) return load();
+  await remote.loadRefs();
+  if (!modules) modules = fillDefaults(await remote.loadDoc());
   return modules;
 }
 
@@ -111,17 +146,35 @@ function migrateV3(db) {
   const now = new Date().toISOString();
   db.inventoryItems = INVENTORY_ITEMS.map(([name, category, unit], index) => ({ id: `ins-${index + 1}`, name, category, unit, active: true, createdAt: now }));
   db.inventoryCounts = {};
-  db.enrollments = enrollmentsFor(localStore().schools);
+  db.enrollments = enrollmentsFor(refs().schools);
   db.version = 3;
   const tmp = `${MODULES_FILE}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
   fs.renameSync(tmp, MODULES_FILE);
 }
 
+let dirty = false;
+
 function save() {
+  if (!LOCAL) { dirty = true; return; }
   const tmp = `${MODULES_FILE}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(modules, null, 2));
   fs.renameSync(tmp, MODULES_FILE);
+}
+
+// Produção: grava no Supabase o que a ação mudou. Se falhar, descarta a memória e recarrega do banco.
+async function persist() {
+  if (LOCAL || !dirty) return;
+  try {
+    await remote.persistDoc(modules);
+    dirty = false;
+  } catch (error) {
+    modules = null;
+    dirty = false;
+    remote.forgetBaseline();
+    console.error("[modulos] falha ao gravar:", error.message);
+    fail(500, "Não foi possível salvar agora. Confira os dados e tente de novo.");
+  }
 }
 
 function uid(prefix) {
@@ -137,20 +190,24 @@ function fail(status, message) {
 function actorFrom(headers) {
   const token = core.verifyToken({ headers });
   if (!token) return null;
-  return localStore().profiles.find(profile => profile.id === token.sub && profile.active !== false) || null;
+  return refs().profiles.find(profile => profile.id === token.sub && profile.active !== false) || null;
 }
 
 function schoolIdsOf(nutritionistId) {
-  return new Set(localStore().nutritionist_schools.filter(item => item.profile_id === nutritionistId).map(item => item.school_id));
+  return new Set(refs().nutritionist_schools.filter(item => item.profile_id === nutritionistId).map(item => item.school_id));
 }
 
 function requireAdmin(actor) {
   if (actor.role !== "admin") fail(403, "Apenas a coordenação pode realizar esta ação.");
 }
 
+// Local: o arquivo tem url (/uploads/...). Produção: tem path no Storage; o link é gerado na leitura.
 function cleanFile(file) {
-  if (!file || typeof file !== "object" || !file.id || !file.url) return null;
-  return { id: String(file.id), name: String(file.name || "arquivo"), url: String(file.url), size: Number(file.size || 0), type: String(file.type || "") };
+  if (!file || typeof file !== "object" || !file.id) return null;
+  const base = { id: String(file.id), name: String(file.name || "arquivo"), size: Number(file.size || 0), type: String(file.type || "") };
+  if (!LOCAL && typeof file.path === "string" && /^[\w./-]+$/.test(file.path) && !file.path.includes("..")) return { ...base, path: file.path };
+  if (LOCAL && file.url) return { ...base, url: String(file.url) };
+  return null;
 }
 
 function cleanFiles(files) {
@@ -203,7 +260,7 @@ function localToday() {
 
 // Escolas, rotas, cards e nutricionistas direto da base local (formato usado pelas planilhas).
 function directory() {
-  const store = localStore();
+  const store = refs();
   const routes = new Map(store.routes.map(route => [route.id, route.name]));
   const profiles = new Map(store.profiles.map(profile => [profile.id, profile]));
   const schools = store.schools.map(school => ({
@@ -281,7 +338,9 @@ async function relationalDb(actor) {
 }
 
 async function recordExport(actor, payload, month, rows) {
-  await createLocalClient().from("exports").insert({ id: `export-${Date.now()}`, month, filename: payload.filename, rows });
+  const row = { id: `export-${Date.now()}`, month, filename: payload.filename, rows };
+  if (LOCAL) await createLocalClient().from("exports").insert(row);
+  else await remote.insertExport(row);
   return payload;
 }
 
@@ -508,7 +567,7 @@ function countsFor(all, schoolIds) {
 }
 
 function nutriIdsOf(schoolId) {
-  return localStore().nutritionist_schools.filter(item => item.school_id === schoolId).map(item => item.profile_id);
+  return refs().nutritionist_schools.filter(item => item.school_id === schoolId).map(item => item.profile_id);
 }
 
 // Evento sob responsabilidade da nutricionista que está agindo (a coordenação cria, edita e aprova).
@@ -560,6 +619,7 @@ function writeInventoryRows(db, actor, month, schoolId, rows) {
 // ---------- Perfil ADM (conferência de KM e Capacitação) ----------
 // Garante um usuário ADM na base local (adm / adm123) para bases criadas antes deste perfil existir.
 function ensureAdmProfile() {
+  if (!LOCAL) return;
   const store = localStore();
   if (store.profiles.some(profile => profile.role === "adm")) return;
   const now = new Date().toISOString();
@@ -711,7 +771,7 @@ function reviewRecord(actor, action, note) {
   return { status: action, note: String(note || "").slice(0, 1000), by: actor.name, at: new Date().toISOString() };
 }
 
-function handleUpload(actor, body) {
+async function handleUpload(actor, body) {
   const name = String(body.name || "arquivo").slice(0, 160);
   const data = String(body.data || "").replace(/^data:[^;]+;base64,/, "");
   const buffer = Buffer.from(data, "base64");
@@ -720,8 +780,14 @@ function handleUpload(actor, body) {
   const id = uid("file");
   const safe = name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "_");
   const filename = `${id}-${safe}`;
+  const type = String(body.type || "");
+  if (!LOCAL) {
+    const storagePath = `${localToday().slice(0, 7)}/${filename}`;
+    await remote.uploadFile(storagePath, buffer, type);
+    return { id, name, path: storagePath, size: buffer.length, type, uploadedBy: actor.id, uploadedAt: new Date().toISOString() };
+  }
   fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffer);
-  return { id, name, url: `/uploads/${filename}`, size: buffer.length, type: String(body.type || ""), uploadedBy: actor.id, uploadedAt: new Date().toISOString() };
+  return { id, name, url: `/uploads/${filename}`, size: buffer.length, type, uploadedBy: actor.id, uploadedAt: new Date().toISOString() };
 }
 
 const handlers = {
@@ -919,7 +985,7 @@ const handlers = {
     if (!body.schoolId || !String(body.event || "").trim()) fail(400, "Informe a escola e o evento.");
     const schoolNutris = nutriIdsOf(String(body.schoolId));
     const nutritionistId = String(body.nutritionistId || schoolNutris[0] || "");
-    const isNutri = localStore().profiles.some(item => item.id === nutritionistId && item.role === "nutritionist");
+    const isNutri = refs().profiles.some(item => item.id === nutritionistId && item.role === "nutritionist");
     if (!isNutri) fail(400, "Selecione a nutricionista responsável.");
     const audience = AUDIENCE_LABELS[body.audience] ? body.audience : "alunos";
     const toInt = value => (value === "" || value === undefined || value === null ? 0 : Math.max(0, Math.trunc(Number(value) || 0)));
@@ -1331,19 +1397,40 @@ const handlers = {
   }
 };
 
-async function handleModules({ method, pathname, headers, body }) {
-  try {
-    load();
-    const actor = actorFrom(headers);
-    if (!actor) return { status: 401, body: { error: "Sessão expirada. Entre novamente." } };
-    const route = pathname.replace(/^\/api\/m\//, "").replace(/\/+$/, "");
-    const handler = handlers[`${method} ${route}`];
-    if (!handler) return { status: 404, body: { error: "Rota não encontrada." } };
-    const parsed = body ? JSON.parse(body) : {};
-    return { status: 200, body: await handler(actor, parsed) };
-  } catch (error) {
-    return { status: error.statusCode || 500, body: { error: error.message } };
-  }
+// As ações rodam uma de cada vez (o documento em memória é compartilhado).
+let queue = Promise.resolve();
+function serialized(task) {
+  const run = queue.then(task, task);
+  queue = run.catch(() => {});
+  return run;
 }
 
-module.exports = { handleModules, UPLOADS_DIR };
+async function handleModules({ method, pathname, headers, body }) {
+  return serialized(async () => {
+    try {
+      await ensureLoaded();
+      const actor = actorFrom(headers);
+      if (!actor) return { status: 401, body: { error: "Sessão expirada. Entre novamente." } };
+      const route = pathname.replace(/^\/api\/m\//, "").replace(/\/+$/, "");
+      const handler = handlers[`${method} ${route}`];
+      if (!handler) return { status: 404, body: { error: "Rota não encontrada." } };
+      const parsed = body ? JSON.parse(body) : {};
+      let result;
+      try {
+        result = await handler(actor, parsed);
+      } catch (error) {
+        // ação recusada: no modo produção, descarta o que ela possa ter mexido na memória (recarrega do banco)
+        if (!LOCAL) { modules = null; dirty = false; remote.forgetBaseline(); }
+        throw error;
+      }
+      await persist();
+      if (!LOCAL) result = await remote.signFiles(JSON.parse(JSON.stringify(result ?? null)));
+      return { status: 200, body: result };
+    } catch (error) {
+      if (!error.statusCode) console.error("[modulos]", error);
+      return { status: error.statusCode || 500, body: { error: error.message } };
+    }
+  });
+}
+
+module.exports = { handleModules, UPLOADS_DIR, LOCAL };
