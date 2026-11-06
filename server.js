@@ -99,8 +99,17 @@ async function serveApi(req, res) {
   return send(res, result.statusCode || 200, payload, contentType, headers);
 }
 
+// Endereço antigo: qualquer link (inclusive favoritos com caminho) vai para o endereço novo.
+const OLD_HOSTS = new Set(["apuracaomerendaescolar.ygsystems.com.br", "www.apuracaomerendaescolar.ygsystems.com.br"]);
+const NEW_ORIGIN = "https://portalmerenda.ygsystems.com.br";
+
 const server = http.createServer(async (req, res) => {
   try {
+    const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+    if (OLD_HOSTS.has(host)) {
+      res.writeHead(301, { Location: NEW_ORIGIN + req.url, "Cache-Control": "no-store" });
+      return res.end();
+    }
     if (req.url.split("?")[0] === "/local-env.js") {
       return send(res, 200, LOCAL ? "window.__LOCAL__ = true;" : "", "application/javascript; charset=utf-8");
     }

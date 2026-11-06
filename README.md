@@ -1,8 +1,12 @@
-# Apuração de Comandas
+# Portal Merenda
 
 Sistema web para lançamento e acompanhamento mensal das refeições servidas nas escolas, com acesso separado para nutricionistas e coordenação.
 
-Produção: [https://apuracaomerendaescolar.ygsystems.com.br](https://apuracaomerendaescolar.ygsystems.com.br)
+Produção: [https://portalmerenda.ygsystems.com.br](https://portalmerenda.ygsystems.com.br)
+
+O endereço antigo (apuracaomerendaescolar.ygsystems.com.br) redireciona para o novo.
+
+Módulos novos (supervisão, matriculados, eventos, inventário, pedidos, KM, capacitação, notificações e Analytics): ver `LOCAL.md`. Tabelas no Supabase em `supabase/migrations/`; anexos no Storage (bucket privado `anexos`).
 
 ## Arquitetura atual
 
