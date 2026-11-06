@@ -1,0 +1,1492 @@
+{
+ "source": "ME SSA- NÚMERO DE MATRICULADOS.xlsx / aba 'Matriculados por segmento'",
+ "header": [
+  "CARD 1",
+  "CARD 2",
+  "CARD 3",
+  "CARD 4",
+  "CARD 5",
+  "CARD 6",
+  "CARD 7",
+  "CARD 8",
+  "CARD 9",
+  "DESJEJUM",
+  "CARD 11"
+ ],
+ "schools": [
+  {
+   "code": "0101",
+   "school": "0101 - ESCOLA MUNICIPAL PROFESSOR ALEXANDRE LEAL COSTA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card7": 158,
+    "card9": 106
+   }
+  },
+  {
+   "code": "0103",
+   "school": "0103 - ESCOLA MUNICIPAL COSME DE FARIAS",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card4": 26,
+    "card5": 154
+   }
+  },
+  {
+   "code": "0106",
+   "school": "0106 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL ABRIGO DO SALVADOR",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card1": 44,
+    "card4": 63
+   }
+  },
+  {
+   "code": "0109",
+   "school": "0109 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL CSU MAJOR COSME DE FARIAS",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card1": 88,
+    "card2": 122
+   }
+  },
+  {
+   "code": "0110",
+   "school": "0110 - ESCOLA MUNICIPAL SANTA ANGELA DAS MERCES",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card5": 171,
+    "card7": 286
+   }
+  },
+  {
+   "code": "0111",
+   "school": "0111 - ESCOLA MUNICIPAL LUIZ ANSELMO",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card6": 336
+   }
+  },
+  {
+   "code": "0112",
+   "school": "0112 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL PAROQUIAL DE SANTANA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card1": 35,
+    "card4": 52
+   }
+  },
+  {
+   "code": "0113",
+   "school": "0113 - ESCOLA MUNICIPAL JOIR BRASILEIRO",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card5": 91,
+    "card7": 115
+   }
+  },
+  {
+   "code": "0120",
+   "school": "0120 - ESCOLA MUNICIPAL OLGA FIGUEIREDO DE AZEVEDO",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card5": 227,
+    "card7": 228,
+    "card9": 58
+   }
+  },
+  {
+   "code": "0121",
+   "school": "0121 - ESCOLA MUNICIPAL SEBASTIAO DIAS",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card7": 236
+   }
+  },
+  {
+   "code": "0124",
+   "school": "0124 - ESCOLA MUNICIPAL LELIS PIEDADE",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card5": 329,
+    "card9": 105
+   }
+  },
+  {
+   "code": "0125",
+   "school": "0125 - ESCOLA MUNICIPAL AILTON SOARES",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card3": 7,
+    "card4": 29,
+    "card5": 207
+   }
+  },
+  {
+   "code": "0126",
+   "school": "0126 - ESCOLA MUNICIPAL JOAO LINO",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card1": 41,
+    "card2": 71
+   }
+  },
+  {
+   "code": "0127",
+   "school": "0127 - ESCOLA MUNICIPAL AMELIA RODRIGUES",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card7": 111,
+    "card8": 41
+   }
+  },
+  {
+   "code": "0128",
+   "school": "0128 - ESCOLA MUNICIPAL TEREZINHA VAZ DA SILVEIRA",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card4": 32,
+    "card5": 213,
+    "card9": 4
+   }
+  },
+  {
+   "code": "0130",
+   "school": "0130 - ESCOLA MUNICIPAL CASA DA PROVIDENCIA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card5": 220
+   }
+  },
+  {
+   "code": "0133",
+   "school": "0133 - ESCOLA SAO JOSE ANEXA AO COLEGIO SANTISSIMO SACRAMENTO",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card4": 27,
+    "card5": 219
+   }
+  },
+  {
+   "code": "0134",
+   "school": "0134 - ESCOLA MUNICIPAL DESPORTIVA SANTA RITA",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card4": 10,
+    "card5": 112
+   }
+  },
+  {
+   "code": "0135",
+   "school": "0135 - ESCOLA MUNICIPAL PERMINIO LEITE",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card3": 22,
+    "card4": 47,
+    "card5": 124
+   }
+  },
+  {
+   "code": "0136",
+   "school": "0136 - ESCOLA MUNICIPAL PAROQUIAL DA VITORIA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card6": 152
+   }
+  },
+  {
+   "code": "0138",
+   "school": "0138 - ESCOLA MUNICIPAL MARTAGAO GESTEIRA",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card3": 52,
+    "card4": 87,
+    "card5": 434,
+    "card9": 51
+   }
+  },
+  {
+   "code": "0139",
+   "school": "0139 - ESCOLA MUNICIPAL MARIA QUITERIA",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card5": 317
+   }
+  },
+  {
+   "code": "0140",
+   "school": "0140 - ESCOLA MUNICIPAL VIVALDO DA COSTA LIMA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card5": 60,
+    "card6": 9
+   }
+  },
+  {
+   "code": "0141",
+   "school": "0141 - ESCOLA MUNICIPAL NOSSA SENHORA DOS ANJOS",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card5": 811,
+    "card9": 95
+   }
+  },
+  {
+   "code": "0143",
+   "school": "0143 - ESCOLA MUNICIPAL SOROR JOANA ANGELICA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card5": 130
+   }
+  },
+  {
+   "code": "0144",
+   "school": "0144 - ESCOLA MUNICIPAL RUY DE LIMA MALTEZ",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card4": 48,
+    "card5": 146
+   }
+  },
+  {
+   "code": "0146",
+   "school": "0146 - ESCOLA MUNICIPAL PROFESSOR ARISTIDES NOVIS",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card5": 199
+   }
+  },
+  {
+   "code": "0147",
+   "school": "0147 - ESCOLA MUNICIPAL JOAO PEDRO DOS SANTOS",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card5": 341
+   }
+  },
+  {
+   "code": "0149",
+   "school": "0149 - ESCOLA MUNICIPAL COMUNITARIA DA HISTARTE",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card7": 441
+   }
+  },
+  {
+   "code": "0150",
+   "school": "0150 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL VIRGEM DE LA ALMUDENA",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card1": 55,
+    "card4": 84
+   }
+  },
+  {
+   "code": "0152",
+   "school": "0152 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL LUIS EDUARDO MAGALHAES",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card1": 56,
+    "card4": 103
+   }
+  },
+  {
+   "code": "0154",
+   "school": "0154 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL IACY VAZ FAGUNDES",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card1": 92,
+    "card4": 59
+   }
+  },
+  {
+   "code": "0155",
+   "school": "0155 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL IEDA BARRADAS CARNEIRO",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card1": 45,
+    "card2": 66
+   }
+  },
+  {
+   "code": "0158",
+   "school": "0158 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL NOSSA SENHORA DA VITORIA",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card1": 25,
+    "card2": 80
+   }
+  },
+  {
+   "code": "0159",
+   "school": "0159 - ESCOLA MUNICIPAL SANTA RITA",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card5": 36,
+    "card7": 152
+   }
+  },
+  {
+   "code": "0161",
+   "school": "0161 - ESCOLA MUNICIPAL HILDETE LOMANTO",
+   "nutritionist": "DIONE CIBELE",
+   "segments": {
+    "card4": 14,
+    "card5": 154,
+    "card7": 251,
+    "card9": 64
+   }
+  },
+  {
+   "code": "0162",
+   "school": "0162 - ESCOLA MUNICIPAL VISCONDE DE CAIRU",
+   "nutritionist": "BEATRIZ BAIÃO",
+   "segments": {
+    "card7": 366,
+    "card9": 36
+   }
+  },
+  {
+   "code": "0204",
+   "school": "0204 - ESCOLA MUNICIPAL CONSTANCA MEDEIROS",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card4": 28,
+    "card5": 152
+   }
+  },
+  {
+   "code": "0205",
+   "school": "0205 - ESCOLA MUNICIPAL SIMOES FILHO",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card5": 247
+   }
+  },
+  {
+   "code": "0207",
+   "school": "0207 - ESCOLA MUNICIPAL HENRIQUETA MACHADO",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card5": 144
+   }
+  },
+  {
+   "code": "0212",
+   "school": "0212 - ESCOLA MUNICIPAL HILBERTO SILVA",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card4": 7,
+    "card5": 110,
+    "card7": 105
+   }
+  },
+  {
+   "code": "0213",
+   "school": "0213 - ESCOLA MUNICIPAL PRESIDENTE CASTELO BRANCO",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card1": 22,
+    "card3": 10,
+    "card4": 56
+   }
+  },
+  {
+   "code": "0215",
+   "school": "0215 - ESCOLA MUNICIPAL SOCIEDADE 6 DE JANEIRO",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card5": 263
+   }
+  },
+  {
+   "code": "0217",
+   "school": "0217 - ESCOLA MUNICIPAL TIRADENTES",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card5": 267
+   }
+  },
+  {
+   "code": "0221",
+   "school": "0221 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL BARONESA DE SAUIPE",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card1": 53,
+    "card2": 129
+   }
+  },
+  {
+   "code": "0226",
+   "school": "0226 - ESCOLA MUNICIPAL PROFESSOR FREIRE FILHO",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card5": 176
+   }
+  },
+  {
+   "code": "0228",
+   "school": "0228 - ESCOLA MUNICIPAL ALMERINDA COSTA",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card4": 40,
+    "card5": 132
+   }
+  },
+  {
+   "code": "0230",
+   "school": "0230 - ESCOLA MUNICIPAL MELVIN JONES",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card1": 38,
+    "card3": 10,
+    "card4": 45
+   }
+  },
+  {
+   "code": "0232",
+   "school": "0232 - ESCOLA MUNICIPAL GERALDO TAVARES",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card4": 62,
+    "card5": 102
+   }
+  },
+  {
+   "code": "0233",
+   "school": "0233 - ESCOLA MUNICIPAL UNIAO COMUNITARIA",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card5": 207
+   }
+  },
+  {
+   "code": "0234",
+   "school": "0234 - ESCOLA MUNICIPAL PRIMEIRO DE MAIO",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card4": 16,
+    "card5": 81
+   }
+  },
+  {
+   "code": "0237",
+   "school": "0237 - ESCOLA MUNICIPAL SANTA BARBARA",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card5": 310,
+    "card6": 218,
+    "card9": 147
+   }
+  },
+  {
+   "code": "0238",
+   "school": "0238 - ESCOLA MUNICIPAL CENTRO SOCIAL MANGUEIRA",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card5": 276
+   }
+  },
+  {
+   "code": "0239",
+   "school": "0239 - ESCOLA MUNICIPAL CARMELITANA DO MENINO JESUS",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card6": 553
+   }
+  },
+  {
+   "code": "0240",
+   "school": "0240 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL DR AUGUSTO LOPES PONTES",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card1": 43,
+    "card4": 48
+   }
+  },
+  {
+   "code": "0241",
+   "school": "0241 - ESCOLA MUNICIPAL ELOYNA BARRADAS",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card1": 66,
+    "card4": 99,
+    "card5": 220
+   }
+  },
+  {
+   "code": "0242",
+   "school": "0242 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL ARLETE MAGALHAES",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card1": 72
+   }
+  },
+  {
+   "code": "0244",
+   "school": "0244 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL MARIA DA CONCEICAO COSTA",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card1": 75,
+    "card4": 136
+   }
+  },
+  {
+   "code": "0245",
+   "school": "0245 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL NOSSA SENHORA DAS GRACAS",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card1": 116,
+    "card4": 144
+   }
+  },
+  {
+   "code": "0246",
+   "school": "0246 - ESCOLA MUNICIPAL PROFESSORA MARIA JOSE DE PAULA MOREIRA",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card7": 279
+   }
+  },
+  {
+   "code": "0247",
+   "school": "0247 - ESCOLA MUNICIPAL ALFREDO AMORIM",
+   "nutritionist": "LETÍCIA MIRANDA",
+   "segments": {
+    "card5": 93,
+    "card7": 857,
+    "card9": 117
+   }
+  },
+  {
+   "code": "0301",
+   "school": "0301 - ESCOLA MUNICIPAL ANTONIO CARLOS MAGALHAES",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 34,
+    "card5": 327,
+    "card9": 38
+   }
+  },
+  {
+   "code": "0303",
+   "school": "0303 - ESCOLA MUNICIPAL ASSISTENCIA SOCIAL SAO JOSE",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card4": 18,
+    "card5": 227
+   }
+  },
+  {
+   "code": "0305",
+   "school": "0305 - ESCOLA MUNICIPAL BATISTA DE SAO CAETANO",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card5": 246
+   }
+  },
+  {
+   "code": "0306",
+   "school": "0306 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL CASA DA CRIANCA DO BOM JUA",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card1": 65,
+    "card2": 42,
+    "card4": 29
+   }
+  },
+  {
+   "code": "0307",
+   "school": "0307 - ESCOLA MUNICIPAL AMAI PRO",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card4": 61,
+    "card5": 205
+   }
+  },
+  {
+   "code": "0310",
+   "school": "0310 - ESCOLA MUNICIPAL CONSUL SCHINDLER",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 59,
+    "card5": 271
+   }
+  },
+  {
+   "code": "0312",
+   "school": "0312 - ESCOLA MUNICIPAL FONTE DO CAPIM",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card4": 67,
+    "card5": 337,
+    "card9": 44
+   }
+  },
+  {
+   "code": "0313",
+   "school": "0313 - ESCOLA MUNICIPAL HELENA MAGALHAES",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card5": 136,
+    "card7": 268,
+    "card9": 24
+   }
+  },
+  {
+   "code": "0314",
+   "school": "0314 - ESCOLA MUNICIPAL MARECHAL RONDON",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card5": 238,
+    "card9": 69
+   }
+  },
+  {
+   "code": "0315",
+   "school": "0315 - ESCOLA MUNICIPAL XAVIER MARQUES",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card5": 283,
+    "card9": 119
+   }
+  },
+  {
+   "code": "0316",
+   "school": "0316 - ESCOLA MUNICIPAL FAZENDA GRANDE",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card5": 346
+   }
+  },
+  {
+   "code": "0317",
+   "school": "0317 - ESCOLA MUNICIPAL PROFESSOR ANTONIO CARVALHO GUEDES",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card8": 214
+   }
+  },
+  {
+   "code": "0328",
+   "school": "0328 - ESCOLA MUNICIPAL BATISTA DE SAN MARTIM",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card5": 137
+   }
+  },
+  {
+   "code": "0329",
+   "school": "0329 - ESCOLA MUNICIPAL BELA VISTA DO LOBATO",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card2": 17,
+    "card4": 28,
+    "card5": 369
+   }
+  },
+  {
+   "code": "0330",
+   "school": "0330 - ESCOLA MUNICIPAL CAMPINAS DE PIRAJA",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card7": 560,
+    "card9": 108
+   }
+  },
+  {
+   "code": "0332",
+   "school": "0332 - ESCOLA MUNICIPAL COMUNITARIA REGINA STUKENBORG",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 11,
+    "card5": 119
+   }
+  },
+  {
+   "code": "0333",
+   "school": "0333 - ESCOLA MUNICIPAL CONEGO EMILIO LOBO",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card4": 31,
+    "card5": 252
+   }
+  },
+  {
+   "code": "0336",
+   "school": "0336 - ESCOLA MUNICIPAL ENG CARLOS BATALHA",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card4": 26,
+    "card5": 195
+   }
+  },
+  {
+   "code": "0337",
+   "school": "0337 - ESCOLA MUNICIPAL ENGENHEIRO GILBERTO PIRES MARINHO",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card5": 503
+   }
+  },
+  {
+   "code": "0338",
+   "school": "0338 - ESCOLA MUNICIPAL EDUCADOR PAULO FREIRE",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card4": 40,
+    "card5": 205
+   }
+  },
+  {
+   "code": "0340",
+   "school": "0340 - ESCOLA MUNICIPAL PROFESSORA MARIA DE LOURDES SANTANA ALVES",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card2": 110,
+    "card6": 222
+   }
+  },
+  {
+   "code": "0342",
+   "school": "0342 - ESCOLA MUNICIPAL CRIANCA FELIZ",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card1": 17,
+    "card2": 12,
+    "card4": 16,
+    "card5": 117
+   }
+  },
+  {
+   "code": "0343",
+   "school": "0343 - ESCOLA MUNICIPAL BARBOSA RODRIGUES",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 24,
+    "card5": 144
+   }
+  },
+  {
+   "code": "0344",
+   "school": "0344 - ESCOLA MUNICIPAL AUSTRICLIANO DE CARVALHO",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card5": 206
+   }
+  },
+  {
+   "code": "0345",
+   "school": "0345 - ESCOLA MUNICIPAL PADRE NORBERTO",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card7": 655,
+    "card9": 68
+   }
+  },
+  {
+   "code": "0346",
+   "school": "0346 - ESCOLA MUNICIPAL FRANCISCO MANGABEIRA",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card5": 358,
+    "card9": 67
+   }
+  },
+  {
+   "code": "0347",
+   "school": "0347 - ESCOLA MUNICIPAL FILHOS DE SALOMAO",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card5": 333
+   }
+  },
+  {
+   "code": "0348",
+   "school": "0348 - ESCOLA MUNICIPAL JAQUEIRA DO CARNEIRO",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card5": 230
+   }
+  },
+  {
+   "code": "0349",
+   "school": "0349 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL ANGELINA ROCHA DE ASSIS",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card1": 79,
+    "card4": 116
+   }
+  },
+  {
+   "code": "0350",
+   "school": "0350 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL YOLANDA PIRES",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card1": 67,
+    "card4": 125
+   }
+  },
+  {
+   "code": "0351",
+   "school": "0351 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL FRUTO DO AMANHA",
+   "nutritionist": "ISADORA CARDIM",
+   "segments": {
+    "card1": 40,
+    "card2": 54
+   }
+  },
+  {
+   "code": "0352",
+   "school": "0352 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL LINDAURA ANDRADE MENDONCA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card1": 95,
+    "card4": 92
+   }
+  },
+  {
+   "code": "0353",
+   "school": "0353 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL MOSA BERBERT",
+   "nutritionist": "CARLA AMPARO",
+   "segments": {
+    "card1": 76
+   }
+  },
+  {
+   "code": "0354",
+   "school": "0354 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL SEMENTE DO AMANHA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card1": 100,
+    "card4": 97
+   }
+  },
+  {
+   "code": "0355",
+   "school": "0355 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL TEREZA HELENA MATA PIRES",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card1": 40,
+    "card2": 61
+   }
+  },
+  {
+   "code": "0356",
+   "school": "0356 - ESCOLA MUNICIPAL DO CALAFATE",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card5": 290
+   }
+  },
+  {
+   "code": "0357",
+   "school": "0357 - ESCOLA MUNICIPAL 15 DE OUTUBRO",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card7": 179
+   }
+  },
+  {
+   "code": "0401",
+   "school": "0401 - ESCOLA MUNICIPAL ABRIGO FILHOS DO POVO",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card4": 38,
+    "card5": 459,
+    "card9": 69
+   }
+  },
+  {
+   "code": "0403",
+   "school": "0403 - ESCOLA MUNICIPAL GISELIA PALMA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card5": 135
+   }
+  },
+  {
+   "code": "0406",
+   "school": "0406 - ESCOLA MUNICIPAL DR MARCOS VINICIUS VILACA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card3": 8,
+    "card4": 41,
+    "card5": 151
+   }
+  },
+  {
+   "code": "0408",
+   "school": "0408 - ESCOLA MUNICIPAL DA CIDADE NOVA",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card4": 56,
+    "card5": 210
+   }
+  },
+  {
+   "code": "0409",
+   "school": "0409 - ESCOLA MUNICIPAL DO PAU MIUDO",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card5": 464,
+    "card9": 111
+   }
+  },
+  {
+   "code": "0414",
+   "school": "0414 - ESCOLA MUNICIPAL PERO VAZ VELHO",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card5": 209
+   }
+  },
+  {
+   "code": "0415",
+   "school": "0415 - ESCOLA MUNICIPAL PIRAJA DA SILVA",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card7": 304
+   }
+  },
+  {
+   "code": "0422",
+   "school": "0422 - ESCOLA MUNICIPAL ZACARIAS BOA MORTE",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card4": 20,
+    "card5": 265
+   }
+  },
+  {
+   "code": "0425",
+   "school": "0425 - ESCOLA MUNICIPAL NOSSA SENHORA DE NAZARE",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card1": 86,
+    "card4": 124,
+    "card5": 278
+   }
+  },
+  {
+   "code": "0427",
+   "school": "0427 - ESCOLA MUNICIPAL MANOEL FLORENCIO",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card4": 15,
+    "card5": 78
+   }
+  },
+  {
+   "code": "0429",
+   "school": "0429 - ESCOLA MUNICIPAL MAJOR ELOI MAGALHAES",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card4": 43,
+    "card5": 165
+   }
+  },
+  {
+   "code": "0432",
+   "school": "0432 - ESCOLA MUNICIPAL JOSAFA CARLOS BORGES",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card4": 2,
+    "card5": 139
+   }
+  },
+  {
+   "code": "0433",
+   "school": "0433 - ESCOLA MUNICIPAL MINISTRO SIMOES FILHO",
+   "nutritionist": "RAFAELA ANJOS",
+   "segments": {
+    "card5": 93
+   }
+  },
+  {
+   "code": "0434",
+   "school": "0434 - ESCOLA MUNICIPAL SAO JUDAS TADEU",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card4": 137
+   }
+  },
+  {
+   "code": "0435",
+   "school": "0435 - ESCOLA MUNICIPAL CARDEAL DA SILVA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card5": 284
+   }
+  },
+  {
+   "code": "0437",
+   "school": "0437 - ESCOLA MUNICIPAL VILA VICENTINA",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card5": 295
+   }
+  },
+  {
+   "code": "0438",
+   "school": "0438 - ESCOLA MUNICIPAL JULIETA VIANA",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card3": 20,
+    "card4": 79,
+    "card5": 266
+   }
+  },
+  {
+   "code": "0439",
+   "school": "0439 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL HOSANNAH DE OLIVEIRA",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card1": 89
+   }
+  },
+  {
+   "code": "0440",
+   "school": "0440 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL JOSE ADEODATO DE SOUZA FILHO",
+   "nutritionist": "MÉRCIA NOLAIR",
+   "segments": {
+    "card1": 127
+   }
+  },
+  {
+   "code": "0441",
+   "school": "0441 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL JOSE DA SILVA TAVARES",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card1": 35,
+    "card4": 76
+   }
+  },
+  {
+   "code": "0443",
+   "school": "0443 - ESCOLA MUNICIPAL PROFESSORA SUZANA IMBASSAHY",
+   "nutritionist": "REBECCA TRANQUILLI",
+   "segments": {
+    "card7": 264
+   }
+  },
+  {
+   "code": "0444",
+   "school": "0444 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL EPIFANIA SILVA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card1": 26,
+    "card4": 26
+   }
+  },
+  {
+   "code": "0445",
+   "school": "0445 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL DA SANTA MONICA",
+   "nutritionist": "VANESSA GALVÃO",
+   "segments": {
+    "card1": 26,
+    "card4": 67
+   }
+  },
+  {
+   "code": "0903",
+   "school": "0903 - ESCOLA MUNICIPAL ARMANDO CARNEIRO DA ROCHA",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card5": 234,
+    "card9": 47
+   }
+  },
+  {
+   "code": "0906",
+   "school": "0906 - ESCOLA MUNICIPAL SENADOR ANTONIO CARLOS PEIXOTO DE MAGALHAES",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card5": 294,
+    "card9": 100
+   }
+  },
+  {
+   "code": "0916",
+   "school": "0916 - ESCOLA MUNICIPAL JOAQUIM MAGALHAES",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card4": 25,
+    "card5": 211
+   }
+  },
+  {
+   "code": "0934",
+   "school": "0934 - ESCOLA MUNICIPAL GRACILIANO RAMOS",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 352,
+    "card9": 57
+   }
+  },
+  {
+   "code": "0941",
+   "school": "0941 - ESCOLA MUNICIPAL SENHOR DO BONFIM",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 16,
+    "card5": 372,
+    "card9": 63
+   }
+  },
+  {
+   "code": "0942",
+   "school": "0942 - ESCOLA MUNICIPAL DARCY RIBEIRO",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 590
+   }
+  },
+  {
+   "code": "0952",
+   "school": "0952 - ESCOLA MUNICIPAL ANDRE REBOUCAS",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card3": 18,
+    "card4": 72,
+    "card5": 218
+   }
+  },
+  {
+   "code": "0961",
+   "school": "0961 - ESCOLA MUNICIPAL PROFESSORA EUFROSINA MIRANDA",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card7": 375,
+    "card9": 85
+   }
+  },
+  {
+   "code": "0963",
+   "school": "0963 - ESCOLA MUNICIPAL MACHADO DE ASSIS",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card5": 237
+   }
+  },
+  {
+   "code": "0967",
+   "school": "0967 - ESCOLA MUNICIPAL SANTO ANTONIO DAS MALVINAS",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 237
+   }
+  },
+  {
+   "code": "0968",
+   "school": "0968 - ESCOLA MUNICIPAL PROFESSOR ITALO GAUDENZI",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 617
+   }
+  },
+  {
+   "code": "0969",
+   "school": "0969 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL MARIO ALTENFELDER",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card1": 19,
+    "card4": 93,
+    "card5": 601
+   }
+  },
+  {
+   "code": "0970",
+   "school": "0970 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL MUNDO FELIZ",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card1": 53,
+    "card4": 72
+   }
+  },
+  {
+   "code": "0971",
+   "school": "0971 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL EDUCAR E VIVER",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card1": 70,
+    "card4": 80,
+    "card5": 36
+   }
+  },
+  {
+   "code": "0972",
+   "school": "0972 - ESCOLA MUNICIPAL PROFESSORA OLGA METTIG",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card7": 532
+   }
+  },
+  {
+   "code": "0973",
+   "school": "0973 - ESCOLA MUNICIPAL MANOEL HENRIQUE DA SILVA BARRADAS",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card7": 298
+   }
+  },
+  {
+   "code": "0974",
+   "school": "0974 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL ABDIAS NASCIMENTO",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card1": 70,
+    "card4": 115
+   }
+  },
+  {
+   "code": "0975",
+   "school": "0975 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL PAULO BISPO BRAZ",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card1": 72,
+    "card4": 117
+   }
+  },
+  {
+   "code": "0979",
+   "school": "0979 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL DONA MARIA EMILIA GADELHA VIANNA",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card1": 92,
+    "card2": 111,
+    "card6": 149
+   }
+  },
+  {
+   "code": "1001",
+   "school": "1001 - ESCOLA MUNICIPAL DE NOVO MAROTINHO",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card4": 63,
+    "card5": 345,
+    "card9": 109
+   }
+  },
+  {
+   "code": "1013",
+   "school": "1013 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL CSU JOAO PAULO I",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card1": 12,
+    "card4": 50,
+    "card5": 121
+   }
+  },
+  {
+   "code": "1021",
+   "school": "1021 - ESCOLA MUNICIPAL PROFESSOR MILTON SANTOS",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 455,
+    "card7": 436
+   }
+  },
+  {
+   "code": "1024",
+   "school": "1024 - ESCOLA MUNICIPAL PROFESSORA ELISA SALDANHA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card5": 447,
+    "card9": 47
+   }
+  },
+  {
+   "code": "1026",
+   "school": "1026 - ESCOLA MUNICIPAL ADAUTO PEREIRA DE SOUZA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card4": 34,
+    "card5": 264
+   }
+  },
+  {
+   "code": "1028",
+   "school": "1028 - ESCOLA MUNICIPAL EDUARDO CAMPOS",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card5": 577,
+    "card9": 31
+   }
+  },
+  {
+   "code": "1032",
+   "school": "1032 - ESCOLA MUNICIPAL PROFESSOR RICARDO PEREIRA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card5": 404,
+    "card9": 34
+   }
+  },
+  {
+   "code": "1033",
+   "school": "1033 - ESCOLA MUNICIPAL NOSSA SENHORA APARECIDA",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card1": 9,
+    "card2": 46,
+    "card5": 271
+   }
+  },
+  {
+   "code": "1035",
+   "school": "1035 - ESCOLA MUNICIPAL PROFESSOR MANOEL DE ALMEIDA CRUZ",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card5": 69,
+    "card7": 271
+   }
+  },
+  {
+   "code": "1037",
+   "school": "1037 - ESCOLA MUNICIPAL PROFª IRENE DA SILVA COSTA SANTOS",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card6": 277
+   }
+  },
+  {
+   "code": "1039",
+   "school": "1039 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL CANTINHO DAS CRIANCAS",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card1": 51,
+    "card4": 83
+   }
+  },
+  {
+   "code": "1040",
+   "school": "1040 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL EDIVALDO MACHADO BOAVENTURA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card1": 50,
+    "card2": 45
+   }
+  },
+  {
+   "code": "1041",
+   "school": "1041 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL RAFAEL DE OLIVEIRA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card1": 32,
+    "card4": 90,
+    "card5": 92
+   }
+  },
+  {
+   "code": "1042",
+   "school": "1042 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL WALDECK ORNELAS",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card1": 48,
+    "card2": 35,
+    "card4": 33
+   }
+  },
+  {
+   "code": "1044",
+   "school": "1044 - ESCOLA MUNICIPAL PROFESSOR CLAUDIO VEIGA",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card7": 342,
+    "card9": 12
+   }
+  },
+  {
+   "code": "1045",
+   "school": "1045 - ESCOLA MUNICIPAL ELYSIO ATHAYDE",
+   "nutritionist": "ANA SILVANA",
+   "segments": {
+    "card2": 24,
+    "card5": 287,
+    "card6": 99,
+    "card7": 479,
+    "card9": 95
+   }
+  },
+  {
+   "code": "1104",
+   "school": "1104 - ESCOLA MUNICIPAL CID PASSOS",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card1": 45,
+    "card2": 50
+   }
+  },
+  {
+   "code": "1110",
+   "school": "1110 - ESCOLA MUNICIPAL DR OTAVIANO PIMENTA",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 25,
+    "card5": 454
+   }
+  },
+  {
+   "code": "1117",
+   "school": "1117 - ESCOLA MUNICIPAL ANFILOFIO DE CARVALHO",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card5": 714
+   }
+  },
+  {
+   "code": "1123",
+   "school": "1123 - ESCOLA MUNICIPAL PRESIDENTE MEDICI",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card5": 322
+   }
+  },
+  {
+   "code": "1126",
+   "school": "1126 - ESCOLA MUNICIPAL MIRANTES DE PERIPERI",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 8,
+    "card5": 281
+   }
+  },
+  {
+   "code": "1127",
+   "school": "1127 - ESCOLA MUNICIPAL ALTO DE COUTOS",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card5": 203
+   }
+  },
+  {
+   "code": "1130",
+   "school": "1130 - ESCOLA MUNICIPAL D PEDRO I",
+   "nutritionist": "FLÁVIA FRANCO",
+   "segments": {
+    "card4": 33,
+    "card5": 91
+   }
+  },
+  {
+   "code": "1135",
+   "school": "1135 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL ALVARO BAHIA",
+   "nutritionist": "TÁSSIA VIRGINIA",
+   "segments": {
+    "card1": 90,
+    "card2": 93
+   }
+  },
+  {
+   "code": "1136",
+   "school": "1136 - CENTRO MUNICIPAL DE EDUCACAO INFANTIL HELIO VIANNA",
+   "nutritionist": "CLAUDIA BRIM",
+   "segments": {
+    "card1": 58,
+    "card2": 40,
+    "card4": 39
+   }
+  }
+ ]
+}

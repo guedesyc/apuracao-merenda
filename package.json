@@ -15,7 +15,13 @@
     "routes:preview": "node scripts/preview_route_assignments.js",
     "routes:apply": "node scripts/apply_route_assignments.js --apply",
     "seed": "python scripts/import_seed.py",
-    "export": "python scripts/export_consolidated.py"
+    "export": "python scripts/export_consolidated.py",
+    "local": "node server.js --local",
+    "local:reset": "node scripts/seed_local.js",
+    "local:reset-empty": "node scripts/seed_local.js --empty",
+    "local:regen-entries": "node scripts/seed_local.js --entries-only",
+    "local:demo": "node scripts/seed_demo_nov_dez.js",
+    "local:demo-remove": "node scripts/seed_demo_nov_dez.js --remove"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.45.4",

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "merenda-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js", "--local"],
+      "port": 3000
+    }
+  ]
+}

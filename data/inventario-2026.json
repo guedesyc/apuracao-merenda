@@ -1,0 +1,420 @@
+{
+ "source": "Planilha de inventario 2026.xlsx / aba 'Planilha de Inventário (2)'",
+ "items": [
+  {
+   "name": "QUANT.:",
+   "category": "Congelados",
+   "unit": "QUANT.:"
+  },
+  {
+   "name": "AÇAFRÃO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "CARNE MOÍDA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "AÇÚCAR CRISTAL",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FIGADO ISCA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "ALHO PICADO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FILE DE PEITO DE FRANGO",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "ARROZ BRANCO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "MÚSCULO CUBO",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "ARROZ PARBOILIZADO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "PEIXE CAÇÃO",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "AVEIA EM FLOCOS",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "SALPRESA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "AZEITE DENDÊ",
+   "category": "Secos",
+   "unit": "L"
+  },
+  {
+   "name": "SUÍNO CUBO",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO COQUINHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO CREAM CRAKER",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO MAISENA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "IOGURTE",
+   "category": "Congelados",
+   "unit": "L"
+  },
+  {
+   "name": "BISCOITO MARIA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA ACEROLA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO POLVILHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA CAJU",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO ROSCA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA GOIABA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "CAFÉ EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA MANGA",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "CANELA EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA SALADA DE FRUTAS",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "CHOCOLATE EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "POLPA UMBU",
+   "category": "Congelados",
+   "unit": "KG"
+  },
+  {
+   "name": "COMINHO EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "CORANTE EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "EXTRATO DE TOMATE",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FARINHA MANDIOCA BRANCA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FARINHA TRIGO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "AGUA SANITÁRIA",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "L"
+  },
+  {
+   "name": "FEIJÃO BRANCO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "ALCOOL",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "L"
+  },
+  {
+   "name": "FEIJÃO CARIOCA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "DETERGENTE",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "L"
+  },
+  {
+   "name": "FEIJÃO FRADINHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "ESPONJA DUPLA FACE",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "UND"
+  },
+  {
+   "name": "FEIJÃO PRETO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FIBRAÇO",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "UND"
+  },
+  {
+   "name": "FERMENTO EM PÓ",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "FOSFORO",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "UND"
+  },
+  {
+   "name": "FLOCÃO DE MILHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "LUVA DESCARTÁVEL",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "PCT"
+  },
+  {
+   "name": "FOLHA DE LOURO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "SACO LIXO",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "PCT"
+  },
+  {
+   "name": "FUBA DE MILHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "PANO MULTIUSO",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "RL"
+  },
+  {
+   "name": "LEITE DE COCO",
+   "category": "Secos",
+   "unit": "L"
+  },
+  {
+   "name": "SACO AMOSTRA",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "PCT (C 100 UND)"
+  },
+  {
+   "name": "MASSA ESPAGUETE",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "TOUCA DESCARTÁVEL",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "PCT"
+  },
+  {
+   "name": "MASSA SOPA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "REFIL PARA MOP",
+   "category": "Produtos de Limpeza / Descartáveis",
+   "unit": "UND"
+  },
+  {
+   "name": "MILHO BRANCO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "MILHO PIPOCA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "MISTURA BOLO BAUNILHA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "MISTURA BOLO CHOCOLATE",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "AÇAI",
+   "category": "Aprender+",
+   "unit": "L"
+  },
+  {
+   "name": "MISTURA BOLO FESTA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "BATATA PALHA",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "MISTURA BOLO LARANJA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "GRANOLA",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "ÓLEO DE SOJA",
+   "category": "Secos",
+   "unit": "L"
+  },
+  {
+   "name": "GRANULADO",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "PROTEÍNA DE SOJA CARNE",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "HAMBURGUER",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "SAL",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "KETCHUP",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "TAPIOCA",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "LEITE CONDENSADO",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "TRIGO MOÍDO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "PICOLÉ",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "VINAGRE DE ALCOOL",
+   "category": "Secos",
+   "unit": "L"
+  },
+  {
+   "name": "REQUEIJÃO CREMOSO",
+   "category": "Aprender+",
+   "unit": "KG"
+  },
+  {
+   "name": "XEREM DE MILHO",
+   "category": "Secos",
+   "unit": "KG"
+  },
+  {
+   "name": "BISCOITO KIT LANCHE",
+   "category": "Aprender+",
+   "unit": "UND"
+  },
+  {
+   "name": "SUCO KIT LANCHE",
+   "category": "Aprender+",
+   "unit": "L"
+  }
+ ]
+}
