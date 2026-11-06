@@ -347,6 +347,7 @@ function renderAnPedidos() {
 
   shell(`
     ${analyticsHead(`Ajustes das nutricionistas: previsto × final · ${formatMonthBR(ui.mFrom)} a ${formatMonthBR(ui.mTo)}`)}
+    ${olderOrdersBar()}
     ${periodBarHtml(`<div class="field-group"><span class="label">Tipo de pedido</span>${segmentedHtml("ped-kind", ui.pedKind, ORDER_KINDS)}</div>`)}
     <section class="stat-row">
       ${statCard({ label: "Pedidos no período", value: fmtNumber(orders.length), hint: `${fmtNumber(total.lines)} itens distribuídos`, iconName: "cart", tone: "brand" })}
@@ -593,6 +594,7 @@ function renderAnCruzamento() {
 
   shell(`
     ${analyticsHead("O que a escola tem, o que pede e o que produz, comparado com os matriculados")}
+    ${olderOrdersBar()}
     <section class="card an-filters">
       <div class="an-filter-row">
         <label class="field-group"><span class="label">Pedido e inventário de</span><select id="cross-month">${monthOptions(orderMonths.length ? orderMonths : [ui.crossMonth], ui.crossMonth)}</select></label>
@@ -785,6 +787,7 @@ function renderHistoricoPedidos() {
       ${statCard({ label: "Envios de ajuste", value: fmtNumber(sends), iconName: "send" })}
       ${statCard({ label: "Última alteração", value: all[0] ? fmtDate(String(all[0].at).slice(0, 10)) : "—", hint: all[0] ? fmtDateTime(all[0].at).split(" ").slice(-1)[0] : "", iconName: "calendar" })}
     </section>
+    ${olderOrdersBar()}
     <section class="filter-bar hist-filters">
       <label class="inline-field grow">Pedido<select id="hist-order"><option value="todos">Todos os pedidos</option>${(m.data.orders || []).map(order => `<option value="${order.id}" ${ui.order === order.id ? "selected" : ""}>${esc(order.title)} — ${esc(formatMonthBR(order.month))}</option>`).join("")}</select></label>
       <label class="inline-field">Escola<select id="hist-school"><option value="todas">Todas</option>${schoolIds.map(id => `<option value="${id}" ${ui.school === id ? "selected" : ""}>${esc(schools.get(id)?.shortName || id)}</option>`).join("")}</select></label>

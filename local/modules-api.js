@@ -67,11 +67,30 @@ function fillDefaults(doc) {
   return doc;
 }
 
+// Pedidos: a memória (e a tela) trabalha com os recentes — do mês retrasado em diante, ou criados
+// nos últimos 90 dias. Os anteriores ficam no banco e vêm só quando alguém clica para ver.
+function recentOrdersWindow() {
+  const [year, month] = localToday().slice(0, 7).split("-").map(Number);
+  const cut = new Date(year, month - 1 - 2, 1);
+  const created = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  return { month: `${cut.getFullYear()}-${pad2(cut.getMonth() + 1)}`, createdAt: created.toISOString() };
+}
+
+function isRecentOrder(order, recent = recentOrdersWindow()) {
+  return order.month >= recent.month || String(order.createdAt || "") >= recent.createdAt;
+}
+
+let olderOrdersCount = 0;
+
 // Produção: carrega o documento do Supabase (uma vez; de novo só depois de falha ao gravar).
 async function ensureLoaded() {
   if (LOCAL) return load();
   await remote.loadRefs();
-  if (!modules) modules = fillDefaults(await remote.loadDoc());
+  if (!modules) {
+    const recent = recentOrdersWindow();
+    modules = fillDefaults(await remote.loadDoc(recent));
+    olderOrdersCount = await remote.countOlderOrders(recent);
+  }
   return modules;
 }
 
@@ -225,7 +244,8 @@ function stateFor(actor) {
     events: (isAdmin ? db.events : db.events.filter(item => item.nutritionistId ? item.nutritionistId === actor.id : own.has(item.schoolId)))
       .map(item => ({ ...item, billing: eventAllocations(db, item, cardsById) })),
     inventoryDeadlines: db.inventoryDeadlines,
-    orders: isAdmin ? db.orders : ordersForNutri(db, actor.id),
+    orders: (isAdmin ? db.orders : ordersForNutri(db, actor.id)).filter(order => isRecentOrder(order)),
+    ordersArchive: { before: recentOrdersWindow().month, count: LOCAL ? db.orders.filter(order => !isRecentOrder(order)).length : olderOrdersCount },
     today: localToday(),
     notifications: (isAdmin ? db.notifications : db.notifications.filter(item => (item.targetIds || []).includes(actor.id)))
       .map(item => isAdmin ? item : { ...item, responses: { [actor.id]: item.responses?.[actor.id] || null } }),
@@ -318,7 +338,7 @@ function deadlineOf(db, month, schoolId) {
 }
 
 function ordersForNutri(db, nutriId) {
-  return db.orders
+  return (Array.isArray(db) ? db : db.orders)
     .map(order => ({
       ...order, unmatched: undefined,
       lines: order.lines.filter(line => line.nutritionistId === nutriId),
@@ -1388,9 +1408,17 @@ const handlers = {
     save();
     return { ok: true };
   },
+  // Pedidos antigos (antes da janela dos recentes), só para consulta.
+  "POST orders/older": async actor => {
+    const recent = recentOrdersWindow();
+    const older = LOCAL ? load().orders.filter(order => !isRecentOrder(order, recent)) : await remote.loadOlderOrders(recent);
+    const visible = actor.role === "admin" ? older : actor.role === "nutritionist" ? ordersForNutri(older, actor.id) : [];
+    return { before: recent.month, orders: visible.sort((a, b) => String(b.month).localeCompare(String(a.month)) || String(b.createdAt).localeCompare(String(a.createdAt))) };
+  },
   "POST orders/export": async (actor, body) => {
     requireAdmin(actor);
-    const order = load().orders.find(item => item.id === body.id);
+    const order = load().orders.find(item => item.id === body.id)
+      || (LOCAL ? null : (await remote.loadOlderOrders(recentOrdersWindow())).find(item => item.id === body.id));
     if (!order) fail(404, "Pedido não encontrado.");
     const safe = order.title.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase().slice(0, 40);
     return xl.toPayload(orderWorkbook(order), `pedido-${safe}-${order.month}.xlsx`);

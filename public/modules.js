@@ -366,11 +366,55 @@ function defaultUi() {
   };
 }
 
+// ---------- Pedidos antigos: ficam no banco e só são buscados quando alguém clica ----------
+function mergeOlderOrders(data) {
+  const archive = state.modArchive;
+  if (!archive?.loaded || !data) return;
+  const ids = new Set((data.orders || []).map(order => order.id));
+  data.orders = [...(data.orders || []), ...archive.orders.filter(order => !ids.has(order.id))];
+}
+
+function olderOrdersBar() {
+  const info = mod().data.ordersArchive;
+  if (!info) return "";
+  const archive = state.modArchive;
+  if (archive?.loaded) {
+    return archive.orders.length
+      ? `<div class="older-bar is-loaded">${icon("clock")}<span>Mostrando também <b>${fmtNumber(archive.orders.length)} pedido(s) anteriores</b> a ${esc(formatMonthBR(info.before))}, só para consulta.</span></div>`
+      : `<div class="older-bar is-loaded">${icon("clock")}<span>Não há pedidos anteriores a ${esc(formatMonthBR(info.before))}.</span></div>`;
+  }
+  if (!info.count) return "";
+  const isAdmin = state.user?.role === "admin";
+  return `<div class="older-bar">${icon("clock")}<span>Aparecem os pedidos a partir de <b>${esc(formatMonthBR(info.before))}</b>.${isAdmin ? ` Há <b>${fmtNumber(info.count)}</b> pedido(s) anteriores guardados.` : " Os anteriores ficam guardados no histórico."}</span>
+    <button type="button" class="secondary sm" data-older-orders ${state.modArchive?.loading ? "disabled" : ""}>${icon("download")} ${state.modArchive?.loading ? "Carregando..." : "Ver pedidos anteriores"}</button></div>`;
+}
+
+async function loadOlderOrders() {
+  if (state.modArchive?.loading || state.modArchive?.loaded) return;
+  state.modArchive = { loading: true, loaded: false, orders: [] };
+  render();
+  try {
+    const result = await mapi("orders/older", {});
+    state.modArchive = { loading: false, loaded: true, before: result.before, orders: (result.orders || []).map(order => ({ ...order, archived: true })) };
+    mergeOlderOrders(mod().data);
+    toast(result.orders?.length ? `${result.orders.length} pedido(s) anteriores carregados.` : "Não há pedidos anteriores.");
+  } catch (error) {
+    state.modArchive = null;
+    toast(error.message, "error");
+  }
+  render();
+}
+
+document.addEventListener("click", event => {
+  if (event.target.closest?.("[data-older-orders]")) loadOlderOrders();
+});
+
 async function loadModules() {
   const ui = state.mod?.ui || defaultUi();
   const drafts = state.mod?.drafts || {};
   try {
     const data = await mapi("state");
+    mergeOlderOrders(data);
     state.mod = { available: true, data, ui, drafts };
   } catch (error) {
     state.mod = { available: false, data: emptyModules(), ui, drafts, error: error.message };
@@ -2367,6 +2411,7 @@ function renderPedidos() {
       subtitle: "Envie a planilha do pedido: o sistema lê o Excel e distribui as quantidades para cada nutricionista ajustar.",
       actions: `<button class="secondary" id="ped-template">${icon("download")} Baixar modelo</button><button class="primary" id="ped-new">${icon("upload")} Novo pedido</button>`
     })}
+    ${olderOrdersBar()}
     <section class="stat-row">
       ${statCard({ label: "Pedidos", value: fmtNumber(orders.length), iconName: "cart", tone: "brand" })}
       ${statCard({ label: "Ajustes para finalizar", value: fmtNumber(waiting), iconName: "send", tone: waiting ? "warn" : "" })}
@@ -2394,9 +2439,10 @@ function renderPedidos() {
               <span>${icon("fileSheet")} ${esc(order.fileName || "planilha")}${order.sheet ? ` · aba “${esc(order.sheet)}”` : ""}</span>
               <span>${icon("clock")} enviado por ${esc(order.createdBy)} em ${fmtDateTime(order.createdAt)}</span>
               <span class="grow"></span>
-              ${sent ? `<button type="button" class="secondary sm" data-ped-finalize-all="${order.id}">${icon("check")} Finalizar todos os enviados (${sent})</button>` : ""}
+              ${order.archived ? `<span class="chip neutral">${icon("clock")} Pedido anterior · só consulta</span>` : ""}
+              ${sent && !order.archived ? `<button type="button" class="secondary sm" data-ped-finalize-all="${order.id}">${icon("check")} Finalizar todos os enviados (${sent})</button>` : ""}
               <button type="button" class="secondary sm" data-ped-export="${order.id}">${icon("download")} Baixar Excel do pedido</button>
-              <button type="button" class="icon-btn danger" data-ped-delete="${order.id}" title="Excluir pedido">${icon("trash")}</button>
+              ${order.archived ? "" : `<button type="button" class="icon-btn danger" data-ped-delete="${order.id}" title="Excluir pedido">${icon("trash")}</button>`}
             </div>
             ${order.unmatched?.length ? `<div class="lock-banner warn">${icon("alert")}<span><b>${order.unmatched.reduce((sum, row) => sum + row.rows, 0)} linha(s)</b> com escola não reconhecida ficaram de fora: ${order.unmatched.slice(0, 5).map(row => esc(row.label)).join(", ")}${order.unmatched.length > 5 ? "…" : ""}</span></div>` : ""}
             <div class="school-rows">
@@ -2412,7 +2458,7 @@ function renderPedidos() {
                     </button>
                     <span class="chip ${group.status.tone}">${icon(group.status.icon)} ${group.status.label}</span>
                     <span class="meta">${group.adjustment?.finalizedAt ? `Finalizado em <b>${fmtDateTime(group.adjustment.finalizedAt)}</b>` : group.adjustment?.sentAt ? `Enviado em <b>${fmtDateTime(group.adjustment.sentAt)}</b>` : "Ainda não enviado"}</span>
-                    ${group.status.key === "sent" ? `<span class="row-btns"><button type="button" class="link-btn" data-ped-return="${key}">Devolver</button><button type="button" class="primary sm" data-ped-finalize="${key}">${icon("check")} Finalizar</button></span>` : ""}
+                    ${group.status.key === "sent" && !order.archived ? `<span class="row-btns"><button type="button" class="link-btn" data-ped-return="${key}">Devolver</button><button type="button" class="primary sm" data-ped-finalize="${key}">${icon("check")} Finalizar</button></span>` : ""}
                     <button type="button" class="chev-btn" data-ped-nutri="${key}" aria-label="Abrir">${icon("chevronDown")}</button>
                   </div>
                   ${openNutri ? `<div class="reg-body">${orderLinesTable(group.lines, group.adjustment, schools, { collapsed: ui.collapsed ||= new Set(), scope: key })}</div>` : ""}
@@ -2603,16 +2649,16 @@ function renderAjustePedido() {
   const orders = mod().data.orders || [];
   const schools = schoolMap();
   if (!orders.some(order => order.id === ui.order)) {
-    ui.order = (orders.find(order => !orderAdjustment(order, state.user.id)?.sentAt) || orders[0])?.id || "";
+    ui.order = (orders.find(order => !order.archived && !orderAdjustment(order, state.user.id)?.sentAt) || orders[0])?.id || "";
   }
   const order = orders.find(item => item.id === ui.order);
   const adjustment = order ? orderAdjustment(order, state.user.id) : null;
   const status = orderNutriStatus(adjustment);
-  const locked = Boolean(adjustment?.sentAt);
+  const locked = Boolean(adjustment?.sentAt) || Boolean(order?.archived);
   const draft = ui.dirty[ui.order] ||= {};
   const query = normalizeText(ui.search);
   const lines = order ? order.lines.filter(line => !query || normalizeText(`${line.item} ${schools.get(line.schoolId)?.shortName}`).includes(query)) : [];
-  const pendingCount = orders.filter(item => !orderAdjustment(item, state.user.id)?.sentAt).length;
+  const pendingCount = orders.filter(item => !item.archived && !orderAdjustment(item, state.user.id)?.sentAt).length;
   const currentValue = line => (line.id in draft ? draft[line.id] : adjustment?.values?.[line.id]);
   const adjustedCount = order ? order.lines.filter(line => { const value = currentValue(line); return value !== undefined && value !== "" && value !== null; }).length : 0;
 
@@ -2624,11 +2670,12 @@ function renderAjustePedido() {
       ${statCard({ label: "Itens neste pedido", value: fmtNumber(order?.lines.length || 0), iconName: "package" })}
       ${statCard({ label: "Itens ajustados", value: fmtNumber(adjustedCount), iconName: "edit" })}
     </section>
+    ${olderOrdersBar()}
     ${orders.length ? `<section class="filter-bar">
       <label class="inline-field grow">Pedido
         <select id="aped-order">${orders.map(item => {
           const st = orderNutriStatus(orderAdjustment(item, state.user.id));
-          return `<option value="${item.id}" ${item.id === ui.order ? "selected" : ""}>${st.key === "final" ? "✓ " : st.key === "sent" ? "➜ " : "• "}${esc(item.title)} — ${esc(formatMonthBR(item.month))}</option>`;
+          return `<option value="${item.id}" ${item.id === ui.order ? "selected" : ""}>${item.archived ? "🕘 " : st.key === "final" ? "✓ " : st.key === "sent" ? "➜ " : "• "}${esc(item.title)} — ${esc(formatMonthBR(item.month))}${item.archived ? " (anterior)" : ""}</option>`;
         }).join("")}</select>
       </label>
       <label class="search-field">${icon("search")}<input id="aped-search" placeholder="Buscar item ou escola..." value="${esc(ui.search)}" /></label>
@@ -2643,6 +2690,7 @@ function renderAjustePedido() {
           <button class="primary" id="aped-send">${icon("send")} Enviar ajuste</button>
         </div>`}
       </header>
+      ${order.archived ? `<div class="lock-banner">${icon("clock")}<span>Pedido anterior, aberto só para consulta.</span></div>` : ""}
       ${adjustment?.finalizedAt ? `<div class="lock-banner ok">${icon("check")}<span>Pedido <b>finalizado</b> pela coordenação em ${fmtDateTime(adjustment.finalizedAt)}.</span></div>`
         : locked ? `<div class="lock-banner warn">${icon("lock")}<span>Ajuste enviado em <b>${fmtDateTime(adjustment.sentAt)}</b>. Aguardando a coordenação finalizar — não é possível alterar.</span></div>` : ""}
       ${lines.length ? orderLinesTable(lines, adjustment, schools, { editable: !locked, draft, collapsed: ui.collapsed ||= new Set(), scope: order.id }) : emptyState("Nenhum item encontrado")}

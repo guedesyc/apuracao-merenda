@@ -96,10 +96,13 @@ function fakeDatabase() {
     tables, calls,
     from(name) {
       const filters = [];
+      let mode = "select";
       const api = {
         select() { return api; },
         order() { return api; },
-        range(from, to) { return Promise.resolve({ data: rowsOf(name).slice(from, to + 1).map(row => JSON.parse(JSON.stringify(row))), error: null }); },
+        or(expr) { const parts = expr.split(",").map(part => part.split(".")); filters.push(row => parts.some(([col, , ...value]) => String(row[col]) >= value.join("."))); return api; },
+        lt(col, value) { filters.push(row => String(row[col]) < String(value)); return api; },
+        range(from, to) { return Promise.resolve({ data: rowsOf(name).filter(row => filters.every(fn => fn(row))).slice(from, to + 1).map(row => JSON.parse(JSON.stringify(row))), error: null }); },
         upsert(rows) {
           calls.push(["upsert", name, rows.length]);
           const pk = pkOf(name);
@@ -109,9 +112,11 @@ function fakeDatabase() {
           }
           return Promise.resolve({ error: null });
         },
-        delete() { return api; },
+        delete() { mode = "delete"; return api; },
+        then(resolve) { const data = rowsOf(name).filter(row => filters.every(fn => fn(row))); resolve({ data, count: data.length, error: null }); },
         match(values) { filters.push(row => Object.entries(values).every(([col, value]) => String(row[col]) === String(value))); return api; },
         in(col, values) {
+          if (mode === "select") { const set = new Set(values.map(String)); filters.push(row => set.has(String(row[col]))); return api; }
           calls.push(["delete", name, values.length]);
           const set = new Set(values.map(String));
           tables[name] = rowsOf(name).filter(row => !(filters.every(fn => fn(row)) && set.has(String(row[col]))));
@@ -151,5 +156,34 @@ test("gravação só envia o que mudou e apaga o que saiu", async () => {
   const reloaded = await store.loadDoc();
   assert.equal(reloaded.events[0].notes, "mudou");
   assert.equal(reloaded.km.logs["2026-11"]["user-a"].days["2026-11-04"].end, 20);
+  store.setClient(null);
+});
+
+test("pedidos antigos ficam fora da memória e da gravação, e vêm sob demanda", async () => {
+  const fake = fakeDatabase();
+  store.setClient(fake);
+  const doc = sampleDoc();
+  const old = JSON.parse(JSON.stringify(doc.orders[0]));
+  Object.assign(old, { id: "ped-old", month: "2026-03", createdAt: "2026-02-20T10:00:00.000Z" });
+  old.lines = old.lines.map(line => ({ ...line }));
+  old.history = [{ ...old.history[0], id: "hist-old" }];
+  doc.orders.push(old);
+  for (const [name, rows] of Object.entries(store.toRows(doc))) fake.tables[name] = rows;
+  const recent = { month: "2026-09", createdAt: "2026-08-08T00:00:00.000Z" };
+
+  const loaded = await store.loadDoc(recent);
+  assert.deepEqual(loaded.orders.map(order => order.id), ["ped-1"]);
+  assert.equal(await store.countOlderOrders(recent), 1);
+
+  fake.calls.length = 0;
+  loaded.events[0].notes = "x";
+  await store.persistDoc(loaded);
+  assert.deepEqual(fake.calls, [["upsert", "events", 1]], "o pedido antigo não é apagado só por não estar na memória");
+  assert.equal(fake.tables.order_lines.filter(row => row.order_id === "ped-old").length, 2);
+
+  const older = await store.loadOlderOrders(recent);
+  assert.deepEqual(older.map(order => order.id), ["ped-old"]);
+  assert.equal(older[0].lines.length, 2);
+  assert.equal(older[0].history[0].id, "hist-old");
   store.setClient(null);
 });

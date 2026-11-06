@@ -303,11 +303,11 @@ function snapshot(rows) {
   return result;
 }
 
-async function selectAll(table) {
+async function selectAll(table, filter = query => query) {
   const all = [];
   const order = TABLES.find(item => item.name === table).pk;
   for (let from = 0; ; from += PAGE) {
-    let query = db().from(table).select("*");
+    let query = filter(db().from(table).select("*"));
     for (const col of order) query = query.order(col, { ascending: true });
     const { data, error } = await query.range(from, from + PAGE - 1);
     if (error) throw new Error(`${table}: ${error.message}`);
@@ -318,13 +318,47 @@ async function selectAll(table) {
 }
 
 let baseline = null;
+const ORDER_TABLES = new Set(["orders", "order_lines", "order_adjustments", "order_history"]);
+const ORDER_CHILDREN = ["order_lines", "order_adjustments", "order_history"];
 
-async function loadDoc() {
+// Linhas, ajustes e histórico dos pedidos escolhidos (busca em lotes de ids).
+async function orderChildren(ids) {
+  const rows = Object.fromEntries(ORDER_CHILDREN.map(name => [name, []]));
+  for (let index = 0; index < ids.length; index += 50) {
+    const batch = ids.slice(index, index + 50);
+    for (const name of ORDER_CHILDREN) rows[name].push(...await selectAll(name, query => query.in("order_id", batch)));
+  }
+  return rows;
+}
+
+// Pedidos "recentes": do mês de corte em diante, ou criados depois da data de corte.
+const recentFilter = recent => query => query.or(`month.gte.${recent.month},created_at.gte.${recent.createdAt}`);
+const olderFilter = recent => query => query.lt("month", recent.month).lt("created_at", recent.createdAt);
+
+// recent = { month: "2026-09", createdAt: "2026-08-08T00:00:00.000Z" }: só os pedidos recentes entram na memória.
+async function loadDoc(recent = null) {
   const rows = {};
-  for (const table of TABLES) rows[table.name] = await selectAll(table.name);
+  for (const table of TABLES) {
+    if (ORDER_TABLES.has(table.name)) continue;
+    rows[table.name] = await selectAll(table.name);
+  }
+  rows.orders = await selectAll("orders", recent ? recentFilter(recent) : query => query);
+  Object.assign(rows, await orderChildren(rows.orders.map(row => row.id)));
   const doc = fromRows(rows);
   baseline = snapshot(toRows(doc));
   return doc;
+}
+
+// Pedidos antigos, só para leitura (não entram na memória nem na gravação).
+async function loadOlderOrders(recent) {
+  const orders = await selectAll("orders", olderFilter(recent));
+  return fromRows({ orders, ...(await orderChildren(orders.map(row => row.id))) }).orders;
+}
+
+async function countOlderOrders(recent) {
+  const { count, error } = await olderFilter(recent)(db().from("orders").select("id", { count: "exact", head: true }));
+  if (error) throw new Error(`orders: ${error.message}`);
+  return count || 0;
 }
 
 function forgetBaseline() {
@@ -404,8 +438,8 @@ async function persistDoc(doc) {
 }
 let baselineRowsCache = {};
 
-async function loadDocWithCache() {
-  const doc = await loadDoc();
+async function loadDocWithCache(recent = null) {
+  const doc = await loadDoc(recent);
   baselineRowsCache = { order_history: toRows(doc).order_history.map(row => ({ id: row.id, order_id: row.order_id })) };
   return doc;
 }
@@ -484,6 +518,6 @@ async function signFiles(body) {
 
 module.exports = {
   BUCKET, TABLES, toRows, fromRows, snapshot, setClient,
-  loadDoc: loadDocWithCache, persistDoc, forgetBaseline,
+  loadDoc: loadDocWithCache, persistDoc, forgetBaseline, loadOlderOrders, countOlderOrders,
   loadRefs, refs, insertExport, uploadFile, signFiles
 };
