@@ -191,7 +191,6 @@ const APPROVAL_TEXT = { pendente: "Aguardando aprovação", aprovado: "Aprovado"
 const ATTENDANCE_TEXT = { realizado: "Realizado", nao_realizado: "Não realizado" };
 const AUDIENCE_LABELS = { alunos: "Alunos", adultos: "Adultos", ambos: "Alunos/Adultos" };
 const ADULT_MEALS = { almoco: { label: "Almoço", cardId: "card11" }, lanche: { label: "Lanche", cardId: "card10" } };
-const ADULT_CARD_IDS = new Set(Object.values(ADULT_MEALS).map(meal => meal.cardId));
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -218,15 +217,13 @@ function directory() {
 }
 
 // Regra do faturamento de eventos:
-//  - alunos  -> card de aluno mais caro da escola (pelos segmentos de matriculados);
+//  - alunos  -> sempre no card 10 (DESJEJUM/LANCHE), só quando "Será faturado?" = Sim;
 //  - adultos -> almoço no CARD 11, lanche no DESJEJUM/LANCHE (card 10).
-function studentCardFor(db, schoolId, cardsById) {
-  const segments = db.enrollments[schoolId]?.segments || {};
-  const candidates = Object.entries(segments)
-    .filter(([cardId, value]) => Number(value) > 0 && !ADULT_CARD_IDS.has(cardId) && cardsById.has(cardId))
-    .map(([cardId]) => cardsById.get(cardId))
-    .sort((a, b) => Number(b.price) - Number(a.price) || a.number - b.number);
-  return candidates[0] || null;
+const STUDENT_CARD_ID = "card10";
+
+// Eventos antigos (sem o campo) contam como "Sim".
+function studentsBilled(evt) {
+  return evt.studentBilled !== false;
 }
 
 function cardTitle(card) {
@@ -237,11 +234,11 @@ function eventAllocations(db, evt, cardsById = directory().cardsById) {
   const result = [];
   const students = Number(evt.studentQty) || 0;
   const adults = Number(evt.adultQty) || 0;
-  if (students > 0) {
-    const card = studentCardFor(db, evt.schoolId, cardsById);
+  if (students > 0 && studentsBilled(evt)) {
+    const card = cardsById.get(STUDENT_CARD_ID);
     result.push(card
       ? { cardId: card.id, cardLabel: cardTitle(card), qty: students, who: "Alunos" }
-      : { cardId: null, cardLabel: "Escola sem segmento de alunos em Matriculados", qty: students, who: "Alunos" });
+      : { cardId: null, cardLabel: "Card 10 não cadastrado", qty: students, who: "Alunos" });
   }
   if (adults > 0) {
     const meal = ADULT_MEALS[evt.adultMeal];
@@ -306,6 +303,7 @@ function eventRow(evt, dir, db) {
     event: evt.event,
     audience: AUDIENCE_LABELS[evt.audience] || evt.targetAudience || "",
     students: Number(evt.studentQty) || 0,
+    studentBilled: Number(evt.studentQty) ? (studentsBilled(evt) ? "Sim" : "Não") : "",
     adults: Number(evt.adultQty) || 0,
     adultMeal: ADULT_MEALS[evt.adultMeal]?.label || "",
     total: (Number(evt.studentQty) || 0) + (Number(evt.adultQty) || 0),
@@ -313,7 +311,7 @@ function eventRow(evt, dir, db) {
     food: evt.food || "",
     approval: APPROVAL_TEXT[evt.approval || "pendente"],
     attendance: ATTENDANCE_TEXT[evt.attendance] || "Aguardando nutricionista",
-    cards: allocations.map(item => `${item.who}: ${item.qty} → ${item.cardLabel}`).join("; "),
+    cards: [...allocations.map(item => `${item.who}: ${item.qty} → ${item.cardLabel}`), ...(Number(evt.studentQty) && !studentsBilled(evt) ? [`Alunos: ${evt.studentQty} → não faturado`] : [])].join("; "),
     notes: evt.notes || ""
   };
 }
@@ -327,6 +325,7 @@ const EVENT_COLUMNS = [
   { header: "Evento", key: "event", width: 28 },
   { header: "Público alvo", key: "audience", width: 15 },
   { header: "Qtd. alunos", key: "students", width: 11 },
+  { header: "Alunos faturados?", key: "studentBilled", width: 12 },
   { header: "Qtd. adultos", key: "adults", width: 11 },
   { header: "Refeição dos adultos", key: "adultMeal", width: 14 },
   { header: "Quantitativo total", key: "total", width: 13 },
@@ -602,6 +601,14 @@ function normalizePlate(value) {
   return `${plate.slice(0, 3)}-${plate.slice(3)}`;
 }
 
+function fuelNumber(value, label) {
+  if (value === "" || value === null || value === undefined) return null;
+  const text = String(value).trim();
+  const number = Number(text.includes(",") ? text.replace(/\./g, "").replace(",", ".") : text);
+  if (!Number.isFinite(number) || number < 0) fail(400, label + " inválido.");
+  return Math.round(number * 100) / 100;
+}
+
 function kmNumber(value) {
   if (value === "" || value === null || value === undefined) return null;
   const number = Number(String(value).replace(/\./g, "").replace(",", "."));
@@ -618,9 +625,10 @@ function writeKmDays(db, actor, month, days) {
     if (!date.startsWith(`${month}-`) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     const start = kmNumber(row?.start);
     const end = kmNumber(row?.end);
-    if (start === null && end === null) { delete log.days[date]; continue; }
+    const note = String(row?.note ?? log.days[date]?.note ?? "").trim().slice(0, 300);
+    if (start === null && end === null && !note) { delete log.days[date]; continue; }
     if (start !== null && end !== null && end < start) fail(400, `Em ${xl.fmtDateBR(date)} o KM final é menor que o inicial.`);
-    log.days[date] = { start, end };
+    log.days[date] = note ? { start, end, note } : { start, end };
   }
   log.savedAt = new Date().toISOString();
   return log;
@@ -652,6 +660,8 @@ function kmWorkbook(db, month) {
     { header: "Placa", key: "plate", width: 11 },
     { header: "Dias lançados", key: "days", width: 12 },
     { header: "KM total", key: "total", width: 12, numFmt: "#,##0.0" },
+    { header: "Abastecido (L)", key: "liters", width: 13, numFmt: "#,##0.00" },
+    { header: "Abastecido (R$)", key: "fuelValue", width: 14, numFmt: '"R$" #,##0.00' },
     { header: "Situação", key: "status", width: 30 },
     { header: "Enviado em", key: "sentAt", width: 17, numFmt: "dd/mm/yyyy hh:mm" },
     { header: "Conferido por", key: "reviewBy", width: 18 }
@@ -660,21 +670,28 @@ function kmWorkbook(db, month) {
   const dayColumns = [
     { header: "Data", key: "date", width: 13, numFmt: "dd/mm/yyyy" },
     { header: "Dia", key: "weekday", width: 8 },
+    { header: "Abastecimento (L)", key: "liters", width: 15, numFmt: "#,##0.00" },
+    { header: "Valor do abastecimento", key: "fuelValue", width: 16, numFmt: '"R$" #,##0.00' },
     { header: "KM inicial", key: "start", width: 12, numFmt: "#,##0.0" },
     { header: "KM final", key: "end", width: 12, numFmt: "#,##0.0" },
-    { header: "KM total", key: "total", width: 12, numFmt: "#,##0.0" }
+    { header: "KM total", key: "total", width: 12, numFmt: "#,##0.0" },
+    { header: "Observação", key: "note", width: 36 }
   ];
   const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   for (const nutri of dir.nutris) {
     const log = db.km.logs[month]?.[nutri.id];
     const { total, filled } = kmTotals(log);
-    summary.addRow({ nutri: nutri.name, plate: db.km.vehicles[nutri.id]?.plate || "", days: filled, total, status: kmStatusText(log), sentAt: log?.sentAt ? new Date(log.sentAt) : null, reviewBy: log?.review?.status === "conferido" ? log.review.by : "" });
-    if (!log || !Object.keys(log.days).length) continue;
+    const fuel = Object.values(log?.fuel || {});
+    const liters = fuel.reduce((sum, row) => sum + (Number(row.liters) || 0), 0);
+    const fuelValue = fuel.reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+    summary.addRow({ nutri: nutri.name, plate: db.km.vehicles[nutri.id]?.plate || "", days: filled, total, liters: liters || null, fuelValue: fuelValue || null, status: kmStatusText(log), sentAt: log?.sentAt ? new Date(log.sentAt) : null, reviewBy: log?.review?.status === "conferido" ? log.review.by : "" });
+    if (!log || !Object.keys(log.days).length && !fuel.length) continue;
     const sheet = xl.styledSheet(workbook, nutri.name, { title: `${nutri.name} · ${db.km.vehicles[nutri.id]?.plate || "sem placa"}`, subtitle: `${xl.monthLabel(month)} · ${kmStatusText(log)} · ${total} km`, columns: dayColumns });
-    for (const date of Object.keys(log.days).sort()) {
-      const row = log.days[date];
-      const complete = row.start !== null && row.end !== null;
-      sheet.addRow({ date: new Date(`${date}T00:00:00`), weekday: weekdays[new Date(`${date}T00:00:00`).getDay()], start: row.start, end: row.end, total: complete ? Math.round((row.end - row.start) * 10) / 10 : null });
+    for (const date of [...new Set([...Object.keys(log.days), ...Object.keys(log.fuel || {})])].sort()) {
+      const row = log.days[date] || { start: null, end: null };
+      const refuel = log.fuel?.[date] || {};
+      const complete = row.start !== null && row.end !== null && row.start !== undefined && row.end !== undefined;
+      sheet.addRow({ date: new Date(`${date}T00:00:00`), weekday: weekdays[new Date(`${date}T00:00:00`).getDay()], liters: refuel.liters ?? null, fuelValue: refuel.value ?? null, start: row.start, end: row.end, total: complete ? Math.round((row.end - row.start) * 10) / 10 : null, note: row.note || "" });
     }
     xl.finishSheet(sheet, dayColumns);
   }
@@ -741,13 +758,32 @@ const handlers = {
     const db = load();
     const month = requireMonth(body.month);
     const log = writeKmDays(db, actor, month, body.days);
-    const rows = Object.entries(log.days);
+    const rows = Object.entries(log.days).filter(([, row]) => row.start !== null || row.end !== null);
     if (!rows.length) fail(400, "Lance pelo menos um dia antes de enviar.");
     const incomplete = rows.filter(([, row]) => row.start === null || row.end === null).map(([date]) => xl.fmtDateBR(date));
     if (incomplete.length) fail(400, `Complete o KM inicial e final de: ${incomplete.slice(0, 5).join(", ")}${incomplete.length > 5 ? "…" : ""}.`);
     log.sentAt = new Date().toISOString();
     log.sentBy = actor.name;
     delete log.review;
+    save();
+    return { ok: true, log };
+  },
+  "POST km/fuel": (actor, body) => {
+    requireAdm(actor);
+    const db = load();
+    const month = requireMonth(body.month);
+    const nutriId = String(body.nutritionistId || "");
+    if (!isNutriId(nutriId)) fail(400, "Nutricionista inválida.");
+    db.km.logs[month] ||= {};
+    const log = db.km.logs[month][nutriId] ||= { days: {} };
+    log.fuel ||= {};
+    for (const [date, row] of Object.entries(body.days || {})) {
+      if (!date.startsWith(`${month}-`) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const liters = fuelNumber(row?.liters, "Abastecimento");
+      const value = fuelNumber(row?.value, "Valor do abastecimento");
+      if (liters === null && value === null) { delete log.fuel[date]; continue; }
+      log.fuel[date] = { liters, value: value === null ? null : Math.round(value * 100) / 100, by: actor.name, at: new Date().toISOString() };
+    }
     save();
     return { ok: true, log };
   },
@@ -777,7 +813,8 @@ const handlers = {
     if (!theme) fail(400, "Informe o tema da capacitação.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(body.deadline || ""))) fail(400, "Informe o prazo para envio dos documentos.");
     const existing = trainingOf(db, month);
-    const record = { ...(existing || { createdAt: new Date().toISOString() }), month, theme, deadline: String(body.deadline), updatedAt: new Date().toISOString(), updatedBy: actor.name };
+    const files = Array.isArray(body.files) ? body.files : existing?.files || [];
+    const record = { ...(existing || { createdAt: new Date().toISOString() }), month, theme, deadline: String(body.deadline), files: cleanFiles(files), updatedAt: new Date().toISOString(), updatedBy: actor.name };
     if (existing) Object.assign(existing, record); else db.trainings.push(record);
     db.trainings.sort((a, b) => b.month.localeCompare(a.month));
     save();
@@ -901,6 +938,7 @@ const handlers = {
       audience,
       targetAudience: AUDIENCE_LABELS[audience],
       studentQty,
+      studentBilled: !(body.studentBilled === false || body.studentBilled === "nao"),
       adultQty,
       adultMeal,
       quantity,
@@ -1160,7 +1198,7 @@ const handlers = {
     ];
     const sheet = xl.styledSheet(workbook, "Eventos no faturamento", {
       title: `Eventos somados ao faturamento · ${xl.monthLabel(month)}`,
-      subtitle: "Eventos aprovados e confirmados como realizados, com data no mês. Alunos: card mais caro da escola (valor contratual). Adultos: almoço no CARD 11, lanche no card 10.",
+      subtitle: "Eventos aprovados e confirmados como realizados, com data no mês. Alunos: card 10, só quando Será faturado? = Sim. Adultos: almoço no CARD 11, lanche no card 10.",
       columns
     });
     for (const { evt, allocation } of audit) {

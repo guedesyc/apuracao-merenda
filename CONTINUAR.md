@@ -45,15 +45,19 @@ Leia `LOCAL.md` (módulos e regras). Resumo das decisões já tomadas com o usu�
   Arquivos usam CRLF. Depois de mudar a API ou os dados, reinicie o servidor (ele guarda tudo em memória).
 - Perfis: `admin` (coordenação, acesso a tudo), `adm` (confere KM e Capacitação), `nutritionist`.
 - **Eventos**: a coordenação cria e **aprova** (coluna Aprovado); atendimento (Realizado/Não realizado) e "Concluído" são da nutri.
-  Faturamento soma só eventos **aprovados e realizados**: alunos no card de aluno mais caro da escola
-  (segmentos de Matriculados × valor contratual do card, editável em Configurações → Valores dos cards,
-  escrito na linha 172 da planilha da SMED); adultos almoço → CARD 11, lanche → card 10.
+  Faturamento soma só eventos **aprovados e realizados**: alunos sempre no **card 10**, só se "Será faturado?" = Sim
+  (`studentBilled`; eventos antigos sem o campo contam como Sim); adultos almoço → CARD 11, lanche → card 10.
+  Valor contratual dos cards editável em Configurações → Valores dos cards (linha 172 da planilha da SMED).
 - **Pedidos**: modelos fixos reconhecidos sozinhos — Secos/Congelados (aba Resumo, escolas na linha 8, insumos
   nas linhas abaixo; nome do insumo pode vir da aba Cadastro G:H pelo código) e Horti (abas Resumo ROTA 1 e 2,
   escolas na linha 3). Escolas casadas por nome (com aproximação). "Saturnino Cabral" é lida como ESCOLA MUNICIPAL AILTON SOARES
   (`SCHOOL_ALIASES` em `local/orders-reader.js`); Dr. Fernando Montanha Pondé não está cadastrada. A nutri ajusta (quantidade nova, em branco = sem ajuste) e a coordenação finaliza.
+- **Item do pedido × insumo do inventário**: `inventoryItemFor()` em `public/modules.js` casa os nomes (sem acento, embalagem e
+  palavras genéricas; aceita plural e 1 letra de diferença). Usado na coluna Inventário do Ajuste de Pedido e nos R$ do Analytics
+  (valor unitário do insumo). Horti e itens sem correspondente ficam sem valor.
 - **Inventário**: 4 categorias, admin ativa/inativa e define valor unitário e prazo por GRE; nutri envia e trava.
-- **KM**: placa uma vez; KM inicial/final por dia; Enviar para ADM trava o mês; ADM/coordenação conferem ou
+- **KM**: placa uma vez; KM inicial/final por dia + observação opcional (`days[data].note`); o ADM lança abastecimento (L) e
+  valor por dia (`logs[mês][nutri].fuel[data]`, rota `km/fuel`) — o cálculo estimado de gasolina saiu; Enviar para ADM trava o mês; ADM/coordenação conferem ou
   devolvem. Ranking de KM no Analytics (segue o período do filtro).
 - **Pedidos → Histórico** (admin e nutri): cada salvar/enviar/devolver/finalizar grava `order.history`
   com escola, item, previsto, antes e depois. Ajustes que já existiam viraram registros "anterior" (migração v5).
@@ -62,7 +66,7 @@ Leia `LOCAL.md` (módulos e regras). Resumo das decisões já tomadas com o usu�
   Inventário, Inventário × Pedidos × Matriculados (compara com a mediana da rede) e Notificações.
 - **Notificações**: são para **escolas**; a nutricionista responsável pela escola responde. Ícone "!".
   Filtro por escola na lista. Notificações antigas (sem escola) continuam por nutricionista.
-- **Capacitação**: tema e prazo em Configurações; nutri envia uma vez por mês; ADM/coordenação conferem.
+- **Capacitação**: tema, prazo e anexos (`training.files`, a nutri vê no topo da tela) em Configurações; nutri envia uma vez por mês; ADM/coordenação conferem.
 - Celular primeiro: o sistema é usado principalmente no celular; confira toda tela em 375px. Confirmações usam
   `askConfirm()` (modal da aplicação), nunca `confirm()` do navegador.
 - Dados fictícios de nov/dez (apuração, pedidos com ajustes, inventário, KM, eventos, notificações, supervisão,

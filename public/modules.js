@@ -995,18 +995,16 @@ function eventNutriId(evt) {
   return evt.nutritionistId || schoolMap().get(evt.schoolId)?.nutritionistIds?.[0] || "";
 }
 
-// Mesma regra do servidor: alunos -> card de aluno mais caro da escola; adultos -> almoço CARD 11, lanche card 10.
-function eventAllocationPreview(schoolId, audience, studentQty, adultQty, adultMeal) {
+// Mesma regra do servidor: alunos -> card 10 (se "Será faturado?" = Sim); adultos -> almoço CARD 11, lanche card 10.
+function eventAllocationPreview(schoolId, audience, studentQty, adultQty, adultMeal, studentBilled = true) {
   const cards = new Map(state.db.cards.map(card => [card.id, card]));
-  const adultCards = new Set(Object.values(ADULT_MEALS).map(meal => meal.cardId));
   const result = [];
   const students = audience === "adultos" ? 0 : Number(studentQty) || 0;
   const adults = audience === "alunos" ? 0 : Number(adultQty) || 0;
   if (students) {
-    const segments = mod().data.enrollments[schoolId]?.segments || {};
-    const candidates = Object.entries(segments).filter(([id, value]) => Number(value) > 0 && !adultCards.has(id) && cards.has(id))
-      .map(([id]) => cards.get(id)).sort((a, b) => b.price - a.price || a.number - b.number);
-    result.push({ who: "Alunos", qty: students, card: candidates[0] || null, many: candidates.length > 1, missing: schoolId ? "escola sem segmento de alunos em Matriculados" : "escolha a escola" });
+    result.push(studentBilled
+      ? { who: "Alunos", qty: students, card: cards.get("card10") || null, missing: "card 10 não cadastrado" }
+      : { who: "Alunos", qty: students, card: null, missing: "não será faturado", off: true });
   }
   if (adults) {
     const meal = ADULT_MEALS[adultMeal];
@@ -1016,14 +1014,14 @@ function eventAllocationPreview(schoolId, audience, studentQty, adultQty, adultM
 }
 
 function billingText(items) {
-  return items.map(item => `${fmtNumber(item.qty)} ${item.who.toLowerCase()} → ${item.card ? `${esc(cardName(item.card))} (${money(item.card.price)})` : `<em class="warn-text">${esc(item.missing)}</em>`}`).join(" · ");
+  return items.map(item => `${fmtNumber(item.qty)} ${item.who.toLowerCase()} → ${item.card ? `${esc(cardName(item.card))} (${money(item.card.price)})` : item.off ? `<em class="muted">${esc(item.missing)}</em>` : `<em class="warn-text">${esc(item.missing)}</em>`}`).join(" · ");
 }
 
 function audienceCell(evt) {
   const label = AUDIENCES[evt.audience] || evt.targetAudience;
   if (!label) return "<span class='muted'>—</span>";
   const parts = [];
-  if (Number(evt.studentQty)) parts.push(`${fmtNumber(evt.studentQty)} alunos`);
+  if (Number(evt.studentQty)) parts.push(`${fmtNumber(evt.studentQty)} alunos${evt.studentBilled === false ? " (não faturados)" : ""}`);
   if (Number(evt.adultQty)) parts.push(`${fmtNumber(evt.adultQty)} adultos${ADULT_MEALS[evt.adultMeal] ? ` (${ADULT_MEALS[evt.adultMeal].label.toLowerCase()})` : ""}`);
   return `<span class="aud-tag aud-${esc(evt.audience || "alunos")}">${esc(label)}</span>${parts.length ? `<small>${parts.join(" · ")}</small>` : ""}`;
 }
@@ -1135,16 +1133,15 @@ function renderEventos() {
     bindSchoolCombo(form);
     const sync = () => {
       const audience = field("audience").value;
-      form.querySelector("[data-aud-students]").hidden = audience === "adultos";
+      form.querySelectorAll("[data-aud-students]").forEach(el => { el.hidden = audience === "adultos"; });
       form.querySelectorAll("[data-aud-adults]").forEach(el => { el.hidden = audience === "alunos"; });
       field("adultMeal").required = audience !== "alunos";
       const students = audience === "adultos" ? 0 : Number(field("studentQty").value) || 0;
       const adults = audience === "alunos" ? 0 : Number(field("adultQty").value) || 0;
       form.querySelector("[data-evt-total]").textContent = students + adults ? fmtNumber(students + adults) : "—";
-      const preview = eventAllocationPreview(field("schoolId").value, audience, students, adults, field("adultMeal").value);
-      const many = preview.find(item => item.who === "Alunos" && item.many);
+      const preview = eventAllocationPreview(field("schoolId").value, audience, students, adults, field("adultMeal").value, field("studentBilled").value !== "nao");
       form.querySelector("[data-evt-billing]").innerHTML = preview.length
-        ? `${icon("table")} <span><b>No faturamento:</b> ${billingText(preview)}${many ? ` <small>(a escola tem mais de um card de alunos; vai para o mais caro)</small>` : ""}</span>`
+        ? `${icon("table")} <span><b>No faturamento:</b> ${billingText(preview)}</span>`
         : `${icon("table")} <span>Informe as quantidades para ver em qual card o evento entra no faturamento.</span>`;
     };
     form.addEventListener("input", sync);
@@ -1198,6 +1195,7 @@ function eventForm(evt) {
       <div class="form-grid cols-4">
         <label class="field"><span>Público alvo</span><select name="audience">${Object.entries(AUDIENCES).map(([key, label]) => `<option value="${key}" ${audience === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
         <label class="field" data-aud-students><span>Qtd. de alunos</span><input type="number" min="0" step="1" name="studentQty" value="${esc(evt?.studentQty || (audience !== "adultos" && evt?.quantity) || "")}" placeholder="0" /></label>
+        <label class="field" data-aud-students><span>Será faturado?</span><select name="studentBilled"><option value="sim" ${evt?.studentBilled === false ? "" : "selected"}>Sim (card 10)</option><option value="nao" ${evt?.studentBilled === false ? "selected" : ""}>Não</option></select></label>
         <label class="field" data-aud-adults><span>Qtd. de adultos</span><input type="number" min="0" step="1" name="adultQty" value="${esc(evt?.adultQty || "")}" placeholder="0" /></label>
         <label class="field" data-aud-adults><span>Refeição dos adultos</span><select name="adultMeal"><option value="">Selecione...</option>${Object.entries(ADULT_MEALS).map(([key, meal]) => `<option value="${key}" ${evt?.adultMeal === key ? "selected" : ""}>${meal.label} (${meal.cardId === "card11" ? "CARD 11" : "card 10"})</option>`).join("")}</select></label>
         <div class="field"><span>Quantitativo total</span><output class="total-out" data-evt-total>—</output></div>
@@ -1502,6 +1500,70 @@ function invValue(month, schoolId, itemsById) {
     priced += 1;
   }
   return { total: Math.round(total * 100) / 100, priced };
+}
+
+// ---------- Item do pedido -> insumo do inventário ----------
+// Os nomes não são iguais ("ACUCAR CRISTAL 1KG" x "AÇÚCAR CRISTAL"): tira acento, embalagem e palavras
+// genéricas e compara palavra a palavra (aceita plural e 1 letra de diferença).
+const ITEM_STOPWORDS = new Set(["KG", "G", "GR", "GRS", "ML", "L", "LT", "LITRO", "LITROS", "UND", "UN", "UNID", "UNIDADES", "PCT", "CX", "CT", "DZ", "FR", "DE", "DA", "DO", "DAS", "DOS", "EM", "E", "COM", "SEM", "PARA", "TIPO", "PO", "SABOR"]);
+
+function itemTokens(text) {
+  return String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim().split(" ")
+    .filter(token => token && !ITEM_STOPWORDS.has(token) && !/\d/.test(token))
+    .map(token => token.replace(/EIS$/, "EL").replace(/(?<=..)S$/, ""));
+}
+
+function oneEditApart(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0; let j = 0; let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i += 1; j += 1; continue; }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i += 1; else if (b.length > a.length) j += 1; else { i += 1; j += 1; }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+function sameToken(a, b) {
+  return a === b || (Math.min(a.length, b.length) >= 6 && oneEditApart(a, b));
+}
+
+const itemMatchCache = new Map();
+function inventoryItemFor(name) {
+  const items = mod().data.inventoryItems || [];
+  const cacheKey = `${items.length}:${name}`;
+  if (itemMatchCache.has(cacheKey)) return itemMatchCache.get(cacheKey);
+  const wanted = itemTokens(name);
+  let best = null;
+  if (wanted.length) {
+    for (const item of items) {
+      const tokens = itemTokens(item.name);
+      if (!tokens.length) continue;
+      const matched = tokens.filter(token => wanted.some(other => sameToken(token, other))).length;
+      // todas as palavras do insumo no item, ou o item inteiro no insumo com no máximo 1 palavra a mais
+      const full = matched === tokens.length || (matched === wanted.length && tokens.length - matched <= 1);
+      if (!full) continue;
+      const score = matched * 10 - Math.abs(tokens.length - wanted.length);
+      if (!best || score > best.score) best = { item, score };
+    }
+  }
+  itemMatchCache.set(cacheKey, best?.item || null);
+  return best?.item || null;
+}
+
+// Valor unitário do item do pedido (pelo insumo correspondente do Inventário de Insumos).
+function orderItemPrice(name) {
+  return itemPrice(inventoryItemFor(name));
+}
+
+// Inventário mais recente da escola: o último mês com contagem (enviado ou em preenchimento).
+function latestInventory(schoolId, upToMonth = "9999-99") {
+  const months = Object.keys(mod().data.inventoryCounts || {}).filter(month => month <= upToMonth).sort().reverse();
+  for (const month of months) {
+    const counts = mod().data.inventoryCounts[month]?.[schoolId];
+    if (counts && Object.keys(counts).length) return { month, counts, sent: Boolean(invSubmission(month, schoolId)) };
+  }
+  return null;
 }
 
 function invCount(month, schoolId) {
@@ -2044,7 +2106,7 @@ function renderExportacoes() {
   const ui = mod().ui.exp;
   const data = mod().data;
   const billable = data.events.filter(evt => String(evt.eventDate || "").startsWith(ui.faturamento) && evt.approval === "aprovado" && evt.attendance === "realizado");
-  const billableQty = billable.reduce((sum, evt) => sum + (Number(evt.studentQty) || 0) + (Number(evt.adultQty) || 0), 0);
+  const billableQty = billable.reduce((sum, evt) => sum + (evt.billing || []).reduce((acc, item) => acc + (item.cardId ? Number(item.qty) || 0 : 0), 0), 0);
   const unbilled = billable.filter(evt => (evt.billing || []).some(item => !item.cardId)).length;
   const invSent = Object.keys(data.inventorySubmissions?.[ui.inventario] || {}).length;
   const eventMonths = new Set(data.events.map(evt => String(evt.eventDate || evt.requestDate || "").slice(0, 7)).filter(Boolean));
@@ -2062,7 +2124,7 @@ function renderExportacoes() {
           <label class="inline-field">Mês <input type="month" id="exp-fat-month" value="${ui.faturamento}" /></label>
           <ul class="exp-facts">
             <li>${icon("party")} <b>${billable.length}</b> evento(s) entram neste mês · ${fmtNumber(billableQty)} refeição(ões)</li>
-            <li>${icon("info")} Só eventos aprovados e confirmados como realizados · Alunos: card mais caro da escola (valor contratual) · Adultos: almoço no CARD 11, lanche no card 10</li>
+            <li>${icon("info")} Só eventos aprovados e confirmados como realizados · Alunos: card 10, quando “Será faturado?” = Sim · Adultos: almoço no CARD 11, lanche no card 10</li>
             ${unbilled ? `<li class="warn-text">${icon("alert")} ${unbilled} evento(s) sem card definido ficam fora (veja a aba “Eventos no faturamento”)</li>` : ""}
           </ul>
         </div>
@@ -2180,22 +2242,29 @@ function orderLinesTable(lines, adjustment, schools, { editable = false, draft =
       }).length;
       const key = `${scope}:${schoolId}`;
       const isCollapsed = collapsed.has(key);
+      const inventory = latestInventory(schoolId);
+      const stockOf = line => {
+        const item = inventoryItemFor(line.item);
+        const row = item && inventory ? inventory.counts[item.id] : null;
+        return row && row.quantity !== undefined && row.quantity !== null && row.quantity !== "" ? Number(row.quantity) : null;
+      };
+      const invHead = inventory ? `Inventário <small>${esc(monthShort(inventory.month))}${inventory.sent ? "" : " · rascunho"}</small>` : "Inventário";
       return `<div class="order-school ${isCollapsed ? "is-collapsed" : ""}">
         <button type="button" class="order-school-head" data-order-school="${esc(key)}" aria-expanded="${!isCollapsed}">
           <span class="school-ico">${icon("school")}</span>
-          <span class="order-school-name"><strong>${esc(school?.shortName || schoolId)}</strong><small>${esc(routeLabel(school?.route))} · ${schoolLines.length} item(ns)${adjusted ? ` · <b>${adjusted} ajustado(s)</b>` : ""}</small></span>
+          <span class="order-school-name"><strong>${esc(school?.shortName || schoolId)}</strong><small>${esc(routeLabel(school?.route))} · ${schoolLines.length} item(ns)${adjusted ? ` · <b>${adjusted} ajustado(s)</b>` : ""} · ${inventory ? `inventário de ${esc(formatMonthBR(inventory.month))}${inventory.sent ? "" : " (em preenchimento)"}` : "sem inventário"}</small></span>
           <span class="chev">${icon("chevronDown")}</span>
         </button>
         <div class="order-school-body">
         <table class="data-table order-table">
-          <thead><tr><th>Item</th><th>Unid.</th><th class="num">Qtd. prevista</th><th class="num">${editable ? "Ajuste" : "Qtd. ajustada"}</th><th class="num">${editable ? "Diferença" : "Qtd. final"}</th></tr></thead>
+          <thead><tr><th>Item</th><th>Unid.</th><th class="num ot-inv">${invHead}</th><th class="num">Qtd. prevista</th><th class="num">${editable ? "Ajuste" : "Qtd. ajustada"}</th><th class="num">${editable ? "Diferença" : "Qtd. final"}</th></tr></thead>
           <tbody>${schoolLines.sort((a, b) => a.item.localeCompare(b.item, "pt-BR")).map(line => {
             const raw = line.id in draft ? draft[line.id] : adjustment?.values?.[line.id];
             const has = raw !== undefined && raw !== null && raw !== "";
             const value = has ? parseAdj(raw) : null;
             const diff = has && Number.isFinite(value) ? value - line.qty : 0;
             return `<tr class="${has && diff ? "is-adjusted" : ""}">
-              <td class="ot-item">${esc(line.item)}${line.unit ? `<small class="ot-unit">${esc(line.unit)}</small>` : ""}</td><td class="ot-unit-col">${esc(line.unit || "—")}</td><td class="num" data-label="Prevista">${fmtQty(line.qty)}</td>
+              <td class="ot-item">${esc(line.item)}${line.unit ? `<small class="ot-unit">${esc(line.unit)}</small>` : ""}</td><td class="ot-unit-col">${esc(line.unit || "—")}</td><td class="num ot-inv" data-label="Inventário">${stockOf(line) === null ? "<span class='muted'>—</span>" : fmtQty(stockOf(line))}</td><td class="num" data-label="Prevista">${fmtQty(line.qty)}</td>
               <td class="num" data-label="${editable ? "Ajuste" : "Ajustada"}">${editable
                 ? `<input class="cell-input" inputmode="decimal" data-aped="${line.id}" value="${has ? esc(String(raw).replace(".", ",")) : ""}" placeholder="${esc(fmtQty(line.qty))}" />`
                 : has ? `<b>${fmtQty(value)}</b>` : "<span class='muted'>sem ajuste</span>"}</td>
@@ -2634,9 +2703,16 @@ function kmStatus(log) {
   return { key: "none", label: "Não iniciado", tone: "neutral", icon: "clock" };
 }
 
-function kmDayTable(month, days, { editable = false, draft = {} } = {}) {
+function fuelText(value, digits = 2) {
+  return value === "" || value === null || value === undefined ? "" : Number(value).toFixed(digits).replace(".", ",");
+}
+
+// Tabela diária do KM. Nutricionista: KM inicial/final + observação. ADM: abastecimento (L) e valor (R$) à esquerda.
+function kmDayTable(month, days, { editable = false, draft = {}, fuel = null, fuelEditable = false, fuelDraft = {} } = {}) {
   const today = serverToday();
   const valueOf = (iso, field) => (draft[iso] && field in draft[iso] ? draft[iso][field] : days?.[iso]?.[field] ?? "");
+  const showFuel = Boolean(fuel) || fuelEditable;
+  const fuelOf = (iso, field) => (fuelDraft[iso] && field in fuelDraft[iso] ? fuelDraft[iso][field] : fuelText(fuel?.[iso]?.[field]));
   let lastEnd = null;
   const rows = daysOfMonth(month).map(day => {
     const start = valueOf(day.iso, "start");
@@ -2647,21 +2723,33 @@ function kmDayTable(month, days, { editable = false, draft = {} } = {}) {
     const future = day.iso > today;
     const hint = lastEnd !== null ? fmtKm(lastEnd) : "";
     if (e !== null) lastEnd = e;
-    if (!editable && start === "" && end === "") return "";
+    const note = valueOf(day.iso, "note") || "";
+    const liters = showFuel ? fuelOf(day.iso, "liters") : "";
+    const fuelValue = showFuel ? fuelOf(day.iso, "value") : "";
+    if (!editable && !fuelEditable && start === "" && end === "" && !note && liters === "" && fuelValue === "") return "";
     const cell = (field, value, placeholder) => editable
-      ? `<input class="cell-input" inputmode="decimal" data-km="${day.iso}" data-field="${field}" value="${esc(value === "" ? "" : String(value).replace(".", ","))}" placeholder="${esc(placeholder)}" ${future ? "disabled title='Dia ainda não chegou'" : ""} />`
+      ? `<input class="cell-input" inputmode="decimal" data-km="${day.iso}" data-field="${field}" value="${esc(value === "" || value === null ? "" : String(value).replace(".", ","))}" placeholder="${esc(placeholder)}" ${future ? "disabled title='Dia ainda não chegou'" : ""} />`
       : (value === "" || value === null ? "<span class='muted'>—</span>" : fmtKm(value));
+    const fuelCell = (field, value, label) => fuelEditable
+      ? `<input class="cell-input" inputmode="decimal" data-fuel="${day.iso}" data-field="${field}" value="${esc(value)}" placeholder="${field === "value" ? "0,00" : "0"}" aria-label="${label}" />`
+      : value === "" ? "<span class='muted'>—</span>" : field === "value" ? money(Number(String(value).replace(",", "."))) : `${esc(value)} L`;
+    const noteCell = editable
+      ? `<input class="cell-input note-input" data-km="${day.iso}" data-field="note" maxlength="300" value="${esc(note)}" placeholder="Opcional" ${future ? "disabled" : ""} />`
+      : note ? `<span class="km-note">${esc(note)}</span>` : "<span class='muted'>—</span>";
     return `<tr class="${day.weekend ? "is-weekend" : ""} ${diff !== null ? "has-km" : ""}">
       <td><strong>${day.day}/${month.slice(5, 7)}</strong></td>
       <td>${WEEKDAYS[day.weekday]}</td>
+      ${showFuel ? `<td class="num fuel-col" data-label="Abastecimento (L)">${fuelCell("liters", liters, "Abastecimento em litros")}</td><td class="num fuel-col" data-label="Valor (R$)">${fuelCell("value", fuelValue, "Valor do abastecimento")}</td>` : ""}
       <td class="num">${cell("start", start, hint)}</td>
       <td class="num">${cell("end", end, "")}</td>
       <td class="num km-diff" data-km-diff="${day.iso}">${diff === null ? "<span class='muted'>—</span>" : diff < 0 ? `<span class="diff down">${fmtKm(diff)}</span>` : `<b>${fmtKm(diff)}</b> km`}</td>
+      <td class="km-note-col">${noteCell}</td>
     </tr>`;
   }).join("");
-  return `<table class="data-table km-table">
-    <thead><tr><th>Data</th><th>Dia</th><th class="num">KM inicial</th><th class="num">KM final</th><th class="num">KM total</th></tr></thead>
-    <tbody>${rows || `<tr><td colspan="5">${emptyState("Nenhum dia lançado")}</td></tr>`}</tbody>
+  const cols = showFuel ? 8 : 6;
+  return `<table class="data-table km-table ${showFuel ? "with-fuel" : ""}">
+    <thead><tr><th>Data</th><th>Dia</th>${showFuel ? `<th class="num fuel-col">Abastecimento (L)</th><th class="num fuel-col">Valor do abastecimento</th>` : ""}<th class="num">KM inicial</th><th class="num">KM final</th><th class="num">KM total</th><th>Observação</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="${cols}">${emptyState("Nenhum dia lançado")}</td></tr>`}</tbody>
   </table>`;
 }
 
@@ -2687,7 +2775,7 @@ function renderKmNutri() {
   const dirtyCount = Object.keys(draft).length;
 
   shell(`
-    ${pageHead({ eyebrow: "Rotina", title: "Controle de KM", subtitle: "Lance todos os dias o KM inicial e o KM final do carro. O total do dia é calculado sozinho. No fim do mês, envie para o ADM." })}
+    ${pageHead({ eyebrow: "Rotina", title: "Controle de KM", subtitle: "Lance todos os dias o KM inicial e o KM final do carro. O total do dia é calculado sozinho e a observação é opcional. No fim do mês, envie para o ADM." })}
     <section class="card km-plate ${vehicle ? "" : "is-empty"}">
       <span class="exp-ico">${icon("car")}</span>
       ${vehicle ? `<div><span class="label">Placa do carro</span><strong class="plate">${esc(vehicle.plate)}</strong><small>Cadastrada em ${fmtDateTime(vehicle.setAt)}. Para trocar, fale com o ADM.</small></div>`
@@ -2733,7 +2821,7 @@ function renderKmNutri() {
   });
   if (locked || !vehicle) return;
   document.querySelectorAll("[data-km]").forEach(input => input.addEventListener("input", () => {
-    input.value = input.value.replace(/[^\d,]/g, "");
+    if (input.dataset.field !== "note") input.value = input.value.replace(/[^\d,]/g, "");
     const iso = input.dataset.km;
     (draft[iso] ||= {})[input.dataset.field] = input.value;
     const row = merged()[iso] || {};
@@ -2747,7 +2835,7 @@ function renderKmNutri() {
     save.disabled = false;
     save.innerHTML = `${icon("save")} Salvar (${Object.keys(draft).length})`;
   }));
-  const payload = () => Object.fromEntries(Object.entries(draft).map(([iso, row]) => [iso, { start: row.start ?? log?.days?.[iso]?.start ?? "", end: row.end ?? log?.days?.[iso]?.end ?? "" }]));
+  const payload = () => Object.fromEntries(Object.entries(draft).map(([iso, row]) => [iso, { start: row.start ?? log?.days?.[iso]?.start ?? "", end: row.end ?? log?.days?.[iso]?.end ?? "", note: row.note ?? log?.days?.[iso]?.note ?? "" }]));
   $("#km-save").addEventListener("click", async () => {
     try {
       await mutate("km/save", { month, days: payload() }, "KM salvo.");
@@ -2785,11 +2873,15 @@ function renderKmAdm() {
   const query = normalizeText(ui.search);
   const rows = people.map(person => {
     const log = kmLog(month, person.id);
-    return { person, log, status: kmStatus(log), totals: kmTotalsOf(log?.days), plate: vehicles[person.id]?.plate || "" };
+    const fuel = Object.values(log?.fuel || {});
+    return { person, log, status: kmStatus(log), totals: kmTotalsOf(log?.days), plate: vehicles[person.id]?.plate || "",
+      fuelValue: fuel.reduce((sum, row) => sum + (Number(row.value) || 0), 0), fuelLiters: fuel.reduce((sum, row) => sum + (Number(row.liters) || 0), 0) };
   }).filter(row => !query || normalizeText(`${row.person.name} ${row.plate}`).includes(query));
   const sent = rows.filter(row => ["sent", "ok"].includes(row.status.key)).length;
   const checked = rows.filter(row => row.status.key === "ok").length;
   const kmSum = rows.filter(row => ["sent", "ok"].includes(row.status.key)).reduce((sum, row) => sum + row.totals.total, 0);
+  const fuelSum = rows.reduce((sum, row) => sum + row.fuelValue, 0);
+  ui.fuelDraft ||= {};
 
   shell(`
     ${pageHead({ eyebrow: "Conferência", title: "Controle de KM", subtitle: "KM lançado pelas nutricionistas. Confira os meses enviados ou devolva para correção.",
@@ -2799,6 +2891,7 @@ function renderKmAdm() {
       ${statCard({ label: "Aguardando conferência", value: fmtNumber(sent - checked), iconName: "clock", tone: sent - checked ? "warn" : "" })}
       ${statCard({ label: "Conferidos", value: fmtNumber(checked), iconName: "check" })}
       ${statCard({ label: "KM total enviado", value: `${fmtKm(kmSum)}<small> km</small>`, iconName: "car" })}
+      ${statCard({ label: "Abastecido no mês", value: `<span class="sm-val">${money(fuelSum)}</span>`, hint: "lançado pelo ADM", iconName: "chart" })}
     </section>
     <section class="filter-bar">
       <label class="search-field">${icon("search")}<input id="km-search" placeholder="Buscar nutricionista ou placa..." value="${esc(ui.search)}" /></label>
@@ -2814,13 +2907,18 @@ function renderKmAdm() {
                 <span class="avatar">${esc(initials(row.person.name))}</span>
                 <span class="school-name"><strong>${esc(row.person.name)}</strong><small>${row.plate ? `Placa <b>${esc(row.plate)}</b>` : "Sem placa"} · <button type="button" class="link-btn inline" data-km-plate="${row.person.id}">${row.plate ? "alterar" : "cadastrar"}</button></small></span>
               </div>
-              <span class="meta">${row.totals.filled} dia(s) · <b>${fmtKm(row.totals.total)} km</b></span>
+              <span class="meta">${row.totals.filled} dia(s) · <b>${fmtKm(row.totals.total)} km</b>${row.fuelValue ? ` · ⛽ <b>${money(row.fuelValue)}</b>` : ""}</span>
               <span class="chip ${row.status.tone}">${icon(row.status.icon)} ${row.status.label}</span>
               ${row.status.key === "sent" ? `<span class="row-btns"><button type="button" class="link-btn" data-km-review="${row.person.id}" data-action="devolvido">Devolver</button><button type="button" class="primary sm" data-km-review="${row.person.id}" data-action="conferido">${icon("check")} Conferido</button></span>`
                 : `<span class="meta">${row.log?.review ? `${row.log.review.status === "conferido" ? "Conferido" : "Devolvido"} por ${esc(row.log.review.by)}` : row.log?.savedAt ? `Salvo em ${fmtDateTime(row.log.savedAt)}` : ""}</span>`}
               <button type="button" class="chev-btn" data-km-open="${row.person.id}" aria-label="Abrir">${icon("chevronDown")}</button>
             </div>
-            ${open ? `<div class="reg-body">${row.log?.sentAt ? `<p class="muted">Enviado em ${fmtDateTime(row.log.sentAt)}</p>` : ""}<div class="table-scroll">${kmDayTable(month, row.log?.days)}</div></div>` : ""}
+            ${open ? `<div class="reg-body">
+              <div class="fuel-bar">${row.log?.sentAt ? `<span class="muted">Enviado em ${fmtDateTime(row.log.sentAt)}</span>` : `<span class="muted">Mês ainda não enviado pela nutricionista</span>`}
+                <span class="grow"></span><span class="muted">Preencha o <b>abastecimento</b> e o <b>valor</b> nos dias em que houve.</span>
+                <button type="button" class="primary sm" data-fuel-save="${row.person.id}" ${Object.keys(ui.fuelDraft[`${month}:${row.person.id}`] || {}).length ? "" : "disabled"}>${icon("save")} Salvar abastecimentos</button></div>
+              <div class="table-scroll">${kmDayTable(month, row.log?.days, { fuel: row.log?.fuel || {}, fuelEditable: true, fuelDraft: ui.fuelDraft[`${month}:${row.person.id}`] || {} })}</div>
+              <div class="km-foot"><span>Total do mês</span><strong>${fmtKm(row.totals.total)} km · ${fmtNumber(row.fuelLiters, 2)} L · ${money(row.fuelValue)}</strong></div></div>` : ""}
           </div>`;
         }).join("") || `<p class="muted pad">Nenhuma nutricionista encontrada.</p>`}
       </div>
@@ -2829,6 +2927,26 @@ function renderKmAdm() {
 
   $("#km-search").addEventListener("input", debounce(event => { ui.search = event.target.value; renderKm(); focusEnd("#km-search"); }, 250));
   $("#km-month").addEventListener("change", event => { ui.month = event.target.value || currentMonth(); ui.open = ""; renderKm(); });
+  document.querySelectorAll("[data-fuel]").forEach(input => input.addEventListener("input", () => {
+    input.value = input.value.replace(/[^\d,]/g, "");
+    const key = `${month}:${ui.open}`;
+    ((ui.fuelDraft[key] ||= {})[input.dataset.fuel] ||= {})[input.dataset.field] = input.value;
+    const button = document.querySelector(`[data-fuel-save="${ui.open}"]`);
+    if (button) button.disabled = false;
+  }));
+  document.querySelectorAll("[data-fuel-save]").forEach(button => button.addEventListener("click", async () => {
+    const nutriId = button.dataset.fuelSave;
+    const key = `${month}:${nutriId}`;
+    const current = kmLog(month, nutriId)?.fuel || {};
+    const days = Object.fromEntries(Object.entries(ui.fuelDraft[key] || {}).map(([iso, row]) => [iso, {
+      liters: row.liters ?? fuelText(current[iso]?.liters), value: row.value ?? fuelText(current[iso]?.value)
+    }]));
+    try {
+      await mutate("km/fuel", { month, nutritionistId: nutriId, days }, "Abastecimentos salvos.");
+      delete ui.fuelDraft[key];
+      renderKm();
+    } catch { /* */ }
+  }));
   document.querySelectorAll("[data-km-open]").forEach(button => button.addEventListener("click", event => {
     if (event.target.closest("[data-km-plate]")) return;
     ui.open = ui.open === button.dataset.kmOpen ? "" : button.dataset.kmOpen;
@@ -2883,6 +3001,7 @@ function trainingHead(training) {
     <span class="exp-ico">${icon("graduation")}</span>
     <div><span class="label">Tema da capacitação · ${esc(formatMonthBR(training.month))}</span><h2>${esc(training.theme)}</h2></div>
     <span class="chip ${days < 0 ? "danger" : days <= 3 ? "warn" : "neutral"}">${icon(days < 0 ? "lock" : "clock")} ${days < 0 ? `Prazo encerrado em ${fmtDate(training.deadline)}` : `Enviar até ${fmtDate(training.deadline)}${days === 0 ? " (hoje)" : ` (${days} dia${days === 1 ? "" : "s"})`}`}</span>
+    ${training.files?.length ? `<div class="training-files"><span class="label">${icon("paperclip")} Material da coordenação</span><div class="history-files">${training.files.map(file => fileChip(file)).join("")}</div></div>` : ""}
   </section>`;
 }
 
@@ -3019,7 +3138,7 @@ function renderCapacitacaoAdm() {
 function cardPricesPanel() {
   return `<section class="panel card-prices">
     <div class="section-head"><h2>Valores dos cards</h2></div>
-    <p class="status-line">Valor contratual por refeição de cada card (lote 2, o mesmo da linha 172 da planilha da SMED). É usado no faturamento, no Analytics e para escolher o card <b>mais caro</b> da escola nos eventos de alunos.</p>
+    <p class="status-line">Valor contratual por refeição de cada card (lote 2, o mesmo da linha 172 da planilha da SMED). É usado no faturamento, no Analytics e para os eventos (alunos no card 10; adultos no CARD 11 ou card 10).</p>
     <div class="price-grid">${state.db.cards.map(card => `<label class="price-card"><span><b>${esc(card.label)}</b><small>${esc(card.description)}</small></span>
       <span class="price-wrap"><em>R$</em><input class="cell-input" inputmode="decimal" data-card-price="${card.id}" value="${Number(card.price || 0).toFixed(2).replace(".", ",")}" /></span></label>`).join("")}</div>
   </section>`;
@@ -3043,24 +3162,30 @@ function trainingConfigPanel() {
   const ui = mod().ui.capCfg ||= { month: currentMonth(), editing: "" };
   const trainings = mod().data.trainings || [];
   const editing = trainingFor(ui.editing) || null;
+  if (!ui.files || ui.filesFor !== (ui.editing || "")) { ui.files = [...(editing?.files || [])]; ui.filesFor = ui.editing || ""; }
+  const draft = ui.draft || {};
   const total = (mod().data.people || []).length;
   return cardPricesPanel() + `<section class="panel training-cfg">
     <div class="section-head"><h2>Capacitação</h2></div>
     <p class="status-line">Defina o tema da capacitação do mês e o prazo para as nutricionistas enviarem os documentos. Cada nutricionista envia uma vez por mês; o ADM faz a conferência.</p>
     <form id="cap-cfg-form" class="training-form">
-      <label class="field"><span>Mês</span><input type="month" name="month" value="${esc(editing?.month || ui.month)}" ${editing ? "readonly" : ""} required /></label>
-      <label class="field grow"><span>Tema da capacitação</span><input name="theme" value="${esc(editing?.theme || "")}" placeholder="Ex.: Boas práticas na manipulação de alimentos" required /></label>
-      <label class="field"><span>Prazo para envio</span><input type="date" name="deadline" value="${esc(editing?.deadline || "")}" required /></label>
+      <label class="field"><span>Mês</span><input type="month" name="month" value="${esc(editing?.month || draft.month || ui.month)}" ${editing ? "readonly" : ""} required /></label>
+      <label class="field grow"><span>Tema da capacitação</span><input name="theme" value="${esc(draft.theme ?? editing?.theme ?? "")}" placeholder="Ex.: Boas práticas na manipulação de alimentos" required /></label>
+      <label class="field"><span>Prazo para envio</span><input type="date" name="deadline" value="${esc(draft.deadline ?? editing?.deadline ?? "")}" required /></label>
+      <div class="field training-attach"><span>Anexos para as nutricionistas (opcional)</span>
+        <div class="history-files">${ui.files.map((file, index) => fileChip(file, `data-capcfg-remove="${index}"`)).join("")}</div>
+        ${ui.uploading ? `<span class="uploading"><i class="spinner"></i> Enviando ${ui.uploading} arquivo(s)...</span>` : `<label class="dropzone inline">${icon("upload")}<span><b>Anexar arquivos</b><small>material, apresentação, modelo de lista de presença... até 25 MB cada</small></span><input type="file" id="capcfg-files" multiple hidden /></label>`}
+      </div>
       <div class="training-form-actions">${editing ? `<button type="button" class="secondary" id="cap-cfg-cancel">Cancelar</button>` : ""}<button type="submit" class="primary">${editing ? "Salvar alterações" : "Definir capacitação"}</button></div>
     </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Mês</th><th>Tema</th><th>Prazo</th><th>Envios</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Mês</th><th>Tema</th><th>Prazo</th><th>Anexos</th><th>Envios</th><th>Ações</th></tr></thead>
         <tbody>${trainings.map(item => {
           const sent = Object.keys(mod().data.trainingSubmissions?.[item.month] || {}).length;
-          return `<tr><td>${esc(formatMonthBR(item.month))}</td><td>${esc(item.theme)}</td><td>${fmtDate(item.deadline)}</td><td>${sent}/${total}</td>
+          return `<tr><td>${esc(formatMonthBR(item.month))}</td><td>${esc(item.theme)}</td><td>${fmtDate(item.deadline)}</td><td>${item.files?.length ? `${icon("paperclip")} ${item.files.length}` : "—"}</td><td>${sent}/${total}</td>
             <td><button type="button" class="secondary" data-cap-edit="${item.month}">Editar</button> ${sent ? "" : `<button type="button" class="danger" data-cap-delete="${item.month}">Excluir</button>`}</td></tr>`;
-        }).join("") || `<tr><td colspan="5">Nenhuma capacitação definida.</td></tr>`}</tbody>
+        }).join("") || `<tr><td colspan="6">Nenhuma capacitação definida.</td></tr>`}</tbody>
       </table>
     </div>
   </section>`;
@@ -3074,14 +3199,29 @@ function bindTrainingConfigPanel() {
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
+    delete data[""];
     try {
-      await mutate("training/save", data, "Capacitação salva.");
+      await mutate("training/save", { ...data, files: ui.files }, "Capacitação salva.");
       ui.editing = "";
+      ui.draft = null;
+      ui.files = null;
       render();
     } catch { /* */ }
   });
-  $("#cap-cfg-cancel")?.addEventListener("click", () => { ui.editing = ""; render(); });
-  document.querySelectorAll("[data-cap-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.capEdit; render(); }));
+  const keepDraft = () => { ui.draft = Object.fromEntries(new FormData(form).entries()); };
+  $("#capcfg-files")?.addEventListener("change", async event => {
+    const files = [...event.target.files];
+    if (!files.length) return;
+    keepDraft();
+    ui.uploading = files.length;
+    render();
+    try { ui.files.push(...await uploadFiles(files)); } catch (error) { toast(error.message, "error"); }
+    ui.uploading = 0;
+    render();
+  });
+  document.querySelectorAll("[data-capcfg-remove]").forEach(button => button.addEventListener("click", () => { keepDraft(); ui.files.splice(Number(button.dataset.capcfgRemove), 1); render(); }));
+  $("#cap-cfg-cancel")?.addEventListener("click", () => { ui.editing = ""; ui.draft = null; ui.files = null; render(); });
+  document.querySelectorAll("[data-cap-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.capEdit; ui.draft = null; ui.files = null; render(); }));
   document.querySelectorAll("[data-cap-delete]").forEach(button => button.addEventListener("click", () => {
     askConfirm({ title: "Excluir capacitação?", text: "A capacitação deste mês será removida.", yesLabel: "Excluir", danger: true }).then(ok => ok && mutate("training/delete", { month: button.dataset.capDelete }, "Capacitação excluída.").catch(() => {}));
   }));
@@ -3710,9 +3850,16 @@ function kmAnalytics(from, to) {
     let total = 0;
     let days = 0;
     let pending = 0;
+    let fuelValue = 0;
+    let fuelLiters = 0;
     for (const [month, byNutri] of Object.entries(mod().data.km?.logs || {})) {
       const log = byNutri[person.id];
       if (!log) continue;
+      for (const [date, row] of Object.entries(log.fuel || {})) {
+        if (date < from || date > to) continue;
+        fuelValue += Number(row.value) || 0;
+        fuelLiters += Number(row.liters) || 0;
+      }
       let inPeriod = false;
       for (const [date, row] of Object.entries(log.days || {})) {
         if (date < from || date > to) continue;
@@ -3725,9 +3872,9 @@ function kmAnalytics(from, to) {
       }
       if (inPeriod && !log.sentAt) pending += 1;
     }
-    return { person, plate: vehicles[person.id]?.plate || "", total: Math.round(total * 10) / 10, days, pending };
+    return { person, plate: vehicles[person.id]?.plate || "", total: Math.round(total * 10) / 10, days, pending, fuelValue, fuelLiters };
   }).sort((a, b) => b.total - a.total);
-  return { rows, grand: rows.reduce((sum, row) => sum + row.total, 0) };
+  return { rows, grand: rows.reduce((sum, row) => sum + row.total, 0), fuelValue: rows.reduce((sum, row) => sum + row.fuelValue, 0), fuelLiters: rows.reduce((sum, row) => sum + row.fuelLiters, 0) };
 }
 
 function rankingBars(data, fmt, ui) {

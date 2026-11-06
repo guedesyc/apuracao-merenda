@@ -996,7 +996,7 @@ button.danger-btn:hover { background: #9a1d28; border-color: #9a1d28; }
 @media (max-width: 560px) {
   .order-school .order-table, .order-school .order-table tbody { display: block; width: 100%; }
   .order-school .order-table thead { display: none; }
-  .order-school .order-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 10px; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+  .order-school .order-table tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 10px; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
   .order-school .order-table tr:last-child { border-bottom: 0; }
   .order-school .order-table td { display: block; padding: 0; border: 0; background: transparent !important; font-size: 13px; }
   .order-school .order-table td.ot-item { grid-column: 1 / -1; font-weight: 600; color: var(--ink); line-height: 1.35; margin-bottom: 4px; }
@@ -1177,3 +1177,38 @@ button.danger-btn:hover { background: #9a1d28; border-color: #9a1d28; }
   .filter-bar .segmented::-webkit-scrollbar { display: none; }
   .filter-bar .segmented button { flex: 0 0 auto; white-space: nowrap; }
 }
+
+/* Ajuste de pedido: coluna do inventário */
+.order-table th.ot-inv small { display: block; font-weight: 600; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.order-table td.ot-inv { color: #5b4bc4; font-weight: 600; }
+
+/* KM: observação e abastecimento */
+.km-table .note-input { width: 100%; min-width: 160px; text-align: left; }
+.km-table .km-note-col { min-width: 170px; }
+.km-note { font-size: 12.5px; color: var(--ink-2, #3d4a44); }
+.km-table.with-fuel .fuel-col { background: #f6f4ff; }
+.km-table.with-fuel .fuel-col .cell-input { width: 100px; }
+.fuel-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
+@media (max-width: 720px) {
+  .km-table .cell-input { width: 92px; }
+  .km-table .note-input { min-width: 130px; }
+  .fuel-bar .primary { width: 100%; justify-content: center; min-height: 42px; }
+}
+
+/* Capacitação: material anexado pela coordenação */
+.training-head > .training-files { flex: 1 1 100%; min-width: 0; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.training-files .label { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.training-files .label .i { width: 14px; height: 14px; }
+.training-form .training-attach { flex: 1 1 100%; }
+
+/* Analytics: cabeçalhos ordenáveis */
+th.sortable { padding: 0 !important; }
+th.sortable button { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 4px; width: 100%; padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; white-space: nowrap; }
+th.sortable.num button { justify-content: flex-end; }
+th.sortable button:hover { color: var(--brand); background: var(--line-2); }
+th.sortable button:focus-visible { outline: 2px solid var(--brand-3); outline-offset: -2px; }
+th.sortable .sort-arrow { font-size: 10px; opacity: .45; }
+th.sortable.is-sorted { color: var(--brand); }
+th.sortable.is-sorted .sort-arrow { opacity: 1; }
+.km-table .cell-input:not(.note-input) { width: 108px; }
+.km-table.with-fuel .fuel-col .cell-input { width: 96px; }

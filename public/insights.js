@@ -58,7 +58,7 @@ function columnChart({ labels, series, fmt = value => fmtNumber(value), empty = 
       ${labels.map((label, index) => `<div class="col-group">
         <div class="col-bars">${series.map(item => {
           const value = item.values[index] || 0;
-          return `<span class="col-bar" style="--v:${(value / max * 100).toFixed(1)}%;--c:${item.color}" title="${esc(item.name)} · ${esc(label)}: ${esc(fmt(value))}">${single && value ? `<em>${esc(fmt(value))}</em>` : ""}</span>`;
+          return `<span class="col-bar" style="--v:${(value / max * 100).toFixed(1)}%;--c:${item.color}" title="${esc(item.name)} · ${esc(label)}: ${esc(fmt(value, index))}">${single && value ? `<em>${esc(fmt(value, index))}</em>` : ""}</span>`;
         }).join("")}</div>
         <span class="col-label">${esc(label)}</span>
       </div>`).join("")}
@@ -170,44 +170,45 @@ function kmMonthlyTotals(months) {
   return totals;
 }
 
+function kmMonthlyFuel(months) {
+  return months.map(month => {
+    let sum = 0;
+    for (const log of Object.values(mod().data.km?.logs?.[month] || {})) for (const row of Object.values(log.fuel || {})) sum += Number(row.value) || 0;
+    return Math.round(sum * 100) / 100;
+  });
+}
+
+// KM rodado e abastecimento real (lançado pelo ADM no Controle de KM).
 function renderAnKm() {
   const ui = anPeriod();
-  const settings = { fuelPrice: 6.2, kmPerLiter: 10, ...(mod().data.settings || {}) };
   const months = monthsBetween(ui.mFrom, ui.mTo);
-  const { rows, grand } = kmAnalytics(`${ui.mFrom}-01`, monthEndISO(ui.mTo));
-  const active = rows.filter(row => row.total > 0);
-  const liters = km => km / settings.kmPerLiter;
-  const cost = km => liters(km) * settings.fuelPrice;
-  const avg = active.length ? grand / active.length : 0;
+  const { rows, grand, fuelValue, fuelLiters } = kmAnalytics(`${ui.mFrom}-01`, monthEndISO(ui.mTo));
+  const active = rows.filter(row => row.total > 0 || row.fuelValue > 0);
+  const withKm = active.filter(row => row.total > 0);
+  const avg = withKm.length ? grand / withKm.length : 0;
   const monthly = kmMonthlyTotals(months);
+  const monthlyFuel = kmMonthlyFuel(months);
   const max = Math.max(1, ...active.map(row => row.total));
+  const perKm = km => (km ? fuelValue / km : null);
 
   shell(`
-    ${analyticsHead(`KM rodado e custo estimado de gasolina · ${formatMonthBR(ui.mFrom)} a ${formatMonthBR(ui.mTo)}`)}
+    ${analyticsHead(`KM rodado e abastecimentos · ${formatMonthBR(ui.mFrom)} a ${formatMonthBR(ui.mTo)}`)}
     ${periodBarHtml()}
-    <section class="card fuel-card">
-      <div class="fuel-title">${icon("car")}<div><strong>Cálculo da gasolina</strong><small>Custo estimado = KM rodado ÷ consumo médio × valor do litro. Visível e editável só pela coordenação.</small></div></div>
-      <form class="fuel-form" id="fuel-form">
-        <label class="field"><span>Valor da gasolina (R$/litro)</span><input name="fuelPrice" inputmode="decimal" value="${esc(String(settings.fuelPrice).replace(".", ","))}" required /></label>
-        <label class="field"><span>Consumo médio (km/litro)</span><input name="kmPerLiter" inputmode="decimal" value="${esc(String(settings.kmPerLiter).replace(".", ","))}" required /></label>
-        <button type="submit" class="primary">${icon("save")} Salvar valores</button>
-      </form>
-    </section>
     <section class="stat-row">
       ${statCard({ label: "KM rodado no período", value: `${fmtKm(grand)} km`, iconName: "car", tone: "brand" })}
-      ${statCard({ label: "Litros estimados", value: `${fmtNumber(liters(grand), 0)} L`, iconName: "info" })}
-      ${statCard({ label: "Custo estimado de gasolina", value: money(cost(grand)), iconName: "chart", tone: grand ? "warn" : "" })}
-      ${statCard({ label: "Custo médio por nutricionista", value: money(cost(avg)), hint: `${active.length} com lançamento`, iconName: "users" })}
+      ${statCard({ label: "Abastecido no período", value: money(fuelValue), hint: `${fmtNumber(fuelLiters, 1)} L lançados pelo ADM`, iconName: "chart", tone: fuelValue ? "warn" : "" })}
+      ${statCard({ label: "Custo por KM", value: perKm(grand) !== null && fuelValue ? money(perKm(grand)) : "—", hint: "abastecido ÷ KM rodado", iconName: "info" })}
+      ${statCard({ label: "KM médio por nutricionista", value: `${fmtKm(avg)} km`, hint: `${withKm.length} com lançamento`, iconName: "users" })}
     </section>
     <section class="an-grid">
       <article class="card chart-card span-2">
-        <header class="chart-head"><div><h3>KM rodado por mês</h3><p>Soma de todas as nutricionistas · custo estimado de gasolina no rótulo</p></div></header>
-        ${columnChart({ labels: months.map(monthShort), series: [{ name: "KM", color: "#2a78d6", values: monthly }], fmt: value => `${fmtNumber(value, 0)} km · ${fmtMoneyShort(cost(value))}` })}
+        <header class="chart-head"><div><h3>KM rodado por mês</h3><p>Soma de todas as nutricionistas · valor abastecido no rótulo</p></div></header>
+        ${columnChart({ labels: months.map(monthShort), series: [{ name: "KM", color: "#2a78d6", values: monthly }], fmt: (value, index) => `${fmtNumber(value, 0)} km${monthlyFuel[index] ? ` · ${fmtMoneyShort(monthlyFuel[index])}` : ""}` })}
       </article>
       <article class="card chart-card span-2">
-        <header class="chart-head"><div><h3>KM e gasolina por nutricionista</h3><p>Do mais rodado para o menos rodado</p></div></header>
+        <header class="chart-head"><div><h3>KM e abastecimento por nutricionista</h3><p>Do mais rodado para o menos rodado</p></div></header>
         ${active.length ? `<div class="table-scroll"><table class="data-table an-table km-an-table">
-          <thead><tr><th>#</th><th>Nutricionista</th><th>Placa</th><th class="bar-col">KM</th><th class="num">KM total</th><th class="num">Dias</th><th class="num">Média/dia</th><th class="num">Litros</th><th class="num">Gasolina</th><th class="num">vs. média</th></tr></thead>
+          <thead><tr><th>#</th><th>Nutricionista</th><th>Placa</th><th class="bar-col">KM</th><th class="num">KM total</th><th class="num">Dias</th><th class="num">Média/dia</th><th class="num">Abastecido (L)</th><th class="num">Abastecido (R$)</th><th class="num">R$/km</th><th class="num">vs. média</th></tr></thead>
           <tbody>${active.map((row, index) => {
             const delta = avg ? (row.total - avg) / avg : 0;
             return `<tr>
@@ -218,22 +219,18 @@ function renderAnKm() {
               <td class="num"><strong>${fmtKm(row.total)} km</strong></td>
               <td class="num">${row.days}</td>
               <td class="num">${fmtKm(row.days ? row.total / row.days : 0)} km</td>
-              <td class="num">${fmtNumber(liters(row.total), 1)} L</td>
-              <td class="num"><strong>${money(cost(row.total))}</strong></td>
+              <td class="num">${row.fuelLiters ? `${fmtNumber(row.fuelLiters, 1)} L` : "<span class='muted'>—</span>"}</td>
+              <td class="num"><strong>${row.fuelValue ? money(row.fuelValue) : "<span class='muted'>—</span>"}</strong></td>
+              <td class="num">${row.fuelValue && row.total ? money(row.fuelValue / row.total) : "<span class='muted'>—</span>"}</td>
               <td class="num">${deltaPill(delta, { digits: 0 })}</td>
             </tr>`;
           }).join("")}</tbody>
-          <tfoot><tr><td></td><td><strong>Total</strong></td><td></td><td></td><td class="num"><strong>${fmtKm(grand)} km</strong></td><td></td><td></td><td class="num">${fmtNumber(liters(grand), 1)} L</td><td class="num"><strong>${money(cost(grand))}</strong></td><td></td></tr></tfoot>
+          <tfoot><tr><td></td><td><strong>Total</strong></td><td></td><td></td><td class="num"><strong>${fmtKm(grand)} km</strong></td><td></td><td></td><td class="num">${fmtNumber(fuelLiters, 1)} L</td><td class="num"><strong>${money(fuelValue)}</strong></td><td class="num">${perKm(grand) !== null && fuelValue ? money(perKm(grand)) : "—"}</td><td></td></tr></tfoot>
         </table></div>` : emptyState("Nenhum KM lançado no período", "Os lançamentos do Controle de KM aparecem aqui.", "car")}
+        <p class="form-hint">${icon("info")} O abastecimento (litros e valor) é lançado pelo ADM no Controle de KM, ao abrir cada nutricionista.</p>
       </article>
     </section>
   `);
-
-  $("#fuel-form").addEventListener("submit", event => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(event.target).entries());
-    mutate("settings/save", data, "Valores da gasolina atualizados.").catch(() => {});
-  });
 }
 
 // ================================================================ ANALYTICS · PEDIDOS
@@ -260,7 +257,9 @@ function orderFacts({ from, to, kind = "todos", month = "" }) {
       const raw = sent ? adjustment.values?.[line.id] : undefined;
       const has = raw !== undefined && raw !== null && raw !== "";
       const final = has ? Number(raw) : Number(line.qty) || 0;
+      const price = orderItemPrice(line.item);
       facts.push({
+        price, valuePrev: price === null ? null : (Number(line.qty) || 0) * price, valueFinal: price === null ? null : final * price,
         order, month: order.month, nutriId: line.nutritionistId, schoolId: line.schoolId, route: schools.get(line.schoolId)?.route || "SEM ROTA",
         item: line.item, unit: String(line.unit || "").toUpperCase(), qty: Number(line.qty) || 0, final, adjusted: has && final !== Number(line.qty), sent
       });
@@ -283,32 +282,66 @@ function groupOrderFacts(facts, dim) {
   const groups = new Map();
   for (const fact of facts) {
     const key = keyOf(fact);
-    const group = groups.get(key) || { key, label: dimLabelOf(dim, key), lines: 0, adjusted: 0, up: 0, down: 0, kgPrev: 0, kgFinal: 0, relSum: 0, relN: 0 };
+    const group = groups.get(key) || { key, label: dimLabelOf(dim, key), lines: 0, adjusted: 0, up: 0, down: 0, kgPrev: 0, kgFinal: 0, relSum: 0, relN: 0, valuePrev: 0, valueFinal: 0, noPrice: 0 };
     group.lines += 1;
+    if (fact.price === null) group.noPrice += 1; else { group.valuePrev += fact.valuePrev; group.valueFinal += fact.valueFinal; }
     if (fact.adjusted) { group.adjusted += 1; if (fact.final > fact.qty) group.up += 1; else group.down += 1; }
     if (fact.unit === "KG") { group.kgPrev += fact.qty; group.kgFinal += fact.final; }
     if (fact.qty > 0) { group.relSum += (fact.final - fact.qty) / fact.qty; group.relN += 1; }
     groups.set(key, group);
   }
-  return [...groups.values()].map(group => ({ ...group, kgDelta: group.kgFinal - group.kgPrev, kgPct: group.kgPrev ? (group.kgFinal - group.kgPrev) / group.kgPrev : null, relAvg: group.relN ? group.relSum / group.relN : null }));
+  return [...groups.values()].map(group => ({ ...group, kgDelta: group.kgFinal - group.kgPrev, kgPct: group.kgPrev ? (group.kgFinal - group.kgPrev) / group.kgPrev : null, relAvg: group.relN ? group.relSum / group.relN : null,
+    valueDelta: group.valueFinal - group.valuePrev, valuePct: group.valuePrev ? (group.valueFinal - group.valuePrev) / group.valuePrev : null }));
+}
+
+// Cabeçalho clicável: 1º clique ordena do maior para o menor, 2º clique inverte.
+function sortTh(attr, sort, key, label, { num = true, title = "" } = {}) {
+  const active = sort.key === key;
+  const arrow = active ? (sort.dir === "asc" ? "▲" : "▼") : "↕";
+  return `<th class="${num ? "num " : ""}sortable ${active ? "is-sorted" : ""}" ${title ? `title="${esc(title)}"` : ""}><button type="button" data-${attr}="${key}">${label} <span class="sort-arrow">${arrow}</span></button></th>`;
+}
+
+function sortRows(rows, sort, fallback) {
+  if (!sort.key) return rows.sort(fallback);
+  const factor = sort.dir === "asc" ? 1 : -1;
+  return rows.sort((a, b) => {
+    const x = a[sort.key];
+    const y = b[sort.key];
+    if (typeof x === "string" || typeof y === "string") return factor * String(x ?? "").localeCompare(String(y ?? ""), "pt-BR");
+    const nx = x === null || x === undefined || Number.isNaN(x) ? -Infinity : x;
+    const ny = y === null || y === undefined || Number.isNaN(y) ? -Infinity : y;
+    return factor * (nx - ny) || fallback(a, b);
+  });
+}
+
+function bindSortHeaders(attr, sort, rerender) {
+  document.querySelectorAll(`[data-${attr}]`).forEach(button => button.addEventListener("click", () => {
+    const key = button.getAttribute(`data-${attr}`);
+    if (sort.key === key) sort.dir = sort.dir === "desc" ? "asc" : "desc";
+    else { sort.key = key; sort.dir = key === "label" ? "asc" : "desc"; }
+    rerender();
+  }));
 }
 
 function renderAnPedidos() {
   const ui = anPeriod();
   ui.pedDim ||= "nutri";
   ui.pedKind ||= "todos";
+  ui.pedSort ||= { key: "", dir: "desc" };
   const facts = orderFacts({ from: ui.mFrom, to: ui.mTo, kind: ui.pedKind });
   const orders = [...new Set(facts.map(fact => fact.order))];
   const pairs = new Map();
   for (const fact of facts) pairs.set(`${fact.order.id}:${fact.nutriId}`, fact.sent);
   const sentPairs = [...pairs.values()].filter(Boolean).length;
   const total = groupOrderFacts(facts, "month").reduce((acc, group) => {
-    for (const key of ["lines", "adjusted", "up", "down", "kgPrev", "kgFinal"]) acc[key] += group[key];
+    for (const key of ["lines", "adjusted", "up", "down", "kgPrev", "kgFinal", "valuePrev", "valueFinal", "noPrice"]) acc[key] += group[key];
     return acc;
-  }, { lines: 0, adjusted: 0, up: 0, down: 0, kgPrev: 0, kgFinal: 0 });
+  }, { lines: 0, adjusted: 0, up: 0, down: 0, kgPrev: 0, kgFinal: 0, valuePrev: 0, valueFinal: 0, noPrice: 0 });
+  const valuePct = total.valuePrev ? (total.valueFinal - total.valuePrev) / total.valuePrev : null;
   const months = monthsBetween(ui.mFrom, ui.mTo);
   const byMonth = new Map(groupOrderFacts(facts, "month").map(group => [group.key, group]));
-  const rows = groupOrderFacts(facts, ui.pedDim).sort((a, b) => a.kgDelta - b.kgDelta || b.adjusted - a.adjusted);
+  const rows = sortRows(groupOrderFacts(facts, ui.pedDim), ui.pedSort, (a, b) => a.valueDelta - b.valueDelta || a.kgDelta - b.kgDelta || b.adjusted - a.adjusted);
+  const th = (key, label, opts) => sortTh("ped-sort", ui.pedSort, key, label, opts);
   const dimName = { month: "Mês", nutri: "Nutricionista", school: "Escola", route: "GRE", item: "Item" }[ui.pedDim];
   const kgPct = total.kgPrev ? (total.kgFinal - total.kgPrev) / total.kgPrev : null;
 
@@ -320,26 +353,30 @@ function renderAnPedidos() {
       ${statCard({ label: "Ajustes enviados", value: `${sentPairs}<small>/${pairs.size}</small>`, hint: "nutricionista × pedido", iconName: "send" })}
       ${statCard({ label: "Itens ajustados", value: `${total.lines ? fmtNumber(total.adjusted / total.lines * 100, 1) : 0}%`, hint: `${total.down} reduzidos · ${total.up} aumentados`, iconName: "edit" })}
       ${statCard({ label: "Variação em KG", value: pctText(kgPct), hint: `${fmtKg(total.kgPrev)} previstos → ${fmtKg(total.kgFinal)}`, iconName: "chart", tone: kgPct < 0 ? "brand" : kgPct > 0 ? "danger" : "" })}
+      ${statCard({ label: "Pedido em R$ (final)", value: `<span class="sm-val">${money(total.valueFinal)}</span>`, hint: `previsto ${money(total.valuePrev)} · ${pctText(valuePct)}`, iconName: "cart" })}
     </section>
     <section class="an-grid">
       <article class="card chart-card span-2">
-        <header class="chart-head"><div><h3>Previsto × final por mês (KG)</h3><p>Quanto o pedido mudou depois dos ajustes enviados. Barra final menor = economia.</p></div></header>
+        <header class="chart-head"><div><h3>Previsto × final por mês (R$)</h3><p>Quanto o pedido mudou em reais depois dos ajustes enviados. Barra final menor = economia.</p></div></header>
         ${columnChart({ labels: months.map(monthShort), series: [
-          { name: "Previsto", color: "#a3b8ae", values: months.map(month => byMonth.get(month)?.kgPrev || 0) },
-          { name: "Final (com ajustes)", color: "#1f9d6f", values: months.map(month => byMonth.get(month)?.kgFinal || 0) }
-        ], fmt: fmtKg, empty: "Nenhum pedido no período" })}
+          { name: "Previsto", color: "#a3b8ae", values: months.map(month => byMonth.get(month)?.valuePrev || 0) },
+          { name: "Final (com ajustes)", color: "#1f9d6f", values: months.map(month => byMonth.get(month)?.valueFinal || 0) }
+        ], fmt: fmtMoneyShort, empty: "Nenhum pedido com valor no período" })}
       </article>
       <article class="card chart-card span-2">
-        <header class="chart-head wrap"><div><h3>Comparar por ${dimName.toLowerCase()}</h3><p>Ordenado por quem mais reduziu em KG. Variação média por item considera todas as unidades.</p></div>
+        <header class="chart-head wrap"><div><h3>Comparar por ${dimName.toLowerCase()}</h3><p>Clique no título de uma coluna para ordenar do maior para o menor (clique de novo para inverter). Padrão: quem mais reduziu em R$.</p></div>
           ${segmentedHtml("ped-dim", ui.pedDim, [["month", "Mês"], ["nutri", "Nutricionista"], ["school", "Escola"], ["route", "GRE"], ["item", "Item"]])}</header>
         ${rows.length ? `<div class="table-scroll"><table class="data-table an-table">
-          <thead><tr><th>${dimName}</th><th class="num">Itens</th><th class="num">Ajustados</th><th class="num">↓ Reduz.</th><th class="num">↑ Aum.</th><th class="num">KG previsto</th><th class="num">KG final</th><th class="num">Δ KG</th><th class="num">Δ % KG</th><th class="num">Var. média/item</th></tr></thead>
+          <thead><tr>${th("label", dimName, { num: false })}${th("lines", "Itens")}${th("adjusted", "Ajustados")}${th("down", "↓ Reduz.")}${th("up", "↑ Aum.")}${th("valuePrev", "R$ previsto")}${th("valueFinal", "R$ final")}${th("valueDelta", "Δ R$")}${th("kgPrev", "KG previsto")}${th("kgFinal", "KG final")}${th("kgDelta", "Δ KG")}${th("kgPct", "Δ % KG")}${th("relAvg", "Var. média/item")}</tr></thead>
           <tbody>${rows.map(row => `<tr>
             <td><strong>${esc(row.label)}</strong></td>
             <td class="num">${fmtNumber(row.lines)}</td>
             <td class="num">${fmtNumber(row.adjusted)} <small class="muted">${row.lines ? fmtNumber(row.adjusted / row.lines * 100, 0) : 0}%</small></td>
             <td class="num">${row.down || "<span class='muted'>0</span>"}</td>
             <td class="num">${row.up || "<span class='muted'>0</span>"}</td>
+            <td class="num">${row.valuePrev ? money(row.valuePrev) : "<span class='muted'>—</span>"}</td>
+            <td class="num"><strong>${row.valueFinal ? money(row.valueFinal) : "<span class='muted'>—</span>"}</strong></td>
+            <td class="num">${row.valueDelta ? `<span class="diff ${row.valueDelta > 0 ? "up" : "down"}">${row.valueDelta > 0 ? "+" : ""}${money(row.valueDelta)}</span>` : "<span class='muted'>—</span>"}</td>
             <td class="num">${fmtNumber(row.kgPrev, 1)}</td>
             <td class="num">${fmtNumber(row.kgFinal, 1)}</td>
             <td class="num"><strong>${row.kgDelta > 0 ? "+" : ""}${fmtNumber(row.kgDelta, 1)}</strong></td>
@@ -347,12 +384,13 @@ function renderAnPedidos() {
             <td class="num">${deltaPill(row.relAvg)}</td>
           </tr>`).join("")}</tbody>
         </table></div>` : emptyState("Nenhum pedido no período", "Ajuste o período ou o tipo de pedido.", "cart")}
-        <p class="form-hint">${icon("info")} Entram como ajuste só os pedidos que a nutricionista <b>enviou</b>; rascunhos contam como previsto. As colunas em KG somam só itens em quilo (CX, UND, L etc. ficam de fora da soma, mas entram na variação média por item).</p>
+        <p class="form-hint">${icon("info")} Entram como ajuste só os pedidos que a nutricionista <b>enviou</b>; rascunhos contam como previsto. As colunas em KG somam só itens em quilo (CX, UND, L etc. ficam de fora da soma, mas entram na variação média por item). Os valores em R$ usam o <b>valor unitário do Inventário de Insumos</b> do item correspondente${total.noPrice ? ` — ${fmtNumber(total.noPrice)} linha(s) de pedido sem valor (item sem correspondente ou sem valor cadastrado, ex.: horti) ficam fora do R$` : ""}.</p>
       </article>
     </section>
   `);
   bindSegmented("ped-kind", value => { ui.pedKind = value; });
   bindSegmented("ped-dim", value => { ui.pedDim = value; });
+  bindSortHeaders("ped-sort", ui.pedSort, renderAnalytics);
 }
 
 // ================================================================ ANALYTICS · INVENTÁRIO
@@ -479,8 +517,10 @@ function computeCross(ui) {
   }
   const orderKg = new Map();
   const orderLines = new Map();
+  const orderValue = new Map();
   for (const fact of orderFacts({ month: ui.crossMonth })) {
     orderLines.set(fact.schoolId, (orderLines.get(fact.schoolId) || 0) + 1);
+    if (fact.valueFinal) orderValue.set(fact.schoolId, (orderValue.get(fact.schoolId) || 0) + fact.valueFinal);
     if (fact.unit === "KG") orderKg.set(fact.schoolId, (orderKg.get(fact.schoolId) || 0) + fact.final);
   }
   const stockKg = new Map();
@@ -497,7 +537,8 @@ function computeCross(ui) {
     const kg = orderKg.get(school.id) || 0;
     const stock = stockKg.has(school.id) ? stockKg.get(school.id) : null;
     return {
-      school, matric, meals: m, days: d, orderKg: kg, orderLines: orderLines.get(school.id) || 0, stockKg: stock, stockValue: stockValue.get(school.id) || 0,
+      school, matric, meals: m, days: d, orderKg: kg, orderLines: orderLines.get(school.id) || 0, stockKg: stock, stockValue: stockValue.get(school.id) || 0, orderValue: orderValue.get(school.id) || 0,
+      valuePerStudent: matric && orderValue.get(school.id) ? orderValue.get(school.id) / matric : null,
       perStudentDay: matric && d ? m / (matric * d) : null,
       gPerMeal: m && kg ? kg * 1000 / m : null,
       kgPerStudent: matric && kg ? kg / matric : null,
@@ -546,6 +587,8 @@ function renderAnCruzamento() {
     .filter(row => !query || normalizeText(row.school.shortName).includes(query))
     .sort((a, b) => b.severity - a.severity || b.orderKg - a.orderKg);
   const alerts = all.filter(row => row.flags.some(([tone]) => tone !== "neutral")).length;
+  const sumOrder = rows.reduce((sum, row) => sum + row.orderValue, 0);
+  const sumStock = rows.reduce((sum, row) => sum + row.stockValue, 0);
   const monthOptions = (list, selected) => list.map(month => `<option value="${month}" ${month === selected ? "selected" : ""}>${formatMonthBR(month)}</option>`).join("");
 
   shell(`
@@ -565,11 +608,13 @@ function renderAnCruzamento() {
       ${statCard({ label: "Pedido por refeição (mediana)", value: med.gPerMeal ? `${fmtNumber(med.gPerMeal, 0)} g` : "—", hint: "KG pedidos ÷ refeições produzidas", iconName: "utensils" })}
       ${statCard({ label: "Refeições por aluno/dia (mediana)", value: med.perStudentDay ? fmtNumber(med.perStudentDay, 2) : "—", hint: "soma de todos os cards", iconName: "users" })}
       ${statCard({ label: "Escolas com alerta", value: fmtNumber(alerts), iconName: "alert", tone: alerts ? "warn" : "" })}
+      ${statCard({ label: "Pedido em R$", value: `<span class="sm-val">${money(sumOrder)}</span>`, hint: `final de ${formatMonthBR(ui.crossMonth)} · escolas filtradas`, iconName: "cart" })}
+      ${statCard({ label: "Estoque em R$", value: `<span class="sm-val">${money(sumStock)}</span>`, hint: sumOrder ? `${fmtNumber(sumStock / sumOrder * 100, 0)}% do valor do pedido` : "inventário contado", iconName: "package" })}
     </section>
     <section class="card chart-card">
       <header class="chart-head"><div><h3>Cruzamento por escola</h3><p>Pedido de ${formatMonthBR(ui.crossMonth)} (KG final, com ajustes enviados) · estoque contado em ${formatMonthBR(ui.crossMonth)} · refeições lançadas em ${formatMonthBR(ui.crossProd)}</p></div></header>
       ${rows.length ? `<div class="table-scroll"><table class="data-table an-table cross-table">
-        <thead><tr><th>Escola</th><th class="num">Matriculados</th><th class="num">Refeições</th><th class="num">Ref./aluno/dia</th><th class="num">Pedido (KG)</th><th class="num">g por refeição</th><th class="num">KG por aluno</th><th class="num">Estoque (KG)</th><th>Leitura</th></tr></thead>
+        <thead><tr><th>Escola</th><th class="num">Matriculados</th><th class="num">Refeições</th><th class="num">Ref./aluno/dia</th><th class="num">Pedido (KG)</th><th class="num">g por refeição</th><th class="num">KG por aluno</th><th class="num">Pedido (R$)</th><th class="num">Estoque (KG)</th><th class="num">Estoque (R$)</th><th>Leitura</th></tr></thead>
         <tbody>${rows.map(row => `<tr class="${row.severity >= 3 ? "row-danger" : row.severity >= 2 ? "row-warn" : ""}">
           <td data-label="Escola"><strong>${esc(row.school.shortName)}</strong><small>${esc(routeLabel(row.school.route))} · ${esc(nutriNamesOf(row.school) || "—")}</small></td>
           <td class="num" data-label="Matriculados">${row.matric ? fmtNumber(row.matric) : "<span class='muted'>—</span>"}</td>
@@ -578,13 +623,15 @@ function renderAnCruzamento() {
           <td class="num" data-label="Pedido (KG)"><strong>${row.orderKg ? fmtNumber(row.orderKg, 1) : "<span class='muted'>—</span>"}</strong></td>
           <td class="num" data-label="g por refeição">${row.gPerMeal !== null ? `${fmtNumber(row.gPerMeal, 0)} g` : "<span class='muted'>—</span>"}${row.gPerMeal !== null && med.gPerMeal ? `<small>${deltaPill(row.gPerMeal / med.gPerMeal - 1, { digits: 0 })} vs. rede</small>` : ""}</td>
           <td class="num" data-label="KG por aluno">${row.kgPerStudent !== null ? fmtNumber(row.kgPerStudent, 2) : "<span class='muted'>—</span>"}</td>
+          <td class="num" data-label="Pedido (R$)"><strong>${row.orderValue ? money(row.orderValue) : "<span class='muted'>—</span>"}</strong>${row.valuePerStudent !== null ? `<small>${money(row.valuePerStudent)}/aluno</small>` : ""}</td>
           <td class="num" data-label="Estoque (KG)">${row.stockKg !== null ? fmtNumber(row.stockKg, 1) : "<span class='muted'>sem inventário</span>"}${row.stockRatio !== null ? `<small>${fmtNumber(row.stockRatio * 100, 0)}% do pedido</small>` : ""}</td>
+          <td class="num" data-label="Estoque (R$)"><strong>${row.stockValue ? money(row.stockValue) : "<span class='muted'>—</span>"}</strong>${row.stockValue && row.orderValue ? `<small>${fmtNumber(row.stockValue / row.orderValue * 100, 0)}% do pedido</small>` : ""}</td>
           <td data-label="Leitura" class="wrap">${row.flags.length ? row.flags.map(([tone, text]) => `<span class="chip ${tone}">${esc(text)}</span>`).join(" ") : `<span class="chip ok">${icon("check")} Coerente</span>`}</td>
         </tr>`).join("")}</tbody>
       </table></div>` : emptyState("Nada para cruzar", "Escolha outro mês ou limpe os filtros.", "table")}
       <div class="cross-legend">
         <p>${icon("info")} <span><b>Como ler:</b> cada escola é comparada com a <b>mediana da rede</b>. “Pede muito/pouco para o que produz” = gramas pedidas por refeição 50% acima/abaixo da mediana (${med.gPerMeal ? `${fmtNumber(med.gPerMeal, 0)} g` : "—"}). “Produção acima/baixa” = refeições por aluno por dia 50% acima/abaixo da mediana. “Estoque maior que o pedido” = o inventário contado já cobre o pedido do mês.</span></p>
-        <p>${icon("alert")} <span>Só itens em KG entram no peso. O pedido de um mês costuma ser para o consumo daquele mês; por isso você escolhe o mês de produção separadamente.</span></p>
+        <p>${icon("alert")} <span>Valores em R$: quantidade × valor unitário do Inventário de Insumos (itens do pedido sem correspondente ou sem valor, como o horti, ficam fora). Só itens em KG entram no peso. O pedido de um mês costuma ser para o consumo daquele mês; por isso você escolhe o mês de produção separadamente.</span></p>
       </div>
     </section>
   `);
