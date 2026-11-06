@@ -24,3 +24,4 @@ npm-debug.log*
 # Base local (dados e anexos)
 local-data/
 local-data-backup*/
+senhas.env
