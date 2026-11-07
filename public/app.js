@@ -443,14 +443,8 @@ function renderLogin(error = "") {
         </header>
         <div class="auth-emblem">${heroIllustration()}</div>
         <div class="auth-copy">
-          <span class="eyebrow">Nutrição com propósito</span>
-          <h2>Apuração, supervisão e cardápios em um só painel.</h2>
-          <p>Acompanhe as refeições servidas, as escolas e o trabalho das nutricionistas com organização e segurança.</p>
-          <div class="auth-stats">
-            <div><strong>165</strong><span>escolas<br />acompanhadas</span></div>
-            <div><strong>13</strong><span>nutricionistas<br />em campo</span></div>
-            <div><strong>8</strong><span>gerências<br />regionais</span></div>
-          </div>
+          <h2>Portal Merenda</h2>
+          <p>Feito para o dia a dia das nutricionistas.</p>
         </div>
       </section>
       <section class="auth-panel">
