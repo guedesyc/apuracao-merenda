@@ -1033,20 +1033,12 @@ const handlers = {
       food: String(body.food || "").slice(0, 1000),
       notes: String(body.notes || "").slice(0, 2000),
       eventDate: String(body.eventDate || ""),
-      done: Boolean(body.done),
       updatedAt: new Date().toISOString()
     };
     if (existing) Object.assign(existing, record);
     else db.events.push(record);
     save();
     return record;
-  },
-  "POST events/toggle": (actor, body) => {
-    const item = ownEvent(actor, body.id);
-    item.done = Boolean(body.done);
-    item.doneAt = item.done ? new Date().toISOString() : null;
-    save();
-    return item;
   },
   "POST events/approve": (actor, body) => {
     requireAdmin(actor);

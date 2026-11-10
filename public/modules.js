@@ -1083,7 +1083,6 @@ const AUDIENCES = { alunos: "Alunos", adultos: "Adultos", ambos: "Alunos/Adultos
 const ADULT_MEALS = { almoco: { label: "Almoço", cardId: "card11" }, lanche: { label: "Lanche", cardId: "card10" } };
 
 function eventStatus(evt) {
-  if (evt.done) return { key: "done", label: "Concluído", tone: "ok" };
   if (evt.attendance === "realizado") return { key: "attended", label: "Realizado", tone: "ok" };
   if (evt.attendance === "nao_realizado") return { key: "missed", label: "Não realizado", tone: "danger" };
   if (!evt.eventDate) return { key: "open", label: "Sem data", tone: "neutral" };
@@ -1151,10 +1150,10 @@ function renderEventos() {
   const list = all
     .filter(evt => ui.route === "todas" || schools.get(evt.schoolId)?.route === ui.route)
     .filter(evt => !isAdmin || ui.nutri === "todas" || eventNutriId(evt) === ui.nutri)
-    .filter(evt => ui.status === "todos" || (ui.status === "concluidos" ? evt.done || evt.attendance : !evt.done && !evt.attendance))
+    .filter(evt => ui.status === "todos" || (ui.status === "concluidos" ? evt.attendance : !evt.attendance))
     .filter(evt => !query || normalizeText(`${schools.get(evt.schoolId)?.shortName} ${evt.event} ${evt.food} ${AUDIENCES[evt.audience] || evt.targetAudience || ""}`).includes(query))
-    .sort((a, b) => (Boolean(a.done || a.attendance) - Boolean(b.done || b.attendance)) || String(a.eventDate || "9999").localeCompare(String(b.eventDate || "9999")));
-  const pending = all.filter(evt => !evt.done && !evt.attendance);
+    .sort((a, b) => (Boolean(a.attendance) - Boolean(b.attendance)) || String(a.eventDate || "9999").localeCompare(String(b.eventDate || "9999")));
+  const pending = all.filter(evt => !evt.attendance);
   const late = pending.filter(evt => eventStatus(evt).key === "late").length;
   const soon = pending.filter(evt => ["soon", "today"].includes(eventStatus(evt).key)).length;
   const editing = ui.editing ? all.find(evt => evt.id === ui.editing) : null;
@@ -1196,7 +1195,7 @@ function renderEventos() {
               const approval = APPROVAL_LABELS[evt.approval || "pendente"];
               const nutriName = users.get(eventNutriId(evt))?.name || "";
               const billing = (evt.billing || []).map(item => item.cardId ? esc(item.cardLabel) : `<em class="warn-text">${esc(item.cardLabel)}</em>`).join(" + ");
-              return `<tr class="${evt.done ? "is-done" : ""}">
+              return `<tr>
                 <td data-label="Solicitação">${fmtDate(evt.requestDate)}</td>
                 <td data-label="Escola"><strong>${esc(school?.shortName)}</strong><small>${esc(routeLabel(school?.route))}</small></td>
                 ${isAdmin ? `<td data-label="Nutricionista">${nutriName ? `<span class="nutri-tag"><span class="avatar xs">${esc(initials(nutriName))}</span>${esc(nutriName)}</span>` : "<span class='muted'>—</span>"}</td>` : ""}
@@ -1205,14 +1204,12 @@ function renderEventos() {
                 <td data-label="Quantitativo" class="num">${evt.quantity === "" || evt.quantity === undefined || evt.quantity === null ? "<span class='muted'>—</span>" : `<strong>${fmtNumber(evt.quantity)}</strong>`}${isAdmin && billing ? `<small class="bill-cards" title="Card(s) usados na exportação de faturamento">${billing}</small>` : ""}</td>
                 <td data-label="Fruta">${evt.hasFruit ? `<span class="chip ok">${icon("apple")} Sim</span>` : `<span class="chip neutral">Não</span>`}</td>
                 <td data-label="Alimentação" class="wrap">${esc(evt.food) || "<span class='muted'>—</span>"}</td>
-                <td data-label="Data do evento"><span class="date-pill">${icon("calendar")} ${fmtDate(evt.eventDate)}</span>${!isAdmin && !evt.attendance && !evt.done ? `<small><span class="chip ${status.tone}">${status.label}</span></small>` : ""}</td>
+                <td data-label="Data do evento"><span class="date-pill">${icon("calendar")} ${fmtDate(evt.eventDate)}</span>${!isAdmin && !evt.attendance ? `<small><span class="chip ${status.tone}">${status.label}</span></small>` : ""}</td>
                 <td data-label="Aprovado">${!isAdmin ? `<span class="chip ${approval[1]}">${approval[0]}</span>`
                   : `<select class="approval-select tone-${approval[1]}" data-evt-approve="${evt.id}">${Object.entries(APPROVAL_LABELS).map(([key, [label]]) => `<option value="${key}" ${(evt.approval || "pendente") === key ? "selected" : ""}>${label}</option>`).join("")}</select>`}</td>
                 <td data-label="Atendimento">${attendanceCell(evt, isAdmin)}</td>
                 <td data-label="Situação">
-                  ${isAdmin ? `<span class="chip ${evt.done ? "ok" : "neutral"}">${evt.done ? `${icon("check")} Concluído` : "Não concluído"}</span>`
-                    : `<label class="done-toggle ${evt.done ? "on" : ""}"><input type="checkbox" data-evt-done="${evt.id}" ${evt.done ? "checked" : ""} /><span class="knob"></span><span>${evt.done ? "Concluído" : "Não concluído"}</span></label>`}
-                  ${evt.done || evt.attendance ? "" : `<span class="chip ${status.tone}">${status.label}</span>`}
+                  ${evt.attendance ? "<span class='muted'>—</span>" : `<span class="chip ${status.tone}">${status.label}</span>`}
                 </td>
                 ${isAdmin ? `
                 <td class="row-actions"><button class="icon-btn" data-evt-edit="${evt.id}" title="Editar">${icon("edit")}</button><button class="icon-btn danger" data-evt-delete="${evt.id}" title="Excluir">${icon("trash")}</button></td>` : ""}
@@ -1258,7 +1255,7 @@ function renderEventos() {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(event.target).entries());
       try {
-        await mutate("events/save", { id: editing?.id, done: editing?.done || false, ...data }, editing ? "Evento atualizado." : "Evento registrado.");
+        await mutate("events/save", { id: editing?.id, ...data }, editing ? "Evento atualizado." : "Evento registrado.");
         ui.showForm = false;
         ui.editing = null;
         renderEventos();
@@ -1266,7 +1263,6 @@ function renderEventos() {
     });
   }
   document.querySelectorAll("[data-evt-approve]").forEach(select => select.addEventListener("change", () => mutate("events/approve", { id: select.dataset.evtApprove, approval: select.value }, select.value === "aprovado" ? "Evento aprovado." : select.value === "reprovado" ? "Evento marcado como não aprovado." : "Aprovação pendente.").catch(() => {})));
-  document.querySelectorAll("[data-evt-done]").forEach(input => input.addEventListener("change", () => mutate("events/toggle", { id: input.dataset.evtDone, done: input.checked }, input.checked ? "Evento concluído." : "Evento reaberto.").catch(() => {})));
   document.querySelectorAll("[data-evt-attend]").forEach(button => button.addEventListener("click", () => {
     const evt = all.find(item => item.id === button.dataset.evtAttend);
     const value = evt?.attendance === button.dataset.value ? null : button.dataset.value;
@@ -3406,13 +3402,12 @@ function computePendencias() {
       }
     }
     for (const evt of data.events) {
-      if (evt.done) continue;
+      if (evt.attendance || evt.approval === "reprovado") continue;
       const where = schools.get(evt.schoolId)?.shortName || "";
       const past = evt.eventDate && daysBetween(todayISO(), evt.eventDate) <= 0;
       let text = "";
       if ((evt.approval || "pendente") === "pendente") text = "defina se o evento foi aprovado.";
       else if (evt.approval === "aprovado" && !evt.attendance && past) text = "confirme se o evento foi realizado.";
-      else if (evt.attendance || evt.approval === "reprovado") text = "marque o evento como concluído.";
       if (!text) continue;
       push(groups.evt, { title: evt.event, text: `${where} — ${text}`, tone: evt.eventDate && daysBetween(todayISO(), evt.eventDate) < 0 ? "danger" : "warn", meta: fmtDate(evt.eventDate) });
     }
