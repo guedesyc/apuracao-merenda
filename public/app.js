@@ -483,6 +483,11 @@ function renderLogin(error = "") {
     submit.classList.add("loading");
     submit.disabled = true;
     try {
+      // Entrar sempre começa do zero: nada da sessão anterior fica na memória.
+      state.user = null;
+      state.db = null;
+      state.mod = null;
+      state.modArchive = null;
       const result = await api("/api/login", {
         method: "POST",
         body: { username: $("#username").value.trim(), password: $("#password").value }
@@ -504,7 +509,8 @@ function renderLogin(error = "") {
 
 function homeView() {
   if (state.user?.role === "adm" || state.user?.role === "manutencao") return "km";
-  return state.user?.role === "admin" ? "apuracoes" : "lancamentos";
+  // Coordenação começa pelo Painel.
+  return state.user?.role === "admin" ? "dashboard" : "lancamentos";
 }
 
 function shell(content) {
@@ -589,14 +595,18 @@ function shell(content) {
     document.querySelector(".app-shell").classList.remove("nav-open");
   });
   $("#logout").addEventListener("click", () => {
+    // Sair zera tudo que é da sessão atual (inclusive o que foi carregado sob demanda)
+    // e recarrega a página: a próxima pessoa não herda dados nem permissões de quem saiu.
     state.user = null;
     state.sessionToken = "";
     state.message = "";
     state.lastRenderedView = "";
     state.mod = null;
-    sessionStorage.removeItem("ui-view");
+    state.modArchive = null;
+    state.db = null;
+    sessionStorage.clear();
     localStorage.removeItem(authStorageKey());
-    renderLogin();
+    window.location.reload();
   });
 }
 
