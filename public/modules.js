@@ -434,6 +434,9 @@ function mod() {
 function navConfig(isAdmin) {
   const pend = computePendencias();
   const badgeOf = id => pend.groups.find(group => group.id === id)?.items.length || 0;
+  if (state.user?.role === "manutencao") {
+    return [{ id: "manutencao", label: "Rotina", items: [{ view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" }] }];
+  }
   if (state.user?.role === "adm") {
     return [
       { id: "conferencia", label: "Conferência", items: [
@@ -518,6 +521,7 @@ function renderSidebarNav(isAdmin) {
 }
 
 function renderModuleView(view) {
+  if (state.user.role === "manutencao" && view !== "km") view = "km";
   const isAdmin = state.user.role === "admin";
   const views = {
     supervisao: renderSupervisao,
@@ -2781,6 +2785,10 @@ function parseKm(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function isKmOwnerRole(role) {
+  return role === "nutritionist" || role === "manutencao";
+}
+
 function kmLog(month, nutriId) {
   return mod().data.km?.logs?.[month]?.[nutriId] || null;
 }
@@ -2857,7 +2865,7 @@ function kmDayTable(month, days, { editable = false, draft = {}, fuel = null, fu
 }
 
 function renderKm() {
-  return state.user.role === "nutritionist" ? renderKmNutri() : renderKmAdm();
+  return isKmOwnerRole(state.user.role) ? renderKmNutri() : renderKmAdm();
 }
 
 // ---------- NUTRICIONISTA ----------
@@ -2971,7 +2979,7 @@ function renderKmNutri() {
 function renderKmAdm() {
   const ui = mod().ui.km;
   const month = ui.month || currentMonth();
-  const people = mod().data.people || [];
+  const people = mod().data.kmPeople || mod().data.people || [];
   const vehicles = mod().data.km?.vehicles || {};
   const query = normalizeText(ui.search);
   const rows = people.map(person => {
@@ -3946,7 +3954,7 @@ function fmtMoneyShortOr(value, fmtFull) {
 
 // KM rodado por nutricionista no período do Analytics (todos os dias lançados, enviados ou não).
 function kmAnalytics(from, to) {
-  const people = mod().data.people || [];
+  const people = mod().data.kmPeople || mod().data.people || [];
   const vehicles = mod().data.km?.vehicles || {};
   const rows = people.map(person => {
     let total = 0;

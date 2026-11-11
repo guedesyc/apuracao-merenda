@@ -503,7 +503,7 @@ function renderLogin(error = "") {
 }
 
 function homeView() {
-  if (state.user?.role === "adm") return "km";
+  if (state.user?.role === "adm" || state.user?.role === "manutencao") return "km";
   return state.user?.role === "admin" ? "apuracoes" : "lancamentos";
 }
 
@@ -531,7 +531,7 @@ function shell(content) {
           <span class="avatar">${initials}</span>
           <div class="user-meta">
             <strong>${state.user.name}</strong>
-            <span>${isAdmin ? "Coordenação" : state.user.role === "adm" ? "ADM" : "Nutricionista"}</span>
+            <span>${isAdmin ? "Coordenação" : state.user.role === "adm" ? "ADM" : state.user.role === "manutencao" ? "Manutenção" : "Nutricionista"}</span>
           </div>
           <button id="logout" class="logout-btn" type="button" title="Sair" aria-label="Sair">${icon("logout")}</button>
         </div>
