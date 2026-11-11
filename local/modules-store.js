@@ -54,7 +54,10 @@ const TABLES = [
   { name: "km_vehicles", pk: ["nutritionist_id"] },
   { name: "km_logs", pk: ["month", "nutritionist_id"] },
   { name: "trainings", pk: ["month"] },
-  { name: "training_submissions", pk: ["month", "nutritionist_id"] }
+  { name: "training_submissions", pk: ["month", "nutritionist_id"] },
+  { name: "gas_prices", pk: ["gas_type"] },
+  { name: "gas_records", pk: ["id"] },
+  { name: "genero_submissions", pk: ["month", "nutritionist_id"] }
 ];
 
 // Arquivo guardado no banco: sem o link (o link temporário é gerado a cada leitura).
@@ -167,6 +170,25 @@ function toRows(doc) {
       });
     }
   }
+  for (const [type, price] of Object.entries(doc.gasPrices || {})) {
+    rows.gas_prices.push({ gas_type: type, price: Number(price), updated_at: null });
+  }
+  for (const item of doc.gasRecords || []) {
+    rows.gas_records.push({
+      id: item.id, school_id: item.schoolId, nutritionist_id: nul(item.nutritionistId), month: item.month, quantity: Number(item.quantity),
+      gas_type: item.gasType, unit_value: Number(item.unitValue), total: Number(item.total), created_at: item.createdAt, created_by: nul(item.createdBy),
+      updated_at: item.updatedAt || item.createdAt, updated_by: nul(item.updatedBy)
+    });
+  }
+  for (const [month, byNutri] of Object.entries(doc.generoSubmissions || {})) {
+    for (const [nutriId, sub] of Object.entries(byNutri || {})) {
+      if (!sub) continue;
+      rows.genero_submissions.push({
+        month, nutritionist_id: nutriId, files: fileRows(sub.files), sent_at: sub.sentAt, sent_by: nul(sub.sentBy), review: sub.review || null,
+        history: (sub.history || []).map(entry => ({ ...entry, files: fileRows(entry.files) }))
+      });
+    }
+  }
   return rows;
 }
 
@@ -176,7 +198,8 @@ const opt = (target, key, value) => { if (value !== null && value !== undefined)
 function fromRows(rows) {
   const doc = {
     version: 5, supervisionReports: [], enrollments: {}, events: [], notifications: [], inventoryItems: [], inventoryCounts: {},
-    inventorySubmissions: {}, inventoryDeadlines: {}, orders: [], km: { vehicles: {}, logs: {} }, trainings: [], trainingSubmissions: {}
+    inventorySubmissions: {}, inventoryDeadlines: {}, orders: [], km: { vehicles: {}, logs: {} }, trainings: [], trainingSubmissions: {},
+    gasPrices: {}, gasRecords: [], generoSubmissions: {}
   };
   for (const row of rows.enrollments || []) {
     doc.enrollments[row.school_id] = { segments: row.segments || {}, updatedAt: row.updated_at, updatedBy: row.updated_by || "" };
@@ -273,6 +296,18 @@ function fromRows(rows) {
     const sub = { files: row.files || [], notes: row.notes || "", sentAt: row.sent_at, sentBy: row.sent_by || "", history: row.history || [] };
     opt(sub, "review", row.review);
     (doc.trainingSubmissions[row.month] ||= {})[row.nutritionist_id] = sub;
+  }
+  for (const row of rows.gas_prices || []) doc.gasPrices[row.gas_type] = Number(row.price);
+  for (const row of rows.gas_records || []) {
+    doc.gasRecords.push({
+      id: row.id, schoolId: row.school_id, nutritionistId: row.nutritionist_id || "", month: row.month, quantity: Number(row.quantity), gasType: row.gas_type,
+      unitValue: Number(row.unit_value), total: Number(row.total), createdAt: row.created_at, createdBy: row.created_by || "", updatedAt: row.updated_at, updatedBy: row.updated_by || ""
+    });
+  }
+  for (const row of rows.genero_submissions || []) {
+    const sub = { files: row.files || [], sentAt: row.sent_at, sentBy: row.sent_by || "", history: row.history || [] };
+    opt(sub, "review", row.review);
+    (doc.generoSubmissions[row.month] ||= {})[row.nutritionist_id] = sub;
   }
   return doc;
 }

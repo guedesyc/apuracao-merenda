@@ -41,6 +41,9 @@ function load() {
   modules.km ||= { vehicles: {}, logs: {} };
   modules.trainings ||= [];
   modules.trainingSubmissions ||= {};
+  modules.gasRecords ||= [];
+  modules.gasPrices = { ...DEFAULT_GAS_PRICES, ...(modules.gasPrices || {}) };
+  modules.generoSubmissions ||= {};
   modules.settings = { ...DEFAULT_SETTINGS, ...(modules.settings || {}) };
   if ((modules.version || 1) < 2) migrateV2(modules);
   if (modules.version < 3) migrateV3(modules);
@@ -63,6 +66,9 @@ function fillDefaults(doc) {
   doc.km ||= { vehicles: {}, logs: {} };
   doc.trainings ||= [];
   doc.trainingSubmissions ||= {};
+  doc.gasRecords ||= [];
+  doc.gasPrices = { ...DEFAULT_GAS_PRICES, ...(doc.gasPrices || {}) };
+  doc.generoSubmissions ||= {};
   doc.settings = { ...DEFAULT_SETTINGS, ...(doc.settings || {}) };
   return doc;
 }
@@ -96,6 +102,10 @@ async function ensureLoaded() {
 
 // Valores de referência editáveis pela coordenação (Analytics → Controle de KM).
 const DEFAULT_SETTINGS = { fuelPrice: 6.2, kmPerLiter: 10 };
+
+// Registro de Gás: tipos e valores de referência (editáveis pela coordenação e pelo ADM).
+const GAS_TYPES = ["P13", "P45"];
+const DEFAULT_GAS_PRICES = { P13: 142, P45: 516 };
 
 // v5: histórico dos ajustes de pedido. Ajustes que já existiam viram um registro "importado"
 // com o que estava gravado (quantidade prevista -> ajustada), na data do envio ou do rascunho.
@@ -255,6 +265,9 @@ function stateFor(actor) {
     km: kmStateFor(db, actor),
     trainings: db.trainings,
     trainingSubmissions: actor.role === "nutritionist" ? pickNutri(db.trainingSubmissions, actor.id) : db.trainingSubmissions,
+    gasRecords: canSeeGas(actor) ? db.gasRecords : [],
+    gasPrices: canSeeGas(actor) ? db.gasPrices : null,
+    generoSubmissions: actor.role === "nutritionist" ? pickNutri(db.generoSubmissions, actor.id) : canSeeGas(actor) ? db.generoSubmissions : {},
     people: isKmOwner(actor) ? [] : directory().nutris.map(nutri => ({ id: nutri.id, name: nutri.name, username: nutri.username })),
     kmPeople: isKmOwner(actor) ? [] : directory().kmPeople.map(person => ({ id: person.id, name: person.name, username: person.username })),
     settings: isAdmin ? db.settings : {},
@@ -650,6 +663,15 @@ function ensureAdmProfile() {
   flushStore();
 }
 
+// Registro de Gás: quem preenche é o ADM; a coordenação também vê e edita.
+function canSeeGas(actor) {
+  return actor.role === "adm" || actor.role === "admin";
+}
+
+function requireGasEditor(actor) {
+  if (!canSeeGas(actor)) fail(403, "O Registro de Gás é preenchido pelo ADM (a coordenação também pode ver e editar).");
+}
+
 function requireAdm(actor) {
   if (actor.role !== "adm" && actor.role !== "admin") fail(403, "Apenas o ADM ou a coordenação podem realizar esta ação.");
 }
@@ -957,6 +979,88 @@ const handlers = {
     submission.review = reviewRecord(actor, body.action, body.note);
     save();
     return { ok: true, submission };
+  },
+
+  // ---------- Registro de Gás (ADM preenche; coordenação vê e edita) ----------
+  "POST gas/prices": (actor, body) => {
+    requireGasEditor(actor);
+    const db = load();
+    db.gasPrices = {
+      P13: priceValue(body.P13) ?? db.gasPrices.P13,
+      P45: priceValue(body.P45) ?? db.gasPrices.P45
+    };
+    save();
+    return { ok: true, gasPrices: db.gasPrices };
+  },
+  "POST gas/save": (actor, body) => {
+    requireGasEditor(actor);
+    const db = load();
+    const school = directory().schoolsById.get(String(body.schoolId || ""));
+    if (!school) fail(400, "Escola inválida.");
+    const month = requireMonth(body.month);
+    const quantity = Math.trunc(Number(body.quantity));
+    if (!(quantity >= 1 && quantity <= 5)) fail(400, "A quantidade de gás vai de 1 a 5.");
+    const gasType = String(body.gasType || "");
+    if (!GAS_TYPES.includes(gasType)) fail(400, "Escolha o tipo de gás (P13 ou P45).");
+    const existing = body.id ? db.gasRecords.find(item => item.id === body.id) : null;
+    if (body.id && !existing) fail(404, "Registro não encontrado.");
+    const unitValue = db.gasPrices[gasType];
+    const now = new Date().toISOString();
+    const record = {
+      ...(existing || { id: uid("gas"), createdAt: now, createdBy: actor.name }),
+      schoolId: school.id,
+      nutritionistId: school.nutritionistIds?.[0] || "",
+      month,
+      quantity,
+      gasType,
+      unitValue,
+      total: Math.round(quantity * unitValue * 100) / 100,
+      updatedAt: now,
+      updatedBy: actor.name
+    };
+    if (existing) Object.assign(existing, record);
+    else db.gasRecords.push(record);
+    save();
+    return record;
+  },
+  "POST gas/delete": (actor, body) => {
+    requireGasEditor(actor);
+    const db = load();
+    if (!db.gasRecords.some(item => item.id === body.id)) fail(404, "Registro não encontrado.");
+    db.gasRecords = db.gasRecords.filter(item => item.id !== body.id);
+    save();
+    return { ok: true };
+  },
+
+  // ---------- Gêneros (nutricionista envia um arquivo; ADM confere) ----------
+  "POST generos/submit": (actor, body) => {
+    requireNutri(actor);
+    const db = load();
+    const month = requireMonth(body.month);
+    db.generoSubmissions[month] ||= {};
+    const current = db.generoSubmissions[month][actor.id];
+    const returned = current?.review?.status === "devolvido";
+    if (current && !returned) fail(409, "O envio de gêneros deste mês já foi feito.");
+    const files = cleanFiles(body.files);
+    if (files.length !== 1) fail(400, "Anexe um único arquivo de gêneros.");
+    db.generoSubmissions[month][actor.id] = {
+      files,
+      sentAt: new Date().toISOString(),
+      sentBy: actor.name,
+      history: [...(current?.history || []), ...(current ? [{ files: current.files, sentAt: current.sentAt, review: current.review }] : [])]
+    };
+    save();
+    return { ok: true };
+  },
+  "POST generos/review": (actor, body) => {
+    requireAdm(actor);
+    const db = load();
+    const month = requireMonth(body.month);
+    const sub = db.generoSubmissions[month]?.[String(body.nutritionistId || "")];
+    if (!sub) fail(404, "Envio não encontrado.");
+    sub.review = reviewRecord(actor, body.action, body.note);
+    save();
+    return { ok: true, submission: sub };
   },
 
   // ---------- Relatório de Supervisão ----------

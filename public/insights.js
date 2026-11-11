@@ -85,7 +85,8 @@ const AN_SECTIONS = [
   ["pedidos", "Pedidos", "cart"],
   ["inventario", "Inventário", "package"],
   ["cruzamento", "Inventário × Pedidos × Matriculados", "table"],
-  ["notificacoes", "Notificações", "alertCircle"]
+  ["notificacoes", "Notificações", "alertCircle"],
+  ["gas", "Registro de Gás", "flame"]
 ];
 
 // As seções do Analytics ficam no menu lateral (grupo "Analytics"); não há abas dentro da página.
@@ -138,7 +139,7 @@ function analyticsHead(subtitle) {
 }
 
 function renderAnalyticsSection(tab) {
-  const renderers = { km: renderAnKm, pedidos: renderAnPedidos, inventario: renderAnInventario, cruzamento: renderAnCruzamento, notificacoes: renderAnNotificacoes };
+  const renderers = { km: renderAnKm, pedidos: renderAnPedidos, inventario: renderAnInventario, cruzamento: renderAnCruzamento, notificacoes: renderAnNotificacoes, gas: renderAnGas };
   (renderers[tab] || renderAnKm)();
   bindAnalyticsTabs();
   bindPeriodBar();
@@ -868,3 +869,77 @@ function histCard(entry, { isAdmin, schools, users, open }) {
     </div>`).join("")}</div>` : ""}
   </article>`;
 }
+// ================================================================ ANALYTICS · REGISTRO DE GÁS
+function renderAnGas() {
+  const ui = anPeriod();
+  const data = mod().data;
+  const schools = schoolMap();
+  const users = userMap();
+  const months = monthsBetween(ui.mFrom, ui.mTo);
+  const records = (data.gasRecords || []).filter(item => item.month >= ui.mFrom && item.month <= ui.mTo);
+  const totalQty = records.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalValue = records.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const byMonth = months.map(month => records.filter(item => item.month === month).reduce((sum, item) => sum + (Number(item.total) || 0), 0));
+
+  const aggregate = keyOf => {
+    const map = new Map();
+    for (const item of records) {
+      const key = keyOf(item);
+      if (!key) continue;
+      const row = map.get(key) || { key, qty: 0, value: 0, deliveries: 0 };
+      row.qty += Number(item.quantity) || 0;
+      row.value += Number(item.total) || 0;
+      row.deliveries += 1;
+      map.set(key, row);
+    }
+    return [...map.values()];
+  };
+  const bySchool = aggregate(item => item.schoolId).sort((a, b) => b.value - a.value || b.qty - a.qty);
+  const byNutri = aggregate(item => item.nutritionistId).sort((a, b) => b.value - a.value || b.qty - a.qty);
+  const topReceiving = [...bySchool].sort((a, b) => b.qty - a.qty).slice(0, 10);
+  const maxQty = Math.max(1, ...bySchool.map(row => row.qty));
+
+  shell(`
+    ${analyticsHead(`Registro de Gás · ${formatMonthBR(ui.mFrom)} a ${formatMonthBR(ui.mTo)}`)}
+    ${periodBarHtml()}
+    <section class="stat-row">
+      ${statCard({ label: "Botijões no período", value: fmtNumber(totalQty), iconName: "package", tone: "brand" })}
+      ${statCard({ label: "Valor gasto no período", value: `<span class="sm-val">${money(totalValue)}</span>`, iconName: "chart", tone: totalValue ? "warn" : "" })}
+      ${statCard({ label: "Escolas atendidas", value: fmtNumber(bySchool.length), iconName: "school" })}
+      ${statCard({ label: "Média por escola", value: `<span class="sm-val">${money(bySchool.length ? totalValue / bySchool.length : 0)}</span>`, iconName: "calculator" })}
+    </section>
+    <section class="an-grid">
+      <article class="card chart-card span-2">
+        <header class="chart-head"><div><h3>Valor gasto por mês</h3><p>Soma de todos os registros de gás do mês</p></div></header>
+        ${columnChart({ labels: months.map(monthShort), series: [{ name: "Valor", color: "#eb6834", values: byMonth }], fmt: value => fmtMoneyShort(value), empty: "Nenhum registro de gás no período" })}
+      </article>
+      <article class="card chart-card">
+        <header class="chart-head"><div><h3>Quem mais recebe gás</h3><p>Botijões no período, por escola</p></div></header>
+        ${topReceiving.length ? hbarList(topReceiving.map(row => ({ label: schools.get(row.key)?.shortName || row.key, value: row.qty, sub: `${row.deliveries} entrega(s) · ${money(row.value)}` })), { fmt: value => `${fmtNumber(value)} bot.`, color: "#2a78d6", limit: 10 }) : emptyState("Sem entregas no período", "Os registros do Registro de Gás aparecem aqui.", "package")}
+      </article>
+      <article class="card chart-card">
+        <header class="chart-head"><div><h3>Por nutricionista</h3><p>Valor gasto nas escolas de cada nutricionista</p></div></header>
+        ${byNutri.length ? `<div class="table-scroll"><table class="data-table an-table">
+          <thead><tr><th>Nutricionista</th><th class="num">Botijões</th><th class="num">Valor</th></tr></thead>
+          <tbody>${byNutri.map(row => `<tr><td><strong>${esc(users.get(row.key)?.name || row.key)}</strong></td><td class="num">${fmtNumber(row.qty)}</td><td class="num"><strong>${money(row.value)}</strong></td></tr>`).join("")}</tbody>
+        </table></div>` : emptyState("Sem entregas no período", "", "package")}
+      </article>
+      <article class="card chart-card span-2">
+        <header class="chart-head"><div><h3>Escolas: quem mais gasta</h3><p>Ordenado pelo valor gasto no período</p></div></header>
+        ${bySchool.length ? `<div class="table-scroll"><table class="data-table an-table">
+          <thead><tr><th>#</th><th>Escola</th><th>GRE</th><th class="bar-col">Botijões</th><th class="num">Entregas</th><th class="num">Botijões</th><th class="num">Valor</th></tr></thead>
+          <tbody>${bySchool.map((row, index) => `<tr>
+            <td class="muted">${index + 1}</td>
+            <td><strong>${esc(schools.get(row.key)?.shortName || row.key)}</strong></td>
+            <td>${esc(routeLabel(schools.get(row.key)?.route))}</td>
+            <td class="bar-col"><span class="rank-bar"><i style="width:${(row.qty / maxQty * 100).toFixed(1)}%;background:#2a78d6"></i></span></td>
+            <td class="num">${fmtNumber(row.deliveries)}</td>
+            <td class="num">${fmtNumber(row.qty)}</td>
+            <td class="num"><strong>${money(row.value)}</strong></td>
+          </tr>`).join("")}</tbody>
+        </table></div>` : emptyState("Sem entregas no período", "Os registros do Registro de Gás aparecem aqui.", "package")}
+      </article>
+    </section>
+  `);
+}
+

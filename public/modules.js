@@ -50,6 +50,26 @@ function initials(name) {
   return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 }
 
+// O mês do Painel é a "data do sistema": quando muda, todas as telas e análises passam para ele.
+// Cada tela guarda o próprio mês na sessão; por isso ele é atualizado aqui de uma vez.
+function syncModuleMonths() {
+  const month = currentMonth();
+  const ui = mod().ui;
+  if (!ui) return;
+  for (const part of Object.values(ui)) {
+    if (part && typeof part === "object" && "month" in part) part.month = month;
+  }
+  if (ui.exp) { ui.exp.faturamento = month; ui.exp.inventario = month; }
+  if (ui.an) {
+    ui.an.mTo = month;
+    ui.an.mFrom = shiftMonth(month, -5);
+    ui.an.mPreset = "6m";
+    ui.an.crossMonth = month;
+    ui.an.crossProd = month;
+  }
+  if (state.user?.role === "admin") state.selectedMonth = month;
+}
+
 function currentMonth() {
   return state.db?.settings?.currentMonth || todayISO().slice(0, 7);
 }
@@ -251,6 +271,7 @@ function routeOptionsHtml(selected) {
 
 // ---------------------------------------------------------------- ícones
 const ICONS = {
+  flame: '<path d="M12 2.5c.6 3 3.6 4.9 4.5 8.1A6 6 0 0 1 6.5 13c0-2.2 1.1-3.6 2.2-4.8.3 1.6 1 2.6 2 3.1-.1-2.4.7-5.1 1.3-8.8Z"/><path d="M9 20.5a3 3 0 0 0 6 0c0-1.1-.6-2-1.4-2.8-.3.8-.9 1.3-1.6 1.3.2-1 0-2-.6-2.9-.9 1.1-2.4 1.8-2.4 3.4Z"/>',
   clipboard: '<path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/>',
   calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
@@ -441,7 +462,9 @@ function navConfig(isAdmin) {
     return [
       { id: "conferencia", label: "Conferência", items: [
         { view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" },
-        { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }
+        { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" },
+        { view: "gas", label: "Registro de Gás", icon: "flame" },
+        { view: "generos", label: "Gêneros", icon: "fileCheck", badge: badgeOf("gen"), tone: "warn" }
       ] },
       { id: "comunicacao", label: "Comunicação", items: [{ view: "pendencias", label: "Pendências", icon: "listTodo", badge: pend.total, tone: "warn" }] }
     ];
@@ -480,12 +503,15 @@ function navConfig(isAdmin) {
     },
     ...(isAdmin ? [{ id: "conferencia", label: "Conferência", items: [
       { view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" },
-      { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }
+      { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" },
+      { view: "gas", label: "Registro de Gás", icon: "flame" },
+      { view: "generos", label: "Gêneros", icon: "fileCheck", badge: badgeOf("gen"), tone: "warn" }
     ] }] : []),
     ...(isAdmin ? [{ id: "analytics", label: "Analytics", items: AN_SECTIONS.map(([tab, label, iconName]) => ({ view: `an-${tab}`, label, icon: iconName })) }] : []),
     ...(isAdmin ? [] : [{ id: "rotina", label: "Rotina", items: [
       { view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" },
-      { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }
+      { view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" },
+      { view: "generos", label: "Gêneros", icon: "fileCheck", badge: badgeOf("gen"), tone: "warn" }
     ] }]),
     {
       id: "comunicacao", label: "Comunicação", items: [
@@ -529,6 +555,8 @@ function renderModuleView(view) {
     eventos: renderEventos,
     notificacoes: renderNotificacoes,
     pendencias: renderPendencias,
+    gas: renderGas,
+    generos: renderGeneros,
     inventario: renderInventario,
     "historico-pedidos": renderHistoricoPedidos,
     ...(isAdmin
@@ -3338,6 +3366,266 @@ function bindTrainingConfigPanel() {
   }));
 }
 
+// ================================================================ REGISTRO DE GÁS
+const GAS_TYPE_LABELS = { P13: "P13 (13 kg)", P45: "P45 (45 kg)" };
+const GAS_QUANTITIES = [1, 2, 3, 4, 5];
+
+function canEditGas() {
+  return state.user?.role === "adm" || state.user?.role === "admin";
+}
+
+function gasUi() {
+  return mod().ui.gas ||= { month: currentMonth(), school: "todas", nutri: "todas", showForm: false, editing: null };
+}
+
+function gasPriceOf(type) {
+  return Number(mod().data.gasPrices?.[type]) || 0;
+}
+
+function renderGas() {
+  if (!canEditGas()) {
+    shell(pageHead({ eyebrow: "Conferência", title: "Registro de Gás" }) + `<section class="panel">${emptyState("Acesso restrito", "O Registro de Gás é preenchido pelo ADM e acompanhado pela coordenação.", "alert")}</section>`);
+    return;
+  }
+  const ui = gasUi();
+  const data = mod().data;
+  const schools = schoolMap();
+  const users = userMap();
+  const editing = ui.editing ? (data.gasRecords || []).find(item => item.id === ui.editing) : null;
+  const records = (data.gasRecords || [])
+    .filter(item => item.month === ui.month)
+    .filter(item => ui.school === "todas" || item.schoolId === ui.school)
+    .filter(item => ui.nutri === "todas" || item.nutritionistId === ui.nutri)
+    .sort((a, b) => (schools.get(a.schoolId)?.shortName || "").localeCompare(schools.get(b.schoolId)?.shortName || "", "pt-BR"));
+  const totalQty = records.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalValue = records.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const schoolsServed = new Set(records.map(item => item.schoolId)).size;
+  const monthOptions = [...new Set([currentMonth(), ui.month, ...(data.gasRecords || []).map(item => item.month)])].sort().reverse();
+  const nutriOptions = [...new Set((data.gasRecords || []).map(item => item.nutritionistId).filter(Boolean))];
+  const schoolOptions = [...state.db.schools].sort((a, b) => a.shortName.localeCompare(b.shortName, "pt-BR"));
+
+  shell(`
+    ${pageHead({ eyebrow: "Conferência", title: "Registro de Gás", subtitle: "Entregas de gás por escola e mês. Preenchido pelo ADM; a coordenação pode ver e editar.",
+      actions: `<button class="primary" id="gas-new">${icon("plus")} Novo registro</button>` })}
+    <section class="card gas-prices">
+      <div class="section-head"><h2>Valores do gás</h2></div>
+      <p class="status-line">Valor por botijão usado nos novos registros. Se o preço mudar, altere aqui.</p>
+      <form id="gas-prices-form" class="gas-price-form">
+        <label class="field"><span>P13 (13 kg)</span><span class="price-wrap"><em>R$</em><input class="cell-input" name="P13" inputmode="decimal" value="${esc(gasPriceOf("P13").toFixed(2).replace(".", ","))}" /></span></label>
+        <label class="field"><span>P45 (45 kg)</span><span class="price-wrap"><em>R$</em><input class="cell-input" name="P45" inputmode="decimal" value="${esc(gasPriceOf("P45").toFixed(2).replace(".", ","))}" /></span></label>
+        <button type="submit" class="secondary">${icon("save")} Salvar valores</button>
+      </form>
+    </section>
+    <section class="stat-row">
+      ${statCard({ label: "Botijões no mês", value: fmtNumber(totalQty), iconName: "package", tone: "brand" })}
+      ${statCard({ label: "Valor no mês", value: `<span class="sm-val">${money(totalValue)}</span>`, iconName: "chart" })}
+      ${statCard({ label: "Escolas atendidas", value: fmtNumber(schoolsServed), iconName: "school" })}
+      ${statCard({ label: "Registros", value: fmtNumber(records.length), iconName: "clipboard" })}
+    </section>
+    ${ui.showForm || editing ? gasForm(editing, schoolOptions) : ""}
+    <section class="filter-bar">
+      <label class="inline-field">Mês <select id="gas-month">${monthOptions.map(month => `<option value="${month}" ${month === ui.month ? "selected" : ""}>${esc(formatMonthBR(month))}</option>`).join("")}</select></label>
+      <label class="inline-field grow">Escola <select id="gas-school"><option value="todas">Todas as escolas</option>${schoolOptions.map(school => `<option value="${school.id}" ${ui.school === school.id ? "selected" : ""}>${esc(school.shortName)}</option>`).join("")}</select></label>
+      <label class="inline-field grow">Nutricionista <select id="gas-nutri"><option value="todas">Todas</option>${nutriOptions.map(id => `<option value="${id}" ${ui.nutri === id ? "selected" : ""}>${esc(users.get(id)?.name || id)}</option>`).join("")}</select></label>
+    </section>
+    <section class="card table-card">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Escola</th><th>GRE</th><th>Nutricionista</th><th class="num">Qtd.</th><th>Tipo</th><th class="num">Valor unit.</th><th class="num">Total</th><th></th></tr></thead>
+          <tbody>${records.map(item => {
+            const school = schools.get(item.schoolId);
+            return `<tr>
+              <td data-label="Escola"><strong>${esc(school?.shortName || item.schoolId)}</strong></td>
+              <td data-label="GRE">${esc(routeLabel(school?.route))}</td>
+              <td data-label="Nutricionista">${esc(users.get(item.nutritionistId)?.name || "—")}</td>
+              <td class="num" data-label="Qtd.">${fmtNumber(item.quantity)}</td>
+              <td data-label="Tipo"><span class="chip neutral">${esc(GAS_TYPE_LABELS[item.gasType] || item.gasType)}</span></td>
+              <td class="num" data-label="Valor unit.">${money(item.unitValue)}</td>
+              <td class="num" data-label="Total"><strong>${money(item.total)}</strong></td>
+              <td class="row-actions"><button class="icon-btn" data-gas-edit="${item.id}" title="Editar">${icon("edit")}</button><button class="icon-btn danger" data-gas-delete="${item.id}" title="Excluir">${icon("trash")}</button></td>
+            </tr>`;
+          }).join("") || `<tr><td colspan="8">${emptyState("Nenhum registro neste mês", "Clique em “Novo registro” para lançar uma entrega de gás.", "package")}</td></tr>`}</tbody>
+        </table>
+      </div>
+    </section>
+  `);
+
+  $("#gas-new").addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderGas(); $("#gas-form")?.querySelector("select")?.focus(); });
+  $("#gas-month").addEventListener("change", event => { ui.month = event.target.value; ui.showForm = false; ui.editing = null; renderGas(); });
+  $("#gas-school").addEventListener("change", event => { ui.school = event.target.value; renderGas(); });
+  $("#gas-nutri").addEventListener("change", event => { ui.nutri = event.target.value; renderGas(); });
+  $("#gas-prices-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    const P13 = String(form.get("P13") || "").trim();
+    const P45 = String(form.get("P45") || "").trim();
+    try {
+      await mutate("gas/prices", { P13, P45 }, "Valores do gás atualizados.");
+    } catch { /* o aviso já aparece */ }
+  });
+  document.querySelectorAll("[data-gas-edit]").forEach(button => button.addEventListener("click", () => { ui.editing = button.dataset.gasEdit; ui.showForm = false; renderGas(); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+  document.querySelectorAll("[data-gas-delete]").forEach(button => button.addEventListener("click", () => {
+    askConfirm({ title: "Excluir registro de gás?", text: "A entrega será removida do registro e dos relatórios.", yesLabel: "Excluir", danger: true })
+      .then(ok => ok && mutate("gas/delete", { id: button.dataset.gasDelete }, "Registro excluído.").catch(() => {}));
+  }));
+  const form = $("#gas-form");
+  if (form) {
+    const sync = () => {
+      const type = form.querySelector("[name=gasType]").value;
+      const quantity = Number(form.querySelector("[name=quantity]").value) || 0;
+      const price = type ? gasPriceOf(type) : 0;
+      form.querySelector("[data-gas-total]").textContent = quantity && price ? money(quantity * price) : "—";
+    };
+    form.addEventListener("change", sync);
+    sync();
+    $("#gas-cancel")?.addEventListener("click", () => { ui.showForm = false; ui.editing = null; renderGas(); });
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const data2 = Object.fromEntries(new FormData(event.target).entries());
+      try {
+        await mutate("gas/save", { id: editing?.id, ...data2 }, editing ? "Registro atualizado." : "Registro salvo.");
+        ui.showForm = false;
+        ui.editing = null;
+        renderGas();
+      } catch { /* o aviso já aparece */ }
+    });
+  }
+}
+
+function gasForm(editing, schoolOptions) {
+  const ui = gasUi();
+  const month = editing?.month || ui.month;
+  return `<form class="card form-card pop-in" id="gas-form">
+    <div class="form-title">${icon(editing ? "edit" : "plus")}<strong>${editing ? "Editar registro de gás" : "Novo registro de gás"}</strong></div>
+    <div class="form-grid cols-4">
+      <label class="field wide2"><span>Escola</span><select name="schoolId" required><option value="">Selecione...</option>${schoolOptions.map(school => `<option value="${school.id}" ${editing?.schoolId === school.id ? "selected" : ""}>${esc(school.shortName)}</option>`).join("")}</select></label>
+      <label class="field"><span>Mês</span><input type="month" name="month" value="${esc(month)}" required /></label>
+      <label class="field"><span>Quantidade (máx. 5)</span><select name="quantity" required>${GAS_QUANTITIES.map(q => `<option value="${q}" ${Number(editing?.quantity || 1) === q ? "selected" : ""}>${q}</option>`).join("")}</select></label>
+      <label class="field"><span>Tipo de gás</span><select name="gasType" required>${Object.entries(GAS_TYPE_LABELS).map(([key, label]) => `<option value="${key}" ${editing?.gasType === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+      <div class="field"><span>Total</span><output class="total-out" data-gas-total>—</output></div>
+    </div>
+    <p class="form-hint">${icon("info")} O valor vem da tabela de valores do gás acima. Os valores podem ser alterados lá, se necessário.</p>
+    <div class="form-actions"><button type="button" class="secondary" id="gas-cancel">Cancelar</button><button type="submit" class="primary">${icon("save")} ${editing ? "Salvar" : "Registrar"}</button></div>
+  </form>`;
+}
+
+// ================================================================ GÊNEROS
+function generoStatus(sub) {
+  if (!sub) return { key: "none", label: "Não enviado", tone: "neutral", icon: "clock" };
+  if (sub.review?.status === "conferido") return { key: "ok", label: "Conferido", tone: "ok", icon: "check" };
+  if (sub.review?.status === "devolvido") return { key: "back", label: "Devolvido", tone: "danger", icon: "alert" };
+  return { key: "sent", label: "Aguardando conferência", tone: "warn", icon: "send" };
+}
+
+function generoMonthOptions(selected) {
+  const months = new Set([currentMonth(), selected, ...Object.keys(mod().data.generoSubmissions || {})]);
+  return [...months].sort().reverse().map(month => `<option value="${month}" ${month === selected ? "selected" : ""}>${esc(formatMonthBR(month))}</option>`).join("");
+}
+
+function renderGeneros() {
+  const ui = mod().ui.gen ||= { month: currentMonth(), file: null, uploading: false };
+  const data = mod().data;
+  const isReviewer = state.user.role === "adm" || state.user.role === "admin";
+  const subsOfMonth = data.generoSubmissions?.[ui.month] || {};
+
+  if (!isReviewer) {
+    const sub = subsOfMonth[state.user.id] || null;
+    const status = generoStatus(sub);
+    const canSend = !sub || sub.review?.status === "devolvido";
+    shell(`
+      ${pageHead({ eyebrow: "Rotina", title: "Gêneros", subtitle: "Anexe o arquivo de gêneros do mês e envie para a coordenação conferir." })}
+      <section class="filter-bar">
+        <label class="inline-field grow">Mês <select id="gen-month">${generoMonthOptions(ui.month)}</select></label>
+        <span class="chip ${status.tone}">${icon(status.icon)} ${status.label}</span>
+      </section>
+      ${sub ? `<section class="card form-card">
+        <div class="form-title">${icon("fileCheck")}<strong>Seu envio</strong><small class="muted">em ${fmtDateTime(sub.sentAt)}</small></div>
+        ${sub.review?.status === "conferido" ? `<div class="lock-banner ok">${icon("check")}<span>Conferido por <b>${esc(sub.review.by)}</b> em ${fmtDateTime(sub.review.at)}.</span></div>` : ""}
+        ${sub.review?.status === "devolvido" ? `<div class="lock-banner danger">${icon("alert")}<span>Devolvido pela coordenação: <b>${esc(sub.review.note)}</b>. Envie o arquivo corrigido abaixo.</span></div>` : ""}
+        ${!sub.review ? `<div class="lock-banner warn">${icon("lock")}<span>Enviado. Aguardando a conferência do ADM — não é possível alterar.</span></div>` : ""}
+        <div class="history-files">${(sub.files || []).map(file => fileChip(file)).join("")}</div>
+      </section>` : ""}
+      ${canSend ? `<section class="card form-card">
+        <div class="form-title">${icon("upload")}<strong>${sub ? "Reenviar gêneros" : "Enviar gêneros"}</strong></div>
+        <div class="field wide"><span>Arquivo de gêneros (um arquivo)</span>
+          <div class="history-files">${ui.file ? fileChip(ui.file, `data-gen-remove`) : ""}</div>
+          ${ui.file ? "" : `<label class="dropzone">${icon("upload")}<span><b>Anexar arquivo</b><small>PDF, Word, planilha ou imagem · até 25 MB</small></span><input type="file" id="gen-file" hidden /></label>`}
+        </div>
+        <div class="form-actions">
+          ${ui.uploading ? `<span class="uploading"><i class="spinner"></i> Enviando arquivo...</span>` : ""}
+          <button class="primary" id="gen-send" ${ui.file && !ui.uploading ? "" : "disabled"}>${icon("send")} Enviar gêneros</button>
+        </div>
+      </section>` : ""}
+    `);
+    $("#gen-month").addEventListener("change", event => { ui.month = event.target.value; ui.file = null; renderGeneros(); });
+    $("#gen-file")?.addEventListener("change", async event => {
+      const [file] = [...event.target.files];
+      if (!file) return;
+      ui.uploading = true;
+      renderGeneros();
+      try { [ui.file] = await uploadFiles([file]); } catch (error) { toast(error.message, "error"); }
+      ui.uploading = false;
+      renderGeneros();
+    });
+    document.querySelector("[data-gen-remove]")?.addEventListener("click", () => { ui.file = null; renderGeneros(); });
+    $("#gen-send")?.addEventListener("click", () => openConfirmModal({
+      iconName: "fileCheck",
+      title: "Enviar gêneros",
+      subtitle: formatMonthBR(ui.month),
+      bodyHtml: `<div class="history-files">${fileChip(ui.file)}</div>`,
+      question: "Deseja enviar o arquivo de gêneros?",
+      hint: "O envio é único por mês. Depois de enviado, só a coordenação pode devolver para correção.",
+      onConfirm: async () => {
+        await mutate("generos/submit", { month: ui.month, files: [ui.file] }, "Gêneros enviados para conferência.");
+        ui.file = null;
+        renderGeneros();
+      }
+    }));
+    return;
+  }
+
+  const people = data.people || [];
+  const rows = people.map(person => ({ person, sub: subsOfMonth[person.id] || null, status: generoStatus(subsOfMonth[person.id]) }));
+  const count = key => rows.filter(row => row.status.key === key).length;
+  shell(`
+    ${pageHead({ eyebrow: "Conferência", title: "Gêneros", subtitle: "Arquivos de gêneros enviados pelas nutricionistas. Confira cada envio e confirme, ou devolva para correção." })}
+    <section class="filter-bar">
+      <label class="inline-field grow">Mês <select id="gen-month">${generoMonthOptions(ui.month)}</select></label>
+    </section>
+    <section class="stat-row">
+      ${statCard({ label: "Enviados", value: `${rows.length - count("none")}<small>/${rows.length}</small>`, iconName: "send", tone: "brand" })}
+      ${statCard({ label: "Aguardando conferência", value: fmtNumber(count("sent")), iconName: "clock", tone: count("sent") ? "warn" : "" })}
+      ${statCard({ label: "Conferidos", value: fmtNumber(count("ok")), iconName: "check" })}
+      ${statCard({ label: "Devolvidos", value: fmtNumber(count("back")), iconName: "alert", tone: count("back") ? "danger" : "" })}
+    </section>
+    <section class="card">
+      <div class="school-rows">
+        ${rows.map(({ person, sub, status }) => `<div class="school-row cap-row">
+          <div class="school-row-head as-div">
+            <span class="row-toggle"><span class="avatar">${esc(initials(person.name))}</span><span class="school-name"><strong>${esc(person.name)}</strong><small>${sub ? `Enviado em ${fmtDateTime(sub.sentAt)}` : "Ainda não enviou"}</small></span></span>
+            <span class="chip ${status.tone}">${icon(status.icon)} ${status.label}</span>
+            <span class="meta">${sub?.review ? `${esc(sub.review.by)} · ${fmtDateTime(sub.review.at)}` : ""}</span>
+            ${status.key === "sent" ? `<span class="row-btns"><button type="button" class="link-btn" data-gen-review="${person.id}" data-action="devolvido">Devolver</button><button type="button" class="primary sm" data-gen-review="${person.id}" data-action="conferido">${icon("check")} Conferido</button></span>` : "<span></span>"}
+            <span></span>
+          </div>
+          ${sub ? `<div class="reg-body"><div class="history-files">${(sub.files || []).map(file => fileChip(file)).join("")}</div>
+            ${sub.review?.status === "devolvido" ? `<p class="warn-text">${icon("alert")} Motivo da devolução: ${esc(sub.review.note)}</p>` : ""}</div>` : ""}
+        </div>`).join("") || `<p class="muted pad">Nenhuma nutricionista encontrada.</p>`}
+      </div>
+    </section>
+  `);
+  $("#gen-month").addEventListener("change", event => { ui.month = event.target.value; renderGeneros(); });
+  document.querySelectorAll("[data-gen-review]").forEach(button => button.addEventListener("click", () => {
+    const action = button.dataset.action;
+    let note = "";
+    if (action === "devolvido") {
+      note = prompt("Motivo da devolução (a nutricionista verá esta mensagem):") || "";
+      if (!note.trim()) return;
+    }
+    mutate("generos/review", { month: ui.month, nutritionistId: button.dataset.genReview, action, note }, action === "conferido" ? "Gêneros conferidos." : "Gêneros devolvidos para a nutricionista.").catch(() => {});
+  }));
+}
+
 // ================================================================ PENDÊNCIAS
 function computePendencias() {
   const result = { total: 0, groups: [] };
@@ -3373,7 +3661,15 @@ function computePendencias() {
   const reviewPendencias = () => {
     groups.km = { id: "km", title: "Controle de KM", icon: "car", view: "km" };
     groups.cap = { id: "cap", title: "Capacitação", icon: "graduation", view: "capacitacao" };
+    groups.gen = { id: "gen", title: "Gêneros", icon: "fileCheck", view: "generos" };
+    const isReviewer = state.user.role === "adm" || state.user.role === "admin";
     const people = new Map((data.people || []).map(person => [person.id, person.name]));
+    for (const [month, byNutri] of Object.entries(data.generoSubmissions || {})) {
+      for (const [nutriId, sub] of Object.entries(byNutri)) {
+        if (isReviewer && !sub.review) push(groups.gen, { title: people.get(nutriId) || "Nutricionista", text: `Gêneros de ${formatMonthBR(month)} enviados — falta conferir.`, tone: "warn", meta: fmtDate(sub.sentAt.slice(0, 10)) });
+        else if (!isReviewer && sub.review?.status === "devolvido" && sub.sentAt < sub.review.at) push(groups.gen, { title: formatMonthBR(month), text: `Gêneros devolvidos: ${sub.review.note}`, tone: "danger", meta: fmtDate(sub.review.at.slice(0, 10)) });
+      }
+    }
     for (const [month, byNutri] of Object.entries(data.km?.logs || {})) {
       for (const [nutriId, log] of Object.entries(byNutri)) {
         if (log.sentAt && log.review?.status !== "conferido") push(groups.km, { title: people.get(nutriId) || "Nutricionista", text: `KM de ${formatMonthBR(month)} enviado — falta conferir.`, tone: "warn", meta: fmtDate(log.sentAt.slice(0, 10)) });
@@ -3432,6 +3728,12 @@ function computePendencias() {
       if (item.finalFile || item.responses?.[state.user.id]) continue;
       const late = item.dueDate && daysBetween(todayISO(), item.dueDate) < 0;
       push(groups.ntf, { title: item.title, text: `${item.questions.length} pergunta(s) para responder.`, tone: late ? "danger" : "warn", meta: item.dueDate ? `Prazo ${fmtDate(item.dueDate)}` : "" });
+    }
+    // Gêneros devolvidos pela coordenação: a nutricionista precisa reenviar.
+    groups.gen = { id: "gen", title: "Gêneros", icon: "fileCheck", view: "generos" };
+    for (const [month, byNutri] of Object.entries(data.generoSubmissions || {})) {
+      const sub = byNutri[state.user.id];
+      if (sub?.review?.status === "devolvido" && sub.sentAt < sub.review.at) push(groups.gen, { title: formatMonthBR(month), text: `Gêneros devolvidos: ${sub.review.note}`, tone: "danger", meta: fmtDate(sub.review.at.slice(0, 10)) });
     }
     return result;
   }

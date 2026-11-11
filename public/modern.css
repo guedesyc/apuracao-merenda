@@ -1220,3 +1220,9 @@ th.sortable.is-sorted .sort-arrow { opacity: 1; }
 .older-bar b { color: var(--ink, #1d2a24); }
 .older-bar.is-loaded { border-style: solid; background: #f3f8f5; }
 @media (max-width: 720px) { .older-bar .secondary { width: 100%; justify-content: center; min-height: 42px; } }
+
+/* Registro de Gás */
+.gas-price-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.gas-price-form .field { min-width: 180px; }
+.gas-price-form .price-wrap .cell-input { width: 120px; }
+.gas-prices { padding: 14px 16px; margin-bottom: 14px; }
