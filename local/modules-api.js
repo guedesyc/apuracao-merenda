@@ -267,6 +267,8 @@ function stateFor(actor) {
     trainingSubmissions: actor.role === "nutritionist" ? pickNutri(db.trainingSubmissions, actor.id) : db.trainingSubmissions,
     gasRecords: canSeeGas(actor) ? db.gasRecords : [],
     gasPrices: canSeeGas(actor) ? db.gasPrices : null,
+    // ADM e coordenação veem todas as escolas no Registro de Gás (as demais telas seguem o vínculo).
+    schoolsAll: canSeeGas(actor) ? directory().schools.map(school => ({ id: school.id, shortName: school.shortName, route: school.route })) : [],
     generoSubmissions: actor.role === "nutritionist" ? pickNutri(db.generoSubmissions, actor.id) : canSeeGas(actor) ? db.generoSubmissions : {},
     people: isKmOwner(actor) ? [] : directory().nutris.map(nutri => ({ id: nutri.id, name: nutri.name, username: nutri.username })),
     kmPeople: isKmOwner(actor) ? [] : directory().kmPeople.map(person => ({ id: person.id, name: person.name, username: person.username })),
@@ -724,6 +726,19 @@ function fuelNumber(value, label) {
   return Math.round(number * 100) / 100;
 }
 
+// Abastecimento de um mês: litros e valor por dia (vazio apaga o dia).
+function writeKmFuel(log, actor, month, rows) {
+  log.fuel ||= {};
+  for (const [date, row] of Object.entries(rows || {})) {
+    if (!date.startsWith(`${month}-`) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const liters = fuelNumber(row?.liters, "Abastecimento");
+    const value = fuelNumber(row?.value, "Valor do abastecimento");
+    if (liters === null && value === null) { delete log.fuel[date]; continue; }
+    log.fuel[date] = { liters, value: value === null ? null : Math.round(value * 100) / 100, by: actor.name, at: new Date().toISOString() };
+  }
+  return log;
+}
+
 function kmNumber(value) {
   if (value === "" || value === null || value === undefined) return null;
   const number = Number(String(value).replace(/\./g, "").replace(",", "."));
@@ -871,6 +886,7 @@ const handlers = {
     const db = load();
     const month = requireMonth(body.month);
     const log = writeKmDays(db, actor, month, body.days);
+    if (body.fuel) writeKmFuel(log, actor, month, body.fuel);
     save();
     return { ok: true, log };
   },
@@ -879,6 +895,7 @@ const handlers = {
     const db = load();
     const month = requireMonth(body.month);
     const log = writeKmDays(db, actor, month, body.days);
+    if (body.fuel) writeKmFuel(log, actor, month, body.fuel);
     const rows = Object.entries(log.days).filter(([, row]) => row.start !== null || row.end !== null);
     if (!rows.length) fail(400, "Lance pelo menos um dia antes de enviar.");
     const incomplete = rows.filter(([, row]) => row.start === null || row.end === null).map(([date]) => xl.fmtDateBR(date));
@@ -897,14 +914,7 @@ const handlers = {
     if (!isNutriId(nutriId)) fail(400, "Nutricionista inválida.");
     db.km.logs[month] ||= {};
     const log = db.km.logs[month][nutriId] ||= { days: {} };
-    log.fuel ||= {};
-    for (const [date, row] of Object.entries(body.days || {})) {
-      if (!date.startsWith(`${month}-`) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-      const liters = fuelNumber(row?.liters, "Abastecimento");
-      const value = fuelNumber(row?.value, "Valor do abastecimento");
-      if (liters === null && value === null) { delete log.fuel[date]; continue; }
-      log.fuel[date] = { liters, value: value === null ? null : Math.round(value * 100) / 100, by: actor.name, at: new Date().toISOString() };
-    }
+    writeKmFuel(log, actor, month, body.days);
     save();
     return { ok: true, log };
   },
