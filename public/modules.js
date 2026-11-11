@@ -59,7 +59,7 @@ function syncModuleMonths() {
   for (const part of Object.values(ui)) {
     if (part && typeof part === "object" && "month" in part) part.month = month;
   }
-  if (ui.exp) { ui.exp.faturamento = month; ui.exp.inventario = month; }
+  if (ui.exp) { ui.exp.faturamento = month; ui.exp.inventario = month; ui.exp.km = month; }
   if (ui.an) {
     ui.an.mTo = month;
     ui.an.mFrom = shiftMonth(month, -5);
@@ -2226,6 +2226,7 @@ const EXPORT_KINDS = [
   { match: /maximos/, label: "Máximo" },
   { match: /sem-atendimento/, label: "Sem Atendimento" },
   { match: /^inventario-geral-/, label: "Inventário Geral" },
+  { match: /^controle-km-/, label: "Controle de KM" },
   { match: /^eventos-/, label: "Eventos" }
 ];
 
@@ -2244,6 +2245,13 @@ function renderExportacoes() {
   const notServed = (state.db.entries || []).filter(entry => entry.status === "not_served").length;
   const history = (state.db.exports || []).slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 15);
   const busy = key => ui.busy === key;
+  ui.km ||= currentMonth();
+  const kmMonth = ui.km;
+  const kmLogs = Object.values(data.km?.logs?.[kmMonth] || {});
+  const kmSent = kmLogs.filter(log => log.sentAt).length;
+  const kmChecked = kmLogs.filter(log => log.review?.status === "conferido").length;
+  const kmTotal = kmLogs.reduce((sum, log) => sum + kmTotalsOf(log.days).total, 0);
+  const kmPeople = (data.people || []).length;
   const button = (key, label = "Gerar Excel") => `<button type="button" class="primary ${busy(key) ? "loading" : ""}" data-exp="${key}" ${ui.busy ? "disabled" : ""}>${icon("download")} ${busy(key) ? "Gerando..." : label}</button>`;
 
   shell(`
@@ -2280,6 +2288,17 @@ function renderExportacoes() {
         <footer>${button("inventario")}</footer>
       </article>
       <article class="card exp-card">
+        <header><span class="exp-ico">${icon("car")}</span><div><h3>Exportação - Controle de KM</h3><p>Planilha do KM do mês: um resumo com todas as nutricionistas e uma aba com os dias de cada uma.</p></div></header>
+        <div class="exp-body">
+          <label class="inline-field">Mês <input type="month" id="exp-km-month" value="${kmMonth}" /></label>
+          <ul class="exp-facts">
+            <li>${icon("check")} <b>${kmSent}</b> de ${kmPeople} enviado(s) para o ADM · <b>${kmChecked}</b> conferido(s)</li>
+            <li>${icon("car")} KM total do mês: <b>${fmtKm(kmTotal)} km</b></li>
+          </ul>
+        </div>
+        <footer>${button("km")}</footer>
+      </article>
+      <article class="card exp-card">
         <header><span class="exp-ico">${icon("party")}</span><div><h3>Exportação - Eventos</h3><p>Tudo o que foi registrado em Eventos, com uma aba para cada mês.</p></div></header>
         <div class="exp-body"><ul class="exp-facts"><li>${icon("calendar")} <b>${data.events.length}</b> evento(s) em ${eventMonths.size} mês(es)</li></ul></div>
         <footer>${button("eventos")}</footer>
@@ -2298,11 +2317,13 @@ function renderExportacoes() {
 
   $("#exp-fat-month").addEventListener("change", event => { ui.faturamento = event.target.value || currentMonth(); renderExportacoes(); });
   $("#exp-inv-month").addEventListener("change", event => { ui.inventario = event.target.value || currentMonth(); renderExportacoes(); });
+  $("#exp-km-month").addEventListener("change", event => { ui.km = event.target.value || currentMonth(); renderExportacoes(); });
   const runners = {
     faturamento: () => mapi("exports/faturamento", { month: ui.faturamento }),
     maximo: () => api("/api/export-maximo", { method: "POST", body: {} }),
     "sem-atendimento": () => api("/api/export-sem-atendimento", { method: "POST", body: {} }),
     inventario: () => mapi("exports/inventario", { month: ui.inventario }),
+    km: () => mapi("exports/km", { month: ui.km }),
     eventos: () => mapi("exports/eventos", {})
   };
   document.querySelectorAll("[data-exp]").forEach(btn => btn.addEventListener("click", async () => {
