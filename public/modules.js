@@ -2939,7 +2939,7 @@ function renderKmNutri() {
         : locked ? `<div class="lock-banner warn">${icon("lock")}<span>Enviado para o ADM em <b>${fmtDateTime(log.sentAt)}</b>. Não é possível alterar.</span></div>`
         : log?.review?.status === "devolvido" ? `<div class="lock-banner danger">${icon("alert")}<span>O ADM devolveu para correção: <b>${esc(log.review.note)}</b>. Corrija e envie de novo.</span></div>` : ""}
       ${!vehicle ? `<div class="lock-banner warn">${icon("car")}<span>Cadastre a placa do carro acima para começar a lançar o KM.</span></div>` : ""}
-      <div class="table-scroll">${kmDayTable(month, log?.days, { editable: Boolean(vehicle) && !locked, draft })}</div>
+      <div class="table-scroll">${kmDayTable(month, log?.days, { editable: Boolean(vehicle) && !locked, draft, fuel: log?.fuel || {}, fuelEditable: Boolean(vehicle) && !locked, fuelDraft: (ui.fuelDirty ||= {})[month] ||= {} })}</div>
       <div class="km-foot"><span>Total do mês</span><strong data-km-total>${fmtKm(totals.total)} km</strong></div>
     </section>
   `);
@@ -2974,11 +2974,22 @@ function renderKmNutri() {
     save.disabled = false;
     save.innerHTML = `${icon("save")} Salvar (${Object.keys(draft).length})`;
   }));
+  const fuelDirty = (ui.fuelDirty ||= {})[month] ||= {};
+  const countDirty = () => Object.keys(draft).length + Object.keys(fuelDirty).length;
+  document.querySelectorAll("[data-fuel]").forEach(input => input.addEventListener("input", () => {
+    input.value = input.value.replace(/[^\d,]/g, "");
+    (fuelDirty[input.dataset.fuel] ||= {})[input.dataset.field] = input.value;
+    const save = $("#km-save");
+    save.disabled = false;
+    save.innerHTML = `${icon("save")} Salvar (${countDirty()})`;
+  }));
+  const fuelPayload = () => Object.fromEntries(Object.entries(fuelDirty).map(([iso, row]) => [iso, { liters: row.liters ?? fuelText(log?.fuel?.[iso]?.liters), value: row.value ?? fuelText(log?.fuel?.[iso]?.value) }]));
   const payload = () => Object.fromEntries(Object.entries(draft).map(([iso, row]) => [iso, { start: row.start ?? log?.days?.[iso]?.start ?? "", end: row.end ?? log?.days?.[iso]?.end ?? "", note: row.note ?? log?.days?.[iso]?.note ?? "" }]));
   $("#km-save").addEventListener("click", async () => {
     try {
-      await mutate("km/save", { month, days: payload() }, "KM salvo.");
+      await mutate("km/save", { month, days: payload(), fuel: fuelPayload() }, "KM salvo.");
       delete ui.dirty[month];
+      delete ui.fuelDirty[month];
       renderKm();
     } catch { /* */ }
   });
@@ -2995,8 +3006,9 @@ function renderKmNutri() {
       question: `Deseja enviar o KM de ${formatMonthBR(month)} para o ADM?`,
       hint: "Depois de enviado, os lançamentos deste mês não poderão mais ser alterados.",
       onConfirm: async () => {
-        await mutate("km/send", { month, days: payload() }, "KM enviado para o ADM.");
+        await mutate("km/send", { month, days: payload(), fuel: fuelPayload() }, "KM enviado para o ADM.");
         delete ui.dirty[month];
+        delete ui.fuelDirty[month];
         renderKm();
       }
     });
@@ -3389,8 +3401,9 @@ function renderGas() {
   }
   const ui = gasUi();
   const data = mod().data;
-  const schools = schoolMap();
-  const users = userMap();
+  const schoolList = data.schoolsAll?.length ? data.schoolsAll : state.db.schools;
+  const schools = new Map(schoolList.map(school => [school.id, school]));
+  const users = new Map((data.people || []).map(person => [person.id, { name: person.name }]));
   const editing = ui.editing ? (data.gasRecords || []).find(item => item.id === ui.editing) : null;
   const records = (data.gasRecords || [])
     .filter(item => item.month === ui.month)
@@ -3402,7 +3415,7 @@ function renderGas() {
   const schoolsServed = new Set(records.map(item => item.schoolId)).size;
   const monthOptions = [...new Set([currentMonth(), ui.month, ...(data.gasRecords || []).map(item => item.month)])].sort().reverse();
   const nutriOptions = [...new Set((data.gasRecords || []).map(item => item.nutritionistId).filter(Boolean))];
-  const schoolOptions = [...state.db.schools].sort((a, b) => a.shortName.localeCompare(b.shortName, "pt-BR"));
+  const schoolOptions = [...schoolList].sort((a, b) => a.shortName.localeCompare(b.shortName, "pt-BR"));
 
   shell(`
     ${pageHead({ eyebrow: "Conferência", title: "Registro de Gás", subtitle: "Entregas de gás por escola e mês. Preenchido pelo ADM; a coordenação pode ver e editar.",
@@ -3425,7 +3438,7 @@ function renderGas() {
     ${ui.showForm || editing ? gasForm(editing, schoolOptions) : ""}
     <section class="filter-bar">
       <label class="inline-field">Mês <select id="gas-month">${monthOptions.map(month => `<option value="${month}" ${month === ui.month ? "selected" : ""}>${esc(formatMonthBR(month))}</option>`).join("")}</select></label>
-      <label class="inline-field grow">Escola <select id="gas-school"><option value="todas">Todas as escolas</option>${schoolOptions.map(school => `<option value="${school.id}" ${ui.school === school.id ? "selected" : ""}>${esc(school.shortName)}</option>`).join("")}</select></label>
+      <label class="inline-field grow">Escola <span id="gas-school-box">${schoolCombo({ name: "schoolFilter", selectedId: ui.school === "todas" ? "" : ui.school, schools: schoolOptions, required: false, placeholder: "Todas — digite o nome da escola" })}</span></label>
       <label class="inline-field grow">Nutricionista <select id="gas-nutri"><option value="todas">Todas</option>${nutriOptions.map(id => `<option value="${id}" ${ui.nutri === id ? "selected" : ""}>${esc(users.get(id)?.name || id)}</option>`).join("")}</select></label>
     </section>
     <section class="card table-card">
@@ -3452,7 +3465,15 @@ function renderGas() {
 
   $("#gas-new").addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderGas(); $("#gas-form")?.querySelector("select")?.focus(); });
   $("#gas-month").addEventListener("change", event => { ui.month = event.target.value; ui.showForm = false; ui.editing = null; renderGas(); });
-  $("#gas-school").addEventListener("change", event => { ui.school = event.target.value; renderGas(); });
+  // Busca digitável: a lista de escolas só filtra; a tela atualiza ao escolher uma escola (ou limpar).
+  const schoolBox = $("#gas-school-box");
+  bindSchoolCombo(schoolBox, schoolOptions);
+  schoolBox.querySelector("input[type=hidden]").addEventListener("change", event => {
+    const typed = schoolBox.querySelector(".combo-input").value.trim();
+    if (!event.target.value && typed) return;
+    ui.school = event.target.value || "todas";
+    renderGas();
+  });
   $("#gas-nutri").addEventListener("change", event => { ui.nutri = event.target.value; renderGas(); });
   $("#gas-prices-form").addEventListener("submit", async event => {
     event.preventDefault();
@@ -3470,6 +3491,7 @@ function renderGas() {
   }));
   const form = $("#gas-form");
   if (form) {
+    bindSchoolCombo(form, schoolOptions);
     const sync = () => {
       const type = form.querySelector("[name=gasType]").value;
       const quantity = Number(form.querySelector("[name=quantity]").value) || 0;
@@ -3498,7 +3520,7 @@ function gasForm(editing, schoolOptions) {
   return `<form class="card form-card pop-in" id="gas-form">
     <div class="form-title">${icon(editing ? "edit" : "plus")}<strong>${editing ? "Editar registro de gás" : "Novo registro de gás"}</strong></div>
     <div class="form-grid cols-4">
-      <label class="field wide2"><span>Escola</span><select name="schoolId" required><option value="">Selecione...</option>${schoolOptions.map(school => `<option value="${school.id}" ${editing?.schoolId === school.id ? "selected" : ""}>${esc(school.shortName)}</option>`).join("")}</select></label>
+      <div class="field wide2"><span>Escola</span>${schoolCombo({ selectedId: editing?.schoolId || "", schools: schoolOptions })}</div>
       <label class="field"><span>Mês</span><input type="month" name="month" value="${esc(month)}" required /></label>
       <label class="field"><span>Quantidade (máx. 5)</span><select name="quantity" required>${GAS_QUANTITIES.map(q => `<option value="${q}" ${Number(editing?.quantity || 1) === q ? "selected" : ""}>${q}</option>`).join("")}</select></label>
       <label class="field"><span>Tipo de gás</span><select name="gasType" required>${Object.entries(GAS_TYPE_LABELS).map(([key, label]) => `<option value="${key}" ${editing?.gasType === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
