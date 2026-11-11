@@ -1427,6 +1427,13 @@ const handlers = {
     const payload = await xl.toPayload(inventoryWorkbook(load(), month), `inventario-geral-${month}-${xl.stamp()}.xlsx`);
     return recordExport(actor, payload, month, Object.keys(load().inventorySubmissions[month] || {}).length);
   },
+  // Controle de KM do mês (mesma planilha da tela de KM, com resumo e uma aba por nutricionista)
+  "POST exports/km": async (actor, body) => {
+    requireAdm(actor);
+    const month = requireMonth(body.month);
+    const payload = await xl.toPayload(kmWorkbook(load(), month), `controle-km-${month}-${xl.stamp()}.xlsx`);
+    return recordExport(actor, payload, month, Object.keys(load().km.logs[month] || {}).length);
+  },
   "POST exports/eventos": async actor => {
     requireAdmin(actor);
     const db = load();
