@@ -1272,6 +1272,7 @@ function renderDashboard() {
     state.selectedMonth = month;
     state.db.settings.currentMonth = month;
     setExpectedBusinessDays(month, workingDays);
+    if (typeof syncModuleMonths === "function") syncModuleMonths();
     state.adminPeriodDirty = false;
     await saveDb(`Competência global atualizada para ${formatMonthBR(month)} com ${workingDays} dias úteis.`);
     if (state.message.startsWith("Nao foi possivel salvar")) state.adminPeriodDirty = true;

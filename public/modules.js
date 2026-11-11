@@ -50,6 +50,26 @@ function initials(name) {
   return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 }
 
+// O mês do Painel é a "data do sistema": quando muda, todas as telas e análises passam para ele.
+// Cada tela guarda o próprio mês na sessão; por isso ele é atualizado aqui de uma vez.
+function syncModuleMonths() {
+  const month = currentMonth();
+  const ui = mod().ui;
+  if (!ui) return;
+  for (const part of Object.values(ui)) {
+    if (part && typeof part === "object" && "month" in part) part.month = month;
+  }
+  if (ui.exp) { ui.exp.faturamento = month; ui.exp.inventario = month; }
+  if (ui.an) {
+    ui.an.mTo = month;
+    ui.an.mFrom = shiftMonth(month, -5);
+    ui.an.mPreset = "6m";
+    ui.an.crossMonth = month;
+    ui.an.crossProd = month;
+  }
+  if (state.user?.role === "admin") state.selectedMonth = month;
+}
+
 function currentMonth() {
   return state.db?.settings?.currentMonth || todayISO().slice(0, 7);
 }
