@@ -26,6 +26,7 @@ const APPLY = process.argv.includes("--aplicar");
 const NEW_USERS = [
   { username: "jessica.melquiades", id: "admin-jessica.melquiades", name: "JESSICA MELQUIADES", role: "admin" },
   { username: "isadora.cardim", id: "admin-isadora.cardim", name: "ISADORA CARDIM", role: "admin" },
+  { username: "manutencao.ssa", id: "manutencao-manutencao.ssa", name: "MANUTENÇÃO SSA", role: "manutencao" },
   { username: "viviane.cerqueira", id: "adm-viviane.cerqueira", name: "VIVIANE CERQUEIRA", role: "adm" }
 ];
 

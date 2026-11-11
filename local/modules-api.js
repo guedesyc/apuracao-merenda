@@ -255,7 +255,8 @@ function stateFor(actor) {
     km: kmStateFor(db, actor),
     trainings: db.trainings,
     trainingSubmissions: actor.role === "nutritionist" ? pickNutri(db.trainingSubmissions, actor.id) : db.trainingSubmissions,
-    people: actor.role === "nutritionist" ? [] : directory().nutris.map(nutri => ({ id: nutri.id, name: nutri.name, username: nutri.username })),
+    people: isKmOwner(actor) ? [] : directory().nutris.map(nutri => ({ id: nutri.id, name: nutri.name, username: nutri.username })),
+    kmPeople: isKmOwner(actor) ? [] : directory().kmPeople.map(person => ({ id: person.id, name: person.name, username: person.username })),
     settings: isAdmin ? db.settings : {},
     ownSchoolIds: own ? [...own] : null
   };
@@ -290,7 +291,9 @@ function directory() {
   const cards = store.cards.filter(card => card.active !== false).sort((a, b) => a.number - b.number);
   const nutris = store.profiles.filter(profile => profile.role === "nutritionist" && profile.active !== false)
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  return { schools, schoolsById: new Map(schools.map(school => [school.id, school])), cards, cardsById: new Map(cards.map(card => [card.id, card])), nutris, profiles };
+  const kmPeople = store.profiles.filter(profile => KM_OWNER_ROLES.includes(profile.role) && profile.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  return { schools, schoolsById: new Map(schools.map(school => [school.id, school])), cards, cardsById: new Map(cards.map(card => [card.id, card])), nutris, kmPeople, profiles };
 }
 
 // Regra do faturamento de eventos:
@@ -651,6 +654,16 @@ function requireAdm(actor) {
   if (actor.role !== "adm" && actor.role !== "admin") fail(403, "Apenas o ADM ou a coordenação podem realizar esta ação.");
 }
 
+// Quem lança o próprio KM: a nutricionista e o perfil de manutenção (mesma tela).
+const KM_OWNER_ROLES = ["nutritionist", "manutencao"];
+function isKmOwner(actor) {
+  return KM_OWNER_ROLES.includes(actor.role);
+}
+
+function requireKmOwner(actor) {
+  if (!isKmOwner(actor)) fail(403, "Ação exclusiva de quem lança o KM (nutricionista ou manutenção).");
+}
+
 function requireNutri(actor) {
   if (actor.role !== "nutritionist") fail(403, "Ação exclusiva da nutricionista.");
 }
@@ -662,14 +675,14 @@ function pickNutri(byMonth, nutriId) {
 }
 
 function isNutriId(id) {
-  return directory().nutris.some(nutri => nutri.id === id);
+  return directory().kmPeople.some(person => person.id === id);
 }
 
 // ---------- Controle de KM ----------
 // km.vehicles[nutriId] = { plate, setAt, setBy }
 // km.logs[month][nutriId] = { days: { "AAAA-MM-DD": { start, end } }, savedAt, sentAt, sentBy, review }
 function kmStateFor(db, actor) {
-  if (actor.role === "nutritionist") {
+  if (isKmOwner(actor)) {
     return { vehicles: db.km.vehicles[actor.id] ? { [actor.id]: db.km.vehicles[actor.id] } : {}, logs: pickNutri(db.km.logs, actor.id) };
   }
   return db.km;
@@ -758,7 +771,7 @@ function kmWorkbook(db, month) {
     { header: "Observação", key: "note", width: 36 }
   ];
   const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  for (const nutri of dir.nutris) {
+  for (const nutri of dir.kmPeople) {
     const log = db.km.logs[month]?.[nutri.id];
     const { total, filled } = kmTotals(log);
     const fuel = Object.values(log?.fuel || {});
@@ -819,7 +832,7 @@ const handlers = {
   "POST km/plate": (actor, body) => {
     const db = load();
     const plate = normalizePlate(body.plate);
-    if (actor.role === "nutritionist") {
+    if (isKmOwner(actor)) {
       if (db.km.vehicles[actor.id]) fail(409, "A placa já foi cadastrada. Para trocar, fale com o ADM.");
       db.km.vehicles[actor.id] = { plate, setAt: new Date().toISOString(), setBy: actor.name };
     } else {
@@ -832,7 +845,7 @@ const handlers = {
     return { ok: true, plate };
   },
   "POST km/save": (actor, body) => {
-    requireNutri(actor);
+    requireKmOwner(actor);
     const db = load();
     const month = requireMonth(body.month);
     const log = writeKmDays(db, actor, month, body.days);
@@ -840,7 +853,7 @@ const handlers = {
     return { ok: true, log };
   },
   "POST km/send": (actor, body) => {
-    requireNutri(actor);
+    requireKmOwner(actor);
     const db = load();
     const month = requireMonth(body.month);
     const log = writeKmDays(db, actor, month, body.days);
