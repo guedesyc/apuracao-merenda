@@ -192,13 +192,15 @@ test("gás e gêneros: documento -> tabelas -> documento mantém os dados", () =
   const doc = sampleDoc();
   doc.gasPrices = { P13: 142, P45: 516 };
   doc.gasRecords = [{
-    id: "gas-1", schoolId: "school-1", nutritionistId: "user-a", month: "2026-11", quantity: 3, gasType: "P13", unitValue: 142, total: 426,
+    id: "gas-1", schoolId: "school-1", nutritionistId: "user-a", month: "2026-11", date: "2026-11-03", quantity: 3, gasType: "P13", unitValue: 142, total: 426,
     createdAt: "2026-11-02T10:00:00.000Z", createdBy: "ADM", updatedAt: "2026-11-02T10:00:00.000Z", updatedBy: "ADM"
   }];
   doc.generoSubmissions = { "2026-11": { "user-a": { files: [{ id: "file-g", name: "generos.pdf", path: "2026-11/file-g-generos.pdf", size: 10, type: "application/pdf" }], sentAt: "2026-11-05T10:00:00.000Z", sentBy: "A", history: [] } } };
   const back = store.fromRows(viaDatabase(store.toRows(doc)));
   assert.deepEqual(store.snapshot(store.toRows(back)), store.snapshot(store.toRows(doc)));
   assert.equal(back.gasRecords[0].total, 426);
+  assert.equal(back.gasRecords[0].date, "2026-11-03");
+  assert.equal(store.toRows(back).gas_records[0].delivery_date, "2026-11-03");
   assert.equal(back.gasPrices.P45, 516);
   assert.equal(back.generoSubmissions["2026-11"]["user-a"].files[0].path, "2026-11/file-g-generos.pdf");
 });

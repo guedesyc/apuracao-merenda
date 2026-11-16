@@ -175,7 +175,7 @@ function toRows(doc) {
   }
   for (const item of doc.gasRecords || []) {
     rows.gas_records.push({
-      id: item.id, school_id: item.schoolId, nutritionist_id: nul(item.nutritionistId), month: item.month, quantity: Number(item.quantity),
+      id: item.id, school_id: item.schoolId, nutritionist_id: nul(item.nutritionistId), month: item.month, delivery_date: nul(item.date), quantity: Number(item.quantity),
       gas_type: item.gasType, unit_value: Number(item.unitValue), total: Number(item.total), created_at: item.createdAt, created_by: nul(item.createdBy),
       updated_at: item.updatedAt || item.createdAt, updated_by: nul(item.updatedBy)
     });
@@ -300,7 +300,7 @@ function fromRows(rows) {
   for (const row of rows.gas_prices || []) doc.gasPrices[row.gas_type] = Number(row.price);
   for (const row of rows.gas_records || []) {
     doc.gasRecords.push({
-      id: row.id, schoolId: row.school_id, nutritionistId: row.nutritionist_id || "", month: row.month, quantity: Number(row.quantity), gasType: row.gas_type,
+      id: row.id, schoolId: row.school_id, nutritionistId: row.nutritionist_id || "", month: row.month, date: row.delivery_date ? String(row.delivery_date).slice(0, 10) : "", quantity: Number(row.quantity), gasType: row.gas_type,
       unitValue: Number(row.unit_value), total: Number(row.total), createdAt: row.created_at, createdBy: row.created_by || "", updatedAt: row.updated_at, updatedBy: row.updated_by || ""
     });
   }
