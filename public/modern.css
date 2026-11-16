@@ -1226,3 +1226,17 @@ th.sortable.is-sorted .sort-arrow { opacity: 1; }
 .gas-price-form .field { min-width: 180px; }
 .gas-price-form .price-wrap .cell-input { width: 120px; }
 .gas-prices { padding: 14px 16px; margin-bottom: 14px; }
+/* Registro de Gás: busca de escola ocupa o espaço livre; datas De/Até compactas */
+.filter-bar .gas-school-filter { flex: 1 1 320px; min-width: 0; }
+.gas-combo { flex: 1 1 auto; min-width: 0; }
+.filter-bar .gas-nutri-filter { flex: 1 1 260px; min-width: 0; }
+.filter-bar .gas-nutri-filter select { flex: 1; min-width: 0; width: 100%; }
+.filter-bar .gas-combo .combo-input { width: 100%; min-width: 0; }
+.gas-dates { flex-wrap: wrap; }
+.gas-dates label { display: inline-flex; align-items: center; gap: 6px; }
+.filter-bar .gas-dates input[type=date] { min-width: 0; width: 150px; }
+@media (max-width: 760px) {
+  .filter-bar .gas-school-filter, .filter-bar .gas-dates, .filter-bar .gas-nutri-filter { flex: 1 1 100%; }
+  .gas-dates label { flex: 1 1 140px; }
+  .filter-bar .gas-dates input[type=date] { flex: 1; width: auto; }
+}

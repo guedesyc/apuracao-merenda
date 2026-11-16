@@ -1007,7 +1007,10 @@ const handlers = {
     const db = load();
     const school = directory().schoolsById.get(String(body.schoolId || ""));
     if (!school) fail(400, "Escola inválida.");
-    const month = requireMonth(body.month);
+    // Data da entrega (AAAA-MM-DD) define o mês; sem data, vale o mês enviado.
+    const date = String(body.date || "").trim();
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T12:00:00Z`)))) fail(400, "Data da entrega inválida.");
+    const month = date ? date.slice(0, 7) : requireMonth(body.month);
     const quantity = Math.trunc(Number(body.quantity));
     if (!(quantity >= 1 && quantity <= 5)) fail(400, "A quantidade de gás vai de 1 a 5.");
     const gasType = String(body.gasType || "");
@@ -1021,6 +1024,7 @@ const handlers = {
       schoolId: school.id,
       nutritionistId: school.nutritionistIds?.[0] || "",
       month,
+      date: date || (existing?.date?.startsWith(month) ? existing.date : ""),
       quantity,
       gasType,
       unitValue,

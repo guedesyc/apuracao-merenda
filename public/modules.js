@@ -3408,7 +3408,18 @@ function canEditGas() {
 }
 
 function gasUi() {
-  return mod().ui.gas ||= { month: currentMonth(), school: "todas", nutri: "todas", showForm: false, editing: null };
+  return mod().ui.gas ||= { month: currentMonth(), from: "", to: "", school: "todas", nutri: "todas", showForm: false, editing: null };
+}
+
+// Data da entrega; registros antigos (sem data) usam o dia em que foram lançados.
+function gasDateOf(item) {
+  if (item.date) return item.date;
+  const created = item.createdAt ? new Date(item.createdAt) : null;
+  if (created && !Number.isNaN(created.getTime())) {
+    const local = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}-${String(created.getDate()).padStart(2, "0")}`;
+    if (local.startsWith(item.month)) return local;
+  }
+  return `${item.month}-01`;
 }
 
 function gasPriceOf(type) {
@@ -3426,11 +3437,19 @@ function renderGas() {
   const schools = new Map(schoolList.map(school => [school.id, school]));
   const users = new Map((data.people || []).map(person => [person.id, { name: person.name }]));
   const editing = ui.editing ? (data.gasRecords || []).find(item => item.id === ui.editing) : null;
+  // Período De/Até (pode atravessar meses) tem prioridade sobre o mês.
+  const ranged = Boolean(ui.from || ui.to);
+  const inPeriod = item => {
+    if (!ranged) return item.month === ui.month;
+    const date = gasDateOf(item);
+    return (!ui.from || date >= ui.from) && (!ui.to || date <= ui.to);
+  };
   const records = (data.gasRecords || [])
-    .filter(item => item.month === ui.month)
+    .filter(inPeriod)
     .filter(item => ui.school === "todas" || item.schoolId === ui.school)
     .filter(item => ui.nutri === "todas" || item.nutritionistId === ui.nutri)
-    .sort((a, b) => (schools.get(a.schoolId)?.shortName || "").localeCompare(schools.get(b.schoolId)?.shortName || "", "pt-BR"));
+    .sort((a, b) => gasDateOf(b).localeCompare(gasDateOf(a)) || (schools.get(a.schoolId)?.shortName || "").localeCompare(schools.get(b.schoolId)?.shortName || "", "pt-BR"));
+  const periodLabel = ranged ? "no período" : "no mês";
   const totalQty = records.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   const totalValue = records.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
   const schoolsServed = new Set(records.map(item => item.schoolId)).size;
@@ -3451,24 +3470,30 @@ function renderGas() {
       </form>
     </section>
     <section class="stat-row">
-      ${statCard({ label: "Botijões no mês", value: fmtNumber(totalQty), iconName: "package", tone: "brand" })}
-      ${statCard({ label: "Valor no mês", value: `<span class="sm-val">${money(totalValue)}</span>`, iconName: "chart" })}
+      ${statCard({ label: `Botijões ${periodLabel}`, value: fmtNumber(totalQty), iconName: "package", tone: "brand" })}
+      ${statCard({ label: `Valor ${periodLabel}`, value: `<span class="sm-val">${money(totalValue)}</span>`, iconName: "chart" })}
       ${statCard({ label: "Escolas atendidas", value: fmtNumber(schoolsServed), iconName: "school" })}
       ${statCard({ label: "Registros", value: fmtNumber(records.length), iconName: "clipboard" })}
     </section>
     ${ui.showForm || editing ? gasForm(editing, schoolOptions) : ""}
     <section class="filter-bar">
-      <label class="inline-field">Mês <select id="gas-month">${monthOptions.map(month => `<option value="${month}" ${month === ui.month ? "selected" : ""}>${esc(formatMonthBR(month))}</option>`).join("")}</select></label>
-      <label class="inline-field grow">Escola <span id="gas-school-box">${schoolCombo({ name: "schoolFilter", selectedId: ui.school === "todas" ? "" : ui.school, schools: schoolOptions, required: false, placeholder: "Todas — digite o nome da escola" })}</span></label>
-      <label class="inline-field grow">Nutricionista <select id="gas-nutri"><option value="todas">Todas</option>${nutriOptions.map(id => `<option value="${id}" ${ui.nutri === id ? "selected" : ""}>${esc(users.get(id)?.name || id)}</option>`).join("")}</select></label>
+      <label class="inline-field">Mês <select id="gas-month" ${ranged ? "disabled title=\"Limpe as datas para filtrar por mês\"" : ""}>${monthOptions.map(month => `<option value="${month}" ${month === ui.month ? "selected" : ""}>${esc(formatMonthBR(month))}</option>`).join("")}</select></label>
+      <div class="inline-field gas-dates">
+        <label>De <input type="date" id="gas-from" value="${esc(ui.from)}" /></label>
+        <label>Até <input type="date" id="gas-to" value="${esc(ui.to)}" /></label>
+        ${ranged ? `<button type="button" class="secondary sm" id="gas-dates-clear">${icon("x")} Limpar datas</button>` : ""}
+      </div>
+      <div class="inline-field gas-school-filter">Escola <div id="gas-school-box" class="gas-combo">${schoolCombo({ name: "schoolFilter", selectedId: ui.school === "todas" ? "" : ui.school, schools: schoolOptions, required: false, placeholder: "Todas — digite o nome da escola" })}</div></div>
+      <label class="inline-field gas-nutri-filter">Nutricionista <select id="gas-nutri"><option value="todas">Todas</option>${nutriOptions.map(id => `<option value="${id}" ${ui.nutri === id ? "selected" : ""}>${esc(users.get(id)?.name || id)}</option>`).join("")}</select></label>
     </section>
     <section class="card table-card">
       <div class="table-scroll">
         <table class="data-table">
-          <thead><tr><th>Escola</th><th>GRE</th><th>Nutricionista</th><th class="num">Qtd.</th><th>Tipo</th><th class="num">Valor unit.</th><th class="num">Total</th><th></th></tr></thead>
+          <thead><tr><th>Data</th><th>Escola</th><th>GRE</th><th>Nutricionista</th><th class="num">Qtd.</th><th>Tipo</th><th class="num">Valor unit.</th><th class="num">Total</th><th></th></tr></thead>
           <tbody>${records.map(item => {
             const school = schools.get(item.schoolId);
             return `<tr>
+              <td data-label="Data">${fmtDate(gasDateOf(item))}${item.date ? "" : ` <small title="Registro antigo, sem data da entrega: usa o dia do lançamento">lançado</small>`}</td>
               <td data-label="Escola"><strong>${esc(school?.shortName || item.schoolId)}</strong></td>
               <td data-label="GRE">${esc(routeLabel(school?.route))}</td>
               <td data-label="Nutricionista">${esc(users.get(item.nutritionistId)?.name || "—")}</td>
@@ -3478,7 +3503,7 @@ function renderGas() {
               <td class="num" data-label="Total"><strong>${money(item.total)}</strong></td>
               <td class="row-actions"><button class="icon-btn" data-gas-edit="${item.id}" title="Editar">${icon("edit")}</button><button class="icon-btn danger" data-gas-delete="${item.id}" title="Excluir">${icon("trash")}</button></td>
             </tr>`;
-          }).join("") || `<tr><td colspan="8">${emptyState("Nenhum registro neste mês", "Clique em “Novo registro” para lançar uma entrega de gás.", "package")}</td></tr>`}</tbody>
+          }).join("") || `<tr><td colspan="9">${emptyState(ranged ? "Nenhum registro neste período" : "Nenhum registro neste mês", "Clique em “Novo registro” para lançar uma entrega de gás.", "package")}</td></tr>`}</tbody>
         </table>
       </div>
     </section>
@@ -3486,6 +3511,17 @@ function renderGas() {
 
   $("#gas-new").addEventListener("click", () => { ui.showForm = true; ui.editing = null; renderGas(); $("#gas-form")?.querySelector("select")?.focus(); });
   $("#gas-month").addEventListener("change", event => { ui.month = event.target.value; ui.showForm = false; ui.editing = null; renderGas(); });
+  const setDates = () => {
+    let from = $("#gas-from").value || "";
+    let to = $("#gas-to").value || "";
+    if (from && to && from > to) [from, to] = [to, from];
+    ui.from = from;
+    ui.to = to;
+    renderGas();
+  };
+  $("#gas-from").addEventListener("change", setDates);
+  $("#gas-to").addEventListener("change", setDates);
+  $("#gas-dates-clear")?.addEventListener("click", () => { ui.from = ""; ui.to = ""; renderGas(); });
   // Busca digitável: a lista de escolas só filtra; a tela atualiza ao escolher uma escola (ou limpar).
   const schoolBox = $("#gas-school-box");
   bindSchoolCombo(schoolBox, schoolOptions);
@@ -3527,6 +3563,7 @@ function renderGas() {
       const data2 = Object.fromEntries(new FormData(event.target).entries());
       try {
         await mutate("gas/save", { id: editing?.id, ...data2 }, editing ? "Registro atualizado." : "Registro salvo.");
+        if (!ui.from && !ui.to && data2.date) ui.month = data2.date.slice(0, 7);
         ui.showForm = false;
         ui.editing = null;
         renderGas();
@@ -3538,11 +3575,13 @@ function renderGas() {
 function gasForm(editing, schoolOptions) {
   const ui = gasUi();
   const month = editing?.month || ui.month;
+  const today = todayISO();
+  const deliveryDate = editing ? gasDateOf(editing) : (today.startsWith(month) ? today : `${month}-01`);
   return `<form class="card form-card pop-in" id="gas-form">
     <div class="form-title">${icon(editing ? "edit" : "plus")}<strong>${editing ? "Editar registro de gás" : "Novo registro de gás"}</strong></div>
     <div class="form-grid cols-4">
       <div class="field wide2"><span>Escola</span>${schoolCombo({ selectedId: editing?.schoolId || "", schools: schoolOptions })}</div>
-      <label class="field"><span>Mês</span><input type="month" name="month" value="${esc(month)}" required /></label>
+      <label class="field"><span>Data da entrega</span><input type="date" name="date" value="${esc(deliveryDate)}" required /></label>
       <label class="field"><span>Quantidade (máx. 5)</span><select name="quantity" required>${GAS_QUANTITIES.map(q => `<option value="${q}" ${Number(editing?.quantity || 1) === q ? "selected" : ""}>${q}</option>`).join("")}</select></label>
       <label class="field"><span>Tipo de gás</span><select name="gasType" required>${Object.entries(GAS_TYPE_LABELS).map(([key, label]) => `<option value="${key}" ${editing?.gasType === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
       <div class="field"><span>Total</span><output class="total-out" data-gas-total>—</output></div>
