@@ -226,6 +226,14 @@ function schoolIdsOf(nutritionistId) {
   return new Set(refs().nutritionist_schools.filter(item => item.profile_id === nutritionistId).map(item => item.school_id));
 }
 
+// Perfil "qualidade": vê e gerencia a Capacitação como a coordenação (nada além disso).
+function requireTrainingCoord(actor) {
+  if (actor.role !== "admin" && actor.role !== "qualidade") fail(403, "Apenas a coordenação pode realizar esta ação.");
+}
+function requireTrainingReviewer(actor) {
+  if (!(["adm", "admin", "qualidade"].includes(actor.role))) fail(403, "Apenas o ADM, a qualidade ou a coordenação podem conferir.");
+}
+
 function requireAdmin(actor) {
   if (actor.role !== "admin") fail(403, "Apenas a coordenação pode realizar esta ação.");
 }
@@ -937,7 +945,7 @@ const handlers = {
 
   // ---------- Capacitação ----------
   "POST training/save": (actor, body) => {
-    requireAdmin(actor);
+    requireTrainingCoord(actor);
     const db = load();
     const month = requireMonth(body.month);
     const theme = String(body.theme || "").trim().slice(0, 300);
@@ -952,7 +960,7 @@ const handlers = {
     return { ok: true, training: record };
   },
   "POST training/delete": (actor, body) => {
-    requireAdmin(actor);
+    requireTrainingCoord(actor);
     const db = load();
     const month = requireMonth(body.month);
     if (Object.keys(db.trainingSubmissions[month] || {}).length) fail(409, "Já existem envios para esta capacitação; ela não pode ser excluída.");
@@ -981,7 +989,7 @@ const handlers = {
     return { ok: true };
   },
   "POST training/review": (actor, body) => {
-    requireAdm(actor);
+    requireTrainingReviewer(actor);
     const db = load();
     const month = requireMonth(body.month);
     const submission = db.trainingSubmissions[month]?.[String(body.nutritionistId || "")];
@@ -1056,7 +1064,7 @@ const handlers = {
     const returned = current?.review?.status === "devolvido";
     if (current && !returned) fail(409, "O envio de gêneros deste mês já foi feito.");
     const files = cleanFiles(body.files);
-    if (files.length !== 1) fail(400, "Anexe um único arquivo de gêneros.");
+    if (files.length < 1 || files.length > 20) fail(400, "Anexe de 1 a 20 arquivos de gêneros.");
     db.generoSubmissions[month][actor.id] = {
       files,
       sentAt: new Date().toISOString(),

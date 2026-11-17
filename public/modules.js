@@ -455,6 +455,9 @@ function mod() {
 function navConfig(isAdmin) {
   const pend = computePendencias();
   const badgeOf = id => pend.groups.find(group => group.id === id)?.items.length || 0;
+  if (state.user?.role === "qualidade") {
+    return [{ id: "qualidade", label: "Rotina", items: [{ view: "capacitacao", label: "Capacitação", icon: "graduation", badge: badgeOf("cap"), tone: "warn" }] }];
+  }
   if (state.user?.role === "manutencao") {
     return [{ id: "manutencao", label: "Rotina", items: [{ view: "km", label: "Controle de KM", icon: "car", badge: badgeOf("km"), tone: "warn" }] }];
   }
@@ -548,6 +551,7 @@ function renderSidebarNav(isAdmin) {
 
 function renderModuleView(view) {
   if (state.user.role === "manutencao" && view !== "km") view = "km";
+  if (state.user.role === "qualidade" && view !== "capacitacao") view = "capacitacao";
   const isAdmin = state.user.role === "admin";
   const views = {
     supervisao: renderSupervisao,
@@ -2899,16 +2903,16 @@ function kmDayTable(month, days, { editable = false, draft = {}, fuel = null, fu
     return `<tr class="${day.weekend ? "is-weekend" : ""} ${diff !== null ? "has-km" : ""}">
       <td><strong>${day.day}/${month.slice(5, 7)}</strong></td>
       <td>${WEEKDAYS[day.weekday]}</td>
-      ${showFuel ? `<td class="num fuel-col" data-label="Abastecimento (L)">${fuelCell("liters", liters, "Abastecimento em litros")}</td><td class="num fuel-col" data-label="Valor (R$)">${fuelCell("value", fuelValue, "Valor do abastecimento")}</td>` : ""}
       <td class="num">${cell("start", start, hint)}</td>
       <td class="num">${cell("end", end, "")}</td>
+      ${showFuel ? `<td class="num fuel-col" data-label="Abastecimento (L)">${fuelCell("liters", liters, "Abastecimento em litros")}</td><td class="num fuel-col" data-label="Valor (R$)">${fuelCell("value", fuelValue, "Valor do abastecimento")}</td>` : ""}
       <td class="num km-diff" data-km-diff="${day.iso}">${diff === null ? "<span class='muted'>—</span>" : diff < 0 ? `<span class="diff down">${fmtKm(diff)}</span>` : `<b>${fmtKm(diff)}</b> km`}</td>
       <td class="km-note-col">${noteCell}</td>
     </tr>`;
   }).join("");
   const cols = showFuel ? 8 : 6;
   return `<table class="data-table km-table ${showFuel ? "with-fuel" : ""}">
-    <thead><tr><th>Data</th><th>Dia</th>${showFuel ? `<th class="num fuel-col">Abastecimento (L)</th><th class="num fuel-col">Valor do abastecimento</th>` : ""}<th class="num">KM inicial</th><th class="num">KM final</th><th class="num">KM total</th><th>Observação</th></tr></thead>
+    <thead><tr><th>Data</th><th>Dia</th><th class="num">KM inicial</th><th class="num">KM final</th>${showFuel ? `<th class="num fuel-col">Abastecimento (L)</th><th class="num fuel-col">Valor do abastecimento</th>` : ""}<th class="num">KM total</th><th>Observação</th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${cols}">${emptyState("Nenhum dia lançado")}</td></tr>`}</tbody>
   </table>`;
 }
@@ -3605,7 +3609,8 @@ function generoMonthOptions(selected) {
 }
 
 function renderGeneros() {
-  const ui = mod().ui.gen ||= { month: currentMonth(), file: null, uploading: false };
+  const ui = mod().ui.gen ||= { month: currentMonth(), files: [], uploading: false };
+  ui.files ||= [];
   const data = mod().data;
   const isReviewer = state.user.role === "adm" || state.user.role === "admin";
   const subsOfMonth = data.generoSubmissions?.[ui.month] || {};
@@ -3629,37 +3634,37 @@ function renderGeneros() {
       </section>` : ""}
       ${canSend ? `<section class="card form-card">
         <div class="form-title">${icon("upload")}<strong>${sub ? "Reenviar gêneros" : "Enviar gêneros"}</strong></div>
-        <div class="field wide"><span>Arquivo de gêneros (um arquivo)</span>
-          <div class="history-files">${ui.file ? fileChip(ui.file, `data-gen-remove`) : ""}</div>
-          ${ui.file ? "" : `<label class="dropzone">${icon("upload")}<span><b>Anexar arquivo</b><small>PDF, Word, planilha ou imagem · até 25 MB</small></span><input type="file" id="gen-file" hidden /></label>`}
+        <div class="field wide"><span>Arquivos de gêneros (pode anexar mais de um)</span>
+          <div class="history-files">${ui.files.map((file, index) => fileChip(file, `data-gen-remove="${index}"`)).join("")}</div>
+          <label class="dropzone">${icon("upload")}<span><b>${ui.files.length ? "Anexar mais arquivos" : "Anexar arquivos"}</b><small>PDF, Word, planilha ou imagem · até 25 MB cada</small></span><input type="file" id="gen-file" multiple hidden /></label>
         </div>
         <div class="form-actions">
           ${ui.uploading ? `<span class="uploading"><i class="spinner"></i> Enviando arquivo...</span>` : ""}
-          <button class="primary" id="gen-send" ${ui.file && !ui.uploading ? "" : "disabled"}>${icon("send")} Enviar gêneros</button>
+          <button class="primary" id="gen-send" ${ui.files.length && !ui.uploading ? "" : "disabled"}>${icon("send")} Enviar gêneros</button>
         </div>
       </section>` : ""}
     `);
-    $("#gen-month").addEventListener("change", event => { ui.month = event.target.value; ui.file = null; renderGeneros(); });
+    $("#gen-month").addEventListener("change", event => { ui.month = event.target.value; ui.files = []; renderGeneros(); });
     $("#gen-file")?.addEventListener("change", async event => {
-      const [file] = [...event.target.files];
-      if (!file) return;
+      const files = [...event.target.files];
+      if (!files.length) return;
       ui.uploading = true;
       renderGeneros();
-      try { [ui.file] = await uploadFiles([file]); } catch (error) { toast(error.message, "error"); }
+      try { ui.files.push(...await uploadFiles(files)); } catch (error) { toast(error.message, "error"); }
       ui.uploading = false;
       renderGeneros();
     });
-    document.querySelector("[data-gen-remove]")?.addEventListener("click", () => { ui.file = null; renderGeneros(); });
+    document.querySelectorAll("[data-gen-remove]").forEach(button => button.addEventListener("click", () => { ui.files.splice(Number(button.dataset.genRemove), 1); renderGeneros(); }));
     $("#gen-send")?.addEventListener("click", () => openConfirmModal({
       iconName: "fileCheck",
       title: "Enviar gêneros",
       subtitle: formatMonthBR(ui.month),
-      bodyHtml: `<div class="history-files">${fileChip(ui.file)}</div>`,
-      question: "Deseja enviar o arquivo de gêneros?",
+      bodyHtml: `<div class="history-files">${ui.files.map(file => fileChip(file)).join("")}</div>`,
+      question: ui.files.length > 1 ? `Deseja enviar os ${ui.files.length} arquivos de gêneros?` : "Deseja enviar o arquivo de gêneros?",
       hint: "O envio é único por mês. Depois de enviado, só a coordenação pode devolver para correção.",
       onConfirm: async () => {
-        await mutate("generos/submit", { month: ui.month, files: [ui.file] }, "Gêneros enviados para conferência.");
-        ui.file = null;
+        await mutate("generos/submit", { month: ui.month, files: ui.files }, "Gêneros enviados para conferência.");
+        ui.files = [];
         renderGeneros();
       }
     }));
@@ -3763,7 +3768,7 @@ function computePendencias() {
       }
     }
   };
-  if (state.user.role === "adm") {
+  if (state.user.role === "adm" || state.user.role === "qualidade") {
     reviewPendencias();
     return result;
   }

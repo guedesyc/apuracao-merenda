@@ -514,6 +514,7 @@ function renderLogin(error = "") {
 }
 
 function homeView() {
+  if (state.user?.role === "qualidade") return "capacitacao";
   if (state.user?.role === "adm" || state.user?.role === "manutencao") return "km";
   // Coordenação começa pelo Painel.
   return state.user?.role === "admin" ? "dashboard" : "lancamentos";
@@ -543,7 +544,7 @@ function shell(content) {
           <span class="avatar">${initials}</span>
           <div class="user-meta">
             <strong>${state.user.name}</strong>
-            <span>${isAdmin ? "Coordenação" : state.user.role === "adm" ? "ADM" : state.user.role === "manutencao" ? "Manutenção" : "Nutricionista"}</span>
+            <span>${isAdmin ? "Coordenação" : state.user.role === "adm" ? "ADM" : state.user.role === "manutencao" ? "Manutenção" : state.user.role === "qualidade" ? "Qualidade" : "Nutricionista"}</span>
           </div>
           <button id="logout" class="logout-btn" type="button" title="Sair" aria-label="Sair">${icon("logout")}</button>
         </div>
@@ -1601,6 +1602,19 @@ function renderConfig() {
     </section>
     <section class="panel">
       <div class="section-head">
+        <h2>Perfil Qualidade</h2>
+        <button class="secondary" id="add-qualidade" type="button">Novo usuário Qualidade</button>
+      </div>
+      <p class="status-line">O perfil Qualidade vê o módulo de Capacitação com a mesma tela da coordenação. Não tem acesso às outras telas.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Escolas</th><th>Ações</th></tr></thead>
+          <tbody>${state.db.users.filter(user => user.role === "qualidade" && user.active !== false).map(userRow).join("") || `<tr><td colspan="5">Nenhum usuário Qualidade.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-head">
         <h2>Vínculo por escola</h2>
         <button class="secondary" id="add-school" type="button">Adicionar Escola</button>
       </div>
@@ -1616,6 +1630,11 @@ function renderConfig() {
     const count = state.db.users.filter(user => user.role === "adm").length;
     state.db.users.push({ id: uid("user"), name: "Novo ADM", username: `adm${count + 1}`, password: "", role: "adm", active: true });
     saveDb("Usuário ADM criado. Defina nome, usuário e senha na tabela.");
+  });
+  $("#add-qualidade").addEventListener("click", () => {
+    const count = state.db.users.filter(user => user.role === "qualidade").length;
+    state.db.users.push({ id: uid("user"), name: "Novo Qualidade", username: `qualidade${count + 1}`, password: "", role: "qualidade", active: true });
+    saveDb("Usuário Qualidade criado. Defina nome, usuário e senha na tabela.");
   });
   $("#add-user").addEventListener("click", () => {
     state.db.users.push({ id: uid("user"), name: "Nova Nutricionista", username: `nutri${nutritionists().length + 1}`, password: "", role: "nutritionist", active: true });
