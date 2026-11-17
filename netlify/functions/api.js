@@ -186,6 +186,15 @@ async function loadRelationalState(client, actor, options = {}) {
   const { data: schoolsData, error: schoolsError } = await schoolsQuery;
   if (schoolsError) throw schoolsError;
   const entriesData = await selectEntriesPaged(client, actor, { months: options.months || null });
+  if (actor.role !== "admin") {
+    // Troca de responsável: no mês corrente, a nutricionista vê o que já foi lançado nas escolas que estão
+    // com ela hoje, mesmo que outra pessoa tenha lançado (o lançamento continua com o nome de quem lançou).
+    const currentMonth = settingsRows.find(row => row.key === "app")?.value?.currentMonth || "";
+    const ownSchoolIds = assignments.filter(item => item.profile_id === actor.id).map(item => item.school_id);
+    if (currentMonth && ownSchoolIds.length && (!options.months || options.months.includes(currentMonth))) {
+      entriesData.push(...await selectSchoolEntriesFromOthers(client, actor, ownSchoolIds, currentMonth));
+    }
+  }
 
   const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
 
@@ -220,7 +229,7 @@ async function loadRelationalState(client, actor, options = {}) {
     users: actor.role === "admin"
       ? profiles.map(publicUser)
       : [publicUser(actor)],
-    entries: entriesForActorState(entriesData, actor)
+    entries: entriesData
       .map(entry => ({
         id: entry.id,
         date: entry.entry_date,
@@ -341,6 +350,74 @@ function entryItemRowsFromDb(db, actor) {
 function entriesForActorState(entries, actor) {
   if (actor.role === "admin") return entries || [];
   return (entries || []).filter(entry => entry.nutritionist_id === actor.id);
+}
+
+// Lançamentos de outras nutricionistas nas escolas informadas, num mês (troca de responsável).
+async function selectSchoolEntriesFromOthers(client, actor, schoolIds, month, columns = "*, entry_items(card_id, quantity)") {
+  const rows = [];
+  for (let index = 0; index < schoolIds.length; index += 100) {
+    const { data, error } = await client
+      .from("entries")
+      .select(columns)
+      .in("school_id", schoolIds.slice(index, index + 100))
+      .eq("month", month)
+      .neq("nutritionist_id", actor.id);
+    if (error) throw error;
+    rows.push(...(data || []));
+  }
+  return rows;
+}
+
+// Antes de gravar: um lançamento de outra nutricionista só pode ser assumido se a escola está hoje com quem
+// grava e se é do mês corrente. Um dia novo que já tem lançamento de outra pessoa reaproveita esse lançamento
+// (assim o mesmo dia da mesma escola nunca é contado duas vezes).
+async function adoptSchoolEntries(client, actor, db) {
+  const own = (db.entries || []).filter(entry => entry.nutritionistId === actor.id);
+  if (!own.length) return db;
+  const [{ data: settingsRow, error: settingsError }, { data: assignmentRows, error: assignmentError }] = await Promise.all([
+    client.from("settings").select("value").eq("key", "app").maybeSingle(),
+    client.from("nutritionist_schools").select("school_id").eq("profile_id", actor.id)
+  ]);
+  if (settingsError) throw settingsError;
+  if (assignmentError) throw assignmentError;
+  const currentMonth = settingsRow?.value?.currentMonth || "";
+  const ownSchools = new Set((assignmentRows || []).map(row => row.school_id));
+
+  const ids = own.map(entry => entry.id).filter(Boolean);
+  const byId = new Map();
+  for (let index = 0; index < ids.length; index += 200) {
+    const { data, error } = await client
+      .from("entries")
+      .select("id, entry_date, month, school_id, nutritionist_id")
+      .in("id", ids.slice(index, index + 200))
+      .neq("nutritionist_id", actor.id);
+    if (error) throw error;
+    for (const row of data || []) byId.set(row.id, row);
+  }
+  for (const entry of own) {
+    const other = byId.get(entry.id);
+    if (!other) continue;
+    if (!(other.month === currentMonth && ownSchools.has(other.school_id) && other.school_id === entry.schoolId && other.entry_date === entry.date)) {
+      const error = new Error("Este lançamento é de outra nutricionista e não pode ser alterado.");
+      error.statusCode = 403;
+      throw error;
+    }
+  }
+
+  const candidates = own.filter(entry => !byId.has(entry.id) && entry.month === currentMonth && ownSchools.has(entry.schoolId));
+  if (!candidates.length) return db;
+  const schoolIds = [...new Set(candidates.map(entry => entry.schoolId))];
+  const others = await selectSchoolEntriesFromOthers(client, actor, schoolIds, currentMonth, "id, entry_date, school_id, nutritionist_id");
+  const otherByDay = new Map(others.map(row => [`${row.entry_date}:${row.school_id}`, row]));
+  return {
+    ...db,
+    entries: (db.entries || []).map(entry => {
+      if (entry.nutritionistId !== actor.id || byId.has(entry.id)) return entry;
+      if (!(entry.month === currentMonth && ownSchools.has(entry.schoolId))) return entry;
+      const other = otherByDay.get(`${entry.date}:${entry.schoolId}`);
+      return other ? { ...entry, id: other.id } : entry;
+    })
+  };
 }
 
 async function selectApuracoesPage(client, actor, { page = 1, pageSize = 50, nutritionistId = "", date = "", route = "" } = {}) {
@@ -508,6 +585,7 @@ async function assertFinalizedMonthsUnchanged(client, actor, db) {
       .filter(entry => entry.month === month)
       .map(entry => [entry.id, comparableEntry(entry)]));
     const incoming = new Map((db.entries || [])
+      .filter(entry => entry.nutritionistId === actor.id)
       .filter(entry => (entry.month || String(entry.date || "").slice(0, 7)) === month)
       .filter(entry => entry.id)
       .map(entry => [entry.id, comparableEntry(entry)]));
@@ -581,7 +659,7 @@ async function saveRelationalState(client, actor, db, options = {}) {
       await replaceRows(client, "monthly_closures", closureRowsFromDb(db, actor), "month,nutritionist_id");
     }
   } else {
-    const reconciledDb = await upsertNutritionistEntries(client, actor, db);
+    const reconciledDb = await upsertNutritionistEntries(client, actor, await adoptSchoolEntries(client, actor, db));
     const entriesToReplace = await entryIdsWithChangedQuantities(client, actor, reconciledDb);
     if (entriesToReplace.length) await client.from("entry_items").delete().in("entry_id", entriesToReplace);
     await replaceRows(

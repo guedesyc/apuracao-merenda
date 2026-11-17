@@ -203,11 +203,17 @@ function nutritionists() {
   return state.db.users.filter(user => user.role === "nutritionist" && user.active !== false);
 }
 
+// Nutricionista: lançamento feito por outra pessoa numa escola que está hoje com ela (troca de responsável).
+function isSchoolEntryFromOther(entry, userId) {
+  return Boolean(state.user && state.user.role !== "admin" && userId === state.user.id && entry.nutritionistId !== userId
+    && state.db.schools.some(school => school.id === entry.schoolId && (school.nutritionistIds || []).includes(userId)));
+}
+
 function entriesFor({ date, month, userId, schoolId } = {}) {
   return state.db.entries.filter(entry => {
     if (date && entry.date !== date) return false;
     if (month && !entry.date.startsWith(month)) return false;
-    if (userId && entry.nutritionistId !== userId) return false;
+    if (userId && entry.nutritionistId !== userId && !isSchoolEntryFromOther(entry, userId)) return false;
     if (schoolId && entry.schoolId !== schoolId) return false;
     return true;
   });
@@ -611,7 +617,14 @@ function shell(content) {
 }
 
 function entryKey(date, schoolId, nutritionistId = state.user.id) {
-  return state.db.entries.find(entry => entry.date === date && entry.schoolId === schoolId && entry.nutritionistId === nutritionistId);
+  const own = state.db.entries.find(entry => entry.date === date && entry.schoolId === schoolId && entry.nutritionistId === nutritionistId);
+  if (own || state.user?.role === "admin" || nutritionistId !== state.user?.id) return own;
+  return state.db.entries.find(entry => entry.date === date && entry.schoolId === schoolId && isSchoolEntryFromOther(entry, nutritionistId));
+}
+
+function launchedByOther(entry) {
+  if (!entry || !state.user || entry.nutritionistId === state.user.id) return "";
+  return `<small class="muted launched-by">lançado por ${String(entry.nutritionistName || "outra nutricionista").replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char])}</small>`;
 }
 
 function cardPreferenceKey(schoolId, nutritionistId = state.user.id) {
@@ -708,6 +721,11 @@ function schoolMonthCardTotals(schoolId, userId = state.user.id, month = state.s
 function upsertEntry(schoolId, patch, date = state.selectedDate) {
   if (isMonthFinalized(String(date).slice(0, 7))) return;
   let entry = entryKey(date, schoolId);
+  if (entry && entry.nutritionistId !== state.user.id) {
+    // Assume o lançamento da escola feito pela responsável anterior (mesmo registro, sem duplicar o dia).
+    entry.nutritionistId = state.user.id;
+    entry.nutritionistName = state.user.name;
+  }
   if (!entry) {
     entry = {
       id: uid("entry"),
@@ -879,6 +897,7 @@ function dateCard(school, cards, date) {
         <strong>${formatDateBR(date)}</strong>
         <div class="date-summary">
           <span class="badge ${complete ? "done" : "warn"}">${complete ? "registrada" : "pendente"}</span>
+          ${launchedByOther(entry)}
           <span class="muted">${complete ? money(total) : ""}</span>
           <span class="chevron">${expanded ? "-" : "+"}</span>
         </div>
@@ -1056,7 +1075,7 @@ function monthDateRow(school, date) {
       <button class="month-date-row" type="button" data-month-date-toggle="${key}" aria-expanded="${expanded}">
         <strong>${formatDateBR(date)}</strong>
         <span class="badge ${complete ? "done" : "warn"}">${status}</span>
-        <span>${entry?.reason || ""}</span>
+        <span>${entry?.reason || ""}${launchedByOther(entry)}</span>
         <span>${complete ? money(total) : ""}</span>
         <span class="chevron">${expanded ? "-" : "+"}</span>
       </button>
