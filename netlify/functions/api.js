@@ -148,7 +148,8 @@ function publicUser(user) {
   };
 }
 
-async function loadRelationalState(client, actor) {
+// options.months: só os lançamentos desses meses (atualização leve do Painel); sem isso, todo o histórico.
+async function loadRelationalState(client, actor, options = {}) {
   await ensureSeeded(client);
 
   const [
@@ -184,7 +185,7 @@ async function loadRelationalState(client, actor) {
   }
   const { data: schoolsData, error: schoolsError } = await schoolsQuery;
   if (schoolsError) throw schoolsError;
-  const entriesData = await selectEntriesPaged(client, actor);
+  const entriesData = await selectEntriesPaged(client, actor, { months: options.months || null });
 
   const settings = settingsRows.find(row => row.key === "app")?.value || { currentMonth: "2026-07", reasons: ["Sem aula", "Segurança", "Greve", "Feriado", "Outro"], workingDaysByMonth: { "2026-07": 22 } };
 
@@ -820,7 +821,11 @@ exports.handler = async event => {
     if (!actor) return json(401, { error: "Sessao expirada. Entre novamente." });
 
     if (event.httpMethod === "GET" && (action === "data" || action === "bootstrap")) {
-      return json(200, await loadRelationalState(client, actor));
+      // ?months=2026-11 (até 3 meses): devolve só os lançamentos desses meses, para não baixar o histórico inteiro.
+      const months = String(event.queryStringParameters?.months || "").split(",").map(item => item.trim()).filter(item => /^\d{4}-\d{2}$/.test(item)).slice(0, 3);
+      const state = await loadRelationalState(client, actor, { months: months.length ? months : null });
+      if (months.length) state.partialMonths = months;
+      return json(200, state);
     }
 
     if (event.httpMethod === "GET" && action === "apuracoes") {
