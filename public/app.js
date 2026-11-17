@@ -1385,7 +1385,8 @@ function adminSchoolTable() {
         <thead><tr><th>Escola</th><th>Rota</th><th>Respons&aacute;veis</th><th>Preenchimento</th><th>Status</th></tr></thead>
         <tbody>
           ${schools.map(school => {
-            const entries = completeEntriesFor({ month: state.selectedMonth, schoolId: school.id, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
+            // Painel é por escola: conta os dias preenchidos da escola, seja quem for que lançou (troca de responsável).
+            const entries = completeEntriesFor({ month: state.selectedMonth, schoolId: school.id });
             const filledDays = new Set(entries.map(entry => entry.date)).size;
             const percent = Math.min(100, (filledDays / expectedDays) * 100);
             const displayPercent = percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
@@ -1419,8 +1420,9 @@ function adminSchoolTable() {
   `;
 }
 
+// Painel é por escola: os lançamentos do dia valem para a escola, seja quem for que lançou.
 function adminDateEntries(schoolId, date) {
-  return entriesFor({ schoolId, date, userId: state.nutritionistFilter === "todos" ? undefined : state.nutritionistFilter });
+  return entriesFor({ schoolId, date });
 }
 
 function adminSchoolMaxCardRecords(school, dates) {
