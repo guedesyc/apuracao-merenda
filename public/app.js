@@ -1213,7 +1213,41 @@ function renderApuracoes() {
   if (!state.apuracoes.loading && state.apuracoes.loadedKey !== apuracoesFilterKey()) loadApuracoesPage(state.apuracoes.page || 1);
 }
 
+// Atualização leve: busca só os lançamentos de um mês e troca esse mês no estado (o resto do histórico continua).
+async function refreshMonthData(month) {
+  if (isStaticMode() || !/^\d{4}-\d{2}$/.test(month || "") || !state.db) {
+    state.db = await api("/api/data");
+    return;
+  }
+  const fresh = await api(`/api/data?months=${month}`);
+  const others = (state.db.entries || []).filter(entry => entry.month !== month);
+  delete fresh.partialMonths;
+  state.db = { ...fresh, entries: [...others, ...(fresh.entries || [])] };
+}
+
+// Painel: atualiza sozinho a cada 2 minutos só com a aba visível; ao voltar para a aba, atualiza na hora.
+const ADMIN_REFRESH_MS = 120000;
+async function refreshDashboard({ force = false } = {}) {
+  if (!state.user || state.user.role !== "admin" || state.view !== "dashboard" || state.adminPeriodDirty) return;
+  if (!force && (document.hidden || state.adminRefreshing)) return;
+  if (!force && Date.now() - (state.adminRefreshedAt || 0) < ADMIN_REFRESH_MS - 2000) return;
+  state.adminRefreshing = true;
+  try {
+    const selectedMonth = state.selectedMonth;
+    await refreshMonthData(selectedMonth);
+    state.selectedMonth = selectedMonth;
+    state.adminRefreshedAt = Date.now();
+    if (state.view === "dashboard") renderDashboard();
+  } finally {
+    state.adminRefreshing = false;
+  }
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshDashboard().catch(() => {});
+});
+
 function renderDashboard() {
+  state.adminRefreshedAt ||= Date.now();
   const monthEntries = completeEntriesFor({ month: state.selectedMonth });
   const sent = state.db.closures.filter(item => item.month === state.selectedMonth && item.status === "sent");
   const sentNames = [...new Set(sent.map(item => {
@@ -1227,6 +1261,7 @@ function renderDashboard() {
         <div class="field" style="min-width: 180px"><label>Mês</label><input id="month" type="month" value="${state.selectedMonth}" /></div>
         <div class="field" style="width: 150px"><label>Dias úteis</label><input id="working-days" type="number" min="1" max="31" inputmode="numeric" value="${expectedDays}" /></div>
         <button class="primary" id="save-period" ${state.isSaving ? "disabled" : ""}>${state.isSaving ? "Salvando..." : "Salvar competência"}</button>
+        <button class="secondary" id="dashboard-refresh" title="Buscar os lançamentos mais recentes deste mês" ${state.adminRefreshing ? "disabled" : ""}>${state.adminRefreshing ? "Atualizando..." : "Atualizar"}</button>
         <span class="status-line">${state.message}</span>
       </div>
     </div>
@@ -1302,18 +1337,22 @@ function renderDashboard() {
     });
   });
 
-  if (state.adminRefreshTimer) clearInterval(state.adminRefreshTimer);
-  state.adminRefreshTimer = setInterval(async () => {
-    if (!state.user || state.user.role !== "admin" || state.view !== "dashboard" || state.adminPeriodDirty) return;
+  $("#dashboard-refresh")?.addEventListener("click", async event => {
+    event.currentTarget.disabled = true;
+    event.currentTarget.textContent = "Atualizando...";
     try {
-      const selectedMonth = state.selectedMonth;
-      state.db = await api("/api/data");
-      state.selectedMonth = selectedMonth;
+      await refreshDashboard({ force: true });
+    } catch (error) {
+      state.message = error.message;
       renderDashboard();
-    } catch (_) {
-      // Keep the current view when a background refresh is temporarily unavailable.
     }
-  }, 15000);
+  });
+
+  if (state.adminRefreshTimer) clearInterval(state.adminRefreshTimer);
+  state.adminRefreshTimer = setInterval(() => {
+    // Mantém a tela atual se a atualização em segundo plano falhar.
+    refreshDashboard().catch(() => {});
+  }, 30000);
 }
 
 function adminSchoolTable() {
